@@ -5,6 +5,86 @@
 
 ---
 
+## [13-04-2026 15:30] — Add multi-tenant architecture rules and API testing guide
+
+**What changed:**
+Created comprehensive multi-tenant security rules document (RULES.md) with 10 mandatory security rules covering: tenant scoping on every query, auth middleware tenant context, entity naming verification, Zod validation, RBAC, rate limiting, token security, audit logging, no raw SQL, and security headers. Created manual API testing guide (TESTING.md) with all 16 endpoint test cases and Postman/Thunder Client examples. Fixed asyncHandler type error (Promise<void> → Promise<unknown>). Removed duplicate auth.routes.ts file. Updated AuthenticatedRequest type with tenantId field. Updated auth middleware to attach tenantId for both authenticateUser and authenticateAdmin.
+
+**Files touched:**
+- `backend/RULES.md` (new)
+- `backend/TESTING.md` (new)
+- `backend/src/utils/asyncHandler.ts` (updated — type fix)
+- `backend/src/types/index.ts` (updated — tenantId added)
+- `backend/src/middleware/auth.ts` (updated — tenantId, extractToken helper)
+- `backend/src/routes/auth.routes.ts` (deleted — duplicate)
+- `backend/prisma/schema.prisma` (updated — datasource url removed for Prisma 7)
+
+**API endpoints used:**
+- All existing endpoints verified against RULES.md
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-setup
+
+---
+
+## [13-04-2026 16:00] — Schema multi-tenancy fixes and complete system context
+
+**What changed:**
+Updated Prisma schema with multi-tenant architecture fixes: Added `adminId` field to Coupon model (each admin has their own coupons) with index. Added `isAffiliate` boolean field to User model. Added `@@index([adminId])` to User model. Added `aadharVerified`, `panVerified`, `verifiedBy` fields to UserKyc model. Added `user` relation to UserKyc model. Added `shippingOrders` and `billingOrders` relations to Address model. Added `orders` relation to Coupon model. Added `cartItems` relation to Product model. Added `user` and `admin` relations to AuthToken model. Updated RULES.md with complete system architecture, User→Admin flow, KYC flow, multi-tenant query patterns, and platform-wide vs tenant-scoped models documentation.
+
+**Files touched:**
+- `backend/prisma/schema.prisma` (updated — Coupon adminId, UserKyc verification fields, User isAffiliate, relation fixes)
+- `backend/RULES.md` (updated — complete system context added)
+
+**API endpoints used:**
+- None (schema and documentation only)
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-setup
+
+---
+
+## [13-04-2026 16:30] — Fix controller auth middleware and add tenant filtering to store endpoints
+
+**What changed:**
+Fixed user.controller.ts: Removed duplicate authenticateUser middleware calls inside controllers (was being called twice - once at route level and once in controller). Now uses AuthenticatedRequest type directly. Added X-Tenant-ID header requirement for store endpoints with getTenantId() helper. Updated store.service.ts to filter all queries by adminId (tenant). Added audit log placeholder comments for future implementation. Fixed auth.service.ts: Fixed refresh token expiry calculation bug (multiplication → addition). Removed unused User import.
+
+**Files touched:**
+- `backend/src/controllers/user.controller.ts` (updated — removed duplicate auth calls)
+- `backend/src/controllers/store.controller.ts` (updated — X-Tenant-ID header requirement)
+- `backend/src/services/store.service.ts` (updated — adminId tenant filtering on all queries)
+- `backend/src/services/auth.service.ts` (updated — token expiry bug fix)
+- `backend/prisma/schema.prisma` (updated — datasource url removed)
+
+**API endpoints used:**
+- All store endpoints now require X-Tenant-ID header
+
+**Breaking change:** YES — store endpoints now require X-Tenant-ID header
+
+**Branch:** anees-dev-backend-setup
+
+---
+
+## [13-04-2026 17:00] — Add WalletLedger and affiliate wallet system to schema
+
+**What changed:**
+Added complete affiliate wallet system following industry standard double-entry ledger pattern: New `WalletTxType` enum (COMMISSION_CREDIT, WITHDRAWAL_DEBIT, WITHDRAWAL_REVERSED, MANUAL_ADJUSTMENT). New `WalletLedger` model for immutable transaction history - every wallet change creates a ledger entry. Added `minWithdrawalAmount` field (default ₹500) to AffiliateProfile. Added `walletLedger` relation to AffiliateProfile. Added `kycVerified` and `kycCheckedAt` fields to WithdrawalRequest to track KYC status at request time. Added `commissionRate` and `commissionAmount` fields to Order model for tracking affiliate commission. Updated RULES.md with complete affiliate wallet flow documentation including commission credit, withdrawal request, KYC verification, and admin approval flows.
+
+**Files touched:**
+- `backend/prisma/schema.prisma` (updated — WalletLedger, WalletTxType, AffiliateProfile minWithdrawalAmount, WithdrawalRequest kycVerified, Order commission fields)
+- `backend/RULES.md` (updated — affiliate wallet flow documentation)
+
+**API endpoints used:**
+- None (schema and documentation only)
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-setup
+
+---
+
 ## [13-04-2026 12:30] — Initial Prisma schema generation
 
 **What changed:**

@@ -16,6 +16,7 @@
   "license": "ISC",
   "description": "Backend for True Beauty",
   "dependencies": {
+    "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.6",
@@ -25,6 +26,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
+    "pg": "^8.20.0",
     "prisma": "^7.7.0",
     "puppeteer": "^24.40.0",
     "swagger-jsdoc": "^6.2.8",
@@ -38,6 +40,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
     "@types/swagger-ui-express": "^4.1.8",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.2"

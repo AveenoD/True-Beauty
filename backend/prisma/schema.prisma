@@ -137,6 +137,37 @@ enum CommissionType {
   withdrawal
 }
 
+// ============================================================
+// WALLET (Affiliate Wallet System)
+// ============================================================
+
+enum WalletTxType {
+  COMMISSION_CREDIT      // Order commission credited
+  WITHDRAWAL_DEBIT       // Withdrawal deducted
+  WITHDRAWAL_REVERSED    // Rejected withdrawal - money returned
+  MANUAL_ADJUSTMENT      // Admin manual adjustment
+}
+
+model WalletLedger {
+  id            String        @id @default(uuid())
+  affiliateId   String        // FK to AffiliateProfile (tenant-scoped via affiliate)
+  type          WalletTxType
+  amount        Float         // Always positive
+  balanceAfter  Float         // Balance after this transaction
+  description   String?       // "Commission from order ORD-123"
+  orderId       String?      // If commission from order
+  withdrawalId  String?      // If debit from withdrawal
+  createdAt     DateTime     @default(now())
+
+  // Relations
+  affiliate     AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateId])
+  @@index([orderId])
+  @@index([withdrawalId])
+  @@map("wallet_ledger")
+}
+
 enum WithdrawalMethod {
   upi
   bank_transfer
@@ -350,6 +381,7 @@ model AffiliateProfile {
   walletBalance         Float    @default(0)
   totalEarnings         Float    @default(0)
   totalWithdrawals      Float    @default(0)
+  minWithdrawalAmount   Float    @default(500)  // Minimum ₹500 for withdrawal
   isActive              Boolean  @default(true)
   bankName              String?
   accountNumber         String?
@@ -359,10 +391,11 @@ model AffiliateProfile {
   updatedAt             DateTime @updatedAt
 
   // Relations
-  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   referrals             AffiliateReferralTracking[]
   earnings              AffiliateEarning[]
   withdrawals           WithdrawalRequest[]
+  walletLedger          WalletLedger[]
 
   @@map("affiliate_profile")
 }
@@ -416,6 +449,8 @@ model WithdrawalRequest {
   accountNumber   String?
   ifscCode        String?
   status          WithdrawalStatus  @default(pending)
+  kycVerified     Boolean          @default(false)  // KYC status at time of request
+  kycCheckedAt    DateTime?
   minimumAmount   Int?
   note            String?
   requestedAt     DateTime          @default(now())
@@ -599,7 +634,9 @@ model Order {
   shippingAddressId String?
   billingAddressId  String?
   couponId          String?
-  affiliateId       String?
+  affiliateId       String?      // Affiliate who referred this order
+  commissionRate     Float?       // Commission rate at time of order
+  commissionAmount  Float?       // Calculated commission for affiliate
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
