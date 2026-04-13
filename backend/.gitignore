@@ -36,6 +36,8 @@ Thumbs.db
 *~
 *.sublime-workspace
 *.sublime-project
+# change log file
+changeLog.md 
 
 # OS
 .DS_Store
