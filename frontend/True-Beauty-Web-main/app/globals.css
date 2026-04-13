@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+:root {
+  /* Default Blush Rose Theme (Free) */
+  --background: #fffaf8;
+  --foreground: #333333;
+  --primary: #f8c6d0;
+  --secondary: #fef5f7;
+  --accent: #ff6b9d;
+  
+  /* Theme variables */
+  --theme-primary: var(--primary);
+  --theme-secondary: var(--secondary);
+  --theme-accent: var(--accent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--theme-primary);
+  --color-secondary: var(--theme-secondary);
+  --color-accent: var(--theme-accent);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-playfair);
+}
+
+/* Royal Blue Theme */
+.theme-royal-blue {
+  --theme-primary: #2563EB;
+  --theme-secondary: #EFF6FF;
+  --theme-accent: #1E40AF;
+}
+
+/* Emerald Green Theme */
+.theme-emerald-green {
+  --theme-primary: #059669;
+  --theme-secondary: #ECFDF5;
+  --theme-accent: #047857;
+}
+
+/* Purple Glow Theme */
+.theme-purple-glow {
+  --theme-primary: #7C3AED;
+  --theme-secondary: #F5F3FF;
+  --theme-accent: #5B21B6;
+}
+
+/* Sunset Orange Theme */
+.theme-sunset-orange {
+  --theme-primary: #F97316;
+  --theme-secondary: #FFF7ED;
+  --theme-accent: #EA580C;
+}
+
+/* Teal Ocean Theme */
+.theme-teal-ocean {
+  --theme-primary: #0D9488;
+  --theme-secondary: #F0FDFA;
+  --theme-accent: #0F766E;
+}
+
+/* Hot Pink Theme */
+.theme-hot-pink {
+  --theme-primary: #EC4899;
+  --theme-secondary: #FDF2F8;
+  --theme-accent: #DB2777;
+}
+
+/* Coffee Brown Theme */
+.theme-coffee-brown {
+  --theme-primary: #92400E;
+  --theme-secondary: #FEF3C7;
+  --theme-accent: #78350F;
+}
+
+/* Dark Mode Pro Theme */
+.theme-dark-mode-pro {
+  --theme-primary: #0F172A;
+  --theme-secondary: #1E293B;
+  --theme-accent: #38BDF8;
+}
+
+/* Mint Fresh Theme */
+.theme-mint-fresh {
+  --theme-primary: #22C55E;
+  --theme-secondary: #F0FDF4;
+  --theme-accent: #16A34A;
+}
+
+/* Soft Lavender Theme */
+.theme-soft-lavender {
+  --theme-primary: #A78BFA;
+  --theme-secondary: #F5F3FF;
+  --theme-accent: #7C3AED;
+}
+
+/* Utility classes for dynamic theming */
+.text-theme-primary {
+  color: var(--theme-primary);
+}
+
+.bg-theme-primary {
+  background-color: var(--theme-primary);
+}
+
+.border-theme-primary {
+  border-color: var(--theme-primary);
+}
+
+.text-theme-accent {
+  color: var(--theme-accent);
+}
+
+.bg-theme-accent {
+  background-color: var(--theme-accent);
+}
+
+.border-theme-accent {
+  border-color: var(--theme-accent);
+}
+
+.text-theme-secondary {
+  color: var(--theme-secondary);
+}
+
+.bg-theme-secondary {
+  background-color: var(--theme-secondary);
+}
+
+.border-theme-secondary {
+  border-color: var(--theme-secondary);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+.theme-container {
+  color: var(--foreground);
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Apply theme variables to base elements */
+.theme-container * {
+  --tw-text-opacity: 1;
+  --tw-bg-opacity: 1;
+  --tw-border-opacity: 1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input:focus, button:focus {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+
+/* Custom utilities */
+.gradient-bg {
+  background: linear-gradient(135deg, var(--background) 0%, var(--secondary) 100%);
+}
+
+.pastel-shadow {
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+/* Shopping zone - highlighted product area */
+.shopping-zone {
+  background: color-mix(in srgb, var(--secondary) 80%, var(--background) 20%);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 4px 28px color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.hero-gradient {
+  background: linear-gradient(90deg, color-mix(in srgb, white 90%, var(--background) 10%) 0%, color-mix(in srgb, var(--secondary) 70%, white 30%) 100%);
+}
+
+/* Swiper styles */
+.swiper-pagination-bullet {
+  background: var(--primary) !important;
+  opacity: 0.5 !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: var(--accent) !important;
+  opacity: 1 !important;
+  transform: scale(1.2);
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: var(--accent) !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 16px !important;
+  font-weight: bold !important;
+}
+
+/* Promo carousel - smooth transitions */
+.promo-carousel .swiper-slide {
+  transition: transform 0.4s ease-out;
+}
+
+.promo-carousel .swiper-slide-active {
+  z-index: 1;
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-gradient {
+    background: rgba(255, 255, 255, 0.95);
+  }
+  
+  .swiper-button-next,
+  .swiper-button-prev {
+    display: none !important;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Product Grid - Line clamp fallback & card polish */
+.product-card {
+  will-change: transform;
+}
+
+.product-card .line-clamp-1,
+.product-card .line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-card .line-clamp-1 { -webkit-line-clamp: 1; }
+.product-card .line-clamp-2 { -webkit-line-clamp: 2; }
+
+/* Product card image hover - subtle pulse on CTA hover */
+.product-card button:active {
+  transform: scale(0.98);
+}

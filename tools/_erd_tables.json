@@ -1,0 +1,736 @@
+﻿{
+    "table_count":  39,
+    "tables":  [
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-444",
+                       "name":  "Address",
+                       "columns":  [
+                                       "Address",
+                                       "id",
+                                       "user_id",
+                                       "name",
+                                       "phone",
+                                       "address_line1",
+                                       "address_line2",
+                                       "city",
+                                       "state",
+                                       "pincode",
+                                       "is_default",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-1127",
+                       "name":  "Admin",
+                       "columns":  [
+                                       "Admin",
+                                       "id",
+                                       "user_id",
+                                       "current_subscription_id",
+                                       "selected_theme_id",
+                                       "full_name",
+                                       "email",
+                                       "phone",
+                                       "company_name",
+                                       "website",
+                                       "buisness_type",
+                                       "team_size",
+                                       "preferred_start_date",
+                                       "status",
+                                       "subscription_status",
+                                       "is_deleted",
+                                       "deleted_at",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-1253",
+                       "name":  "admin_kyc_document",
+                       "columns":  [
+                                       "admin_kyc_document",
+                                       "id",
+                                       "admin_id",
+                                       "verified_by",
+                                       "gst_number",
+                                       "pan_number",
+                                       "business_registration_no",
+                                       "bank_account_name",
+                                       "bank_account_number",
+                                       "ifsc_code",
+                                       "doc_type",
+                                       "document_url",
+                                       "status",
+                                       "is_required",
+                                       "uploaded_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-1289",
+                       "name":  "admin_onboarding_progress",
+                       "columns":  [
+                                       "admin_onboarding_progress",
+                                       "id",
+                                       "user_id",
+                                       "current_step",
+                                       "selected_plan_id",
+                                       "selected_addon_ids",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "S6SRCgaNRh7czYgI0Zu5-327",
+                       "name":  "admin_subscription",
+                       "columns":  [
+                                       "admin_subscription",
+                                       "id",
+                                       "admin_id",
+                                       "plan_id",
+                                       "payment_id",
+                                       "plan_name",
+                                       "plan_price",
+                                       "billing_cycle",
+                                       "status",
+                                       "started_at",
+                                       "ends_at",
+                                       "renewal_count",
+                                       "selected_addons",
+                                       "max_services",
+                                       "max_products",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "S6SRCgaNRh7czYgI0Zu5-77",
+                       "name":  "Admin_Theme",
+                       "columns":  [
+                                       "Admin_Theme",
+                                       "id",
+                                       "admin_id",
+                                       "web_theme_id",
+                                       "custom_title",
+                                       "custom_description",
+                                       "custom_cta_text",
+                                       "custom_banner_url",
+                                       "is_active",
+                                       "purchased_at",
+                                       "platform_payment_id",
+                                       "expires_at",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-98",
+                       "name":  "Affiliate_earning",
+                       "columns":  [
+                                       "Affiliate_earning",
+                                       "id",
+                                       "affiliate_id",
+                                       "order_id",
+                                       "admin_id",
+                                       "amount",
+                                       "description",
+                                       "status",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-1",
+                       "name":  "Affiliate_profile",
+                       "columns":  [
+                                       "Affiliate_profile",
+                                       "id",
+                                       "user_id",
+                                       "admin_id",
+                                       "referral_code",
+                                       "status",
+                                       "available_balance",
+                                       "total_earned",
+                                       "total_referrals_count",
+                                       "is_kyc_verified",
+                                       "joined_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-52",
+                       "name":  "affiliate_referral_tracking",
+                       "columns":  [
+                                       "affiliate_referral_tracking",
+                                       "id",
+                                       "affiliate_id",
+                                       "admin_id",
+                                       "referred_user_id",
+                                       "order_id",
+                                       "commission_amount",
+                                       "commission_percentage",
+                                       "status",
+                                       "ordered_at",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-505",
+                       "name":  "cart_Item",
+                       "columns":  [
+                                       "cart_Item",
+                                       "id",
+                                       "user_id",
+                                       "product_id",
+                                       "admin_id",
+                                       "quantity",
+                                       "saved_price",
+                                       "added_at"
+                                   ]
+                   },
+                   {
+                       "id":  "dsDg2OfUgpxXdV-WpXHL-327",
+                       "name":  "Coupon",
+                       "columns":  [
+                                       "Coupon",
+                                       "id",
+                                       "admin_id",
+                                       "coupon_code",
+                                       "discount_value",
+                                       "usage_limit_total",
+                                       "used_count",
+                                       "applicable_product",
+                                       "applicable_category",
+                                       "discount_type",
+                                       "start_date",
+                                       "expiry_date",
+                                       "status",
+                                       "deleted_at",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-770",
+                       "name":  "exchange_request",
+                       "columns":  [
+                                       "exchange_request",
+                                       "id",
+                                       "order_id",
+                                       "product_id",
+                                       "user_id",
+                                       "admin_id",
+                                       "reason",
+                                       "description",
+                                       "replacement_product_id",
+                                       "replacement_varient",
+                                       "replacement_tracking_id",
+                                       "status",
+                                       "requested_at",
+                                       "completed_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-889",
+                       "name":  "exchange_timeline",
+                       "columns":  [
+                                       "exchange_timeline",
+                                       "id",
+                                       "exchange_id",
+                                       "order_item_id",
+                                       "status",
+                                       "changed_at",
+                                       "note",
+                                       "changed_by_admin"
+                                   ]
+                   },
+                   {
+                       "id":  "xTCH0kkEKKULhrX48QR8-70",
+                       "name":  "Inventory",
+                       "columns":  [
+                                       "Inventory",
+                                       "id",
+                                       "admin_id",
+                                       "product_id",
+                                       "initial_stock_quantity",
+                                       "low_stock_threshold",
+                                       "stock_location",
+                                       "supplier_name",
+                                       "notes",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "xTCH0kkEKKULhrX48QR8-116",
+                       "name":  "Inventory_Logs",
+                       "columns":  [
+                                       "Inventory_Logs",
+                                       "id",
+                                       "inventory_id",
+                                       "admin_id",
+                                       "operation",
+                                       "inventory_logs_quantity",
+                                       "inventory_log_reason",
+                                       "note",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "S6SRCgaNRh7czYgI0Zu5-645",
+                       "name":  "KYC_Document",
+                       "columns":  [
+                                       "KYC_Document",
+                                       "id",
+                                       "user_id",
+                                       "affiliate_id",
+                                       "doc_type",
+                                       "document_url",
+                                       "document_number",
+                                       "verification_metadata",
+                                       "status",
+                                       "rejection_reason",
+                                       "uploaded_at",
+                                       "verified_at",
+                                       "verified_by_admin"
+                                   ]
+                   },
+                   {
+                       "id":  "dsDg2OfUgpxXdV-WpXHL-99",
+                       "name":  "My_Service",
+                       "columns":  [
+                                       "My_Service",
+                                       "id",
+                                       "admin_id",
+                                       "Service_name",
+                                       "service_category",
+                                       "service_price",
+                                       "discounted_service_price",
+                                       "description",
+                                       "schedule_duration_minutes",
+                                       "booking_confirmation",
+                                       "how_to_use_text",
+                                       "how_to_use_video_url",
+                                       "status",
+                                       "area_branch_name",
+                                       "full_address",
+                                       "city",
+                                       "state",
+                                       "pincode",
+                                       "phone",
+                                       "opening_time",
+                                       "closing_time",
+                                       "working_days",
+                                       "deleted_at",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "xTCH0kkEKKULhrX48QR8-1",
+                       "name":  "notification",
+                       "columns":  [
+                                       "notification",
+                                       "id",
+                                       "admin_id",
+                                       "title",
+                                       "description",
+                                       "notification_image",
+                                       "notification_state",
+                                       "notification_city",
+                                       "notification_pincode",
+                                       "add_link",
+                                       "notification_catregory",
+                                       "send_notification_to",
+                                       "scheduled_at",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-526",
+                       "name":  "Order",
+                       "columns":  [
+                                       "Order",
+                                       "id",
+                                       "order_number",
+                                       "user_id",
+                                       "address_id",
+                                       "coupon_id",
+                                       "affiliate_id",
+                                       "processed_by_admin_id",
+                                       "processed_at",
+                                       "status",
+                                       "payment_status",
+                                       "payment_methods",
+                                       "sub_total",
+                                       "discount",
+                                       "tax",
+                                       "shiping",
+                                       "total",
+                                       "tracking_number",
+                                       "tracking_url",
+                                       "rating",
+                                       "review_count",
+                                       "invoice_number",
+                                       "shipping_charge",
+                                       "tax_amount",
+                                       "delivery_option",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-662",
+                       "name":  "order_item",
+                       "columns":  [
+                                       "order_item",
+                                       "id",
+                                       "order_id",
+                                       "product_id",
+                                       "admin_id",
+                                       "discounted_price",
+                                       "product_name",
+                                       "product_image",
+                                       "price",
+                                       "quantity",
+                                       "total_amount",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-977",
+                       "name":  "Payment",
+                       "columns":  [
+                                       "Payment",
+                                       "id",
+                                       "admin_id",
+                                       "order_id",
+                                       "user_id",
+                                       "service_booking_id",
+                                       "amount",
+                                       "method",
+                                       "transaction_id",
+                                       "status",
+                                       "gateway_response",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "HqOmAL5r3-FvqXiCa7kx-155",
+                       "name":  "plan_addon",
+                       "columns":  [
+                                       "plan_addon",
+                                       "id",
+                                       "created_by",
+                                       "addon_name",
+                                       "description",
+                                       "price",
+                                       "billing_cycle",
+                                       "addon_key",
+                                       "is_active",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "S6SRCgaNRh7czYgI0Zu5-475",
+                       "name":  "platform_payment",
+                       "columns":  [
+                                       "platform_payment",
+                                       "id",
+                                       "user_id",
+                                       "collected_by_super_admin",
+                                       "custom_title",
+                                       "payment_type",
+                                       "subscription_plan_id",
+                                       "theme_id",
+                                       "admin_theme_id",
+                                       "addon_id",
+                                       "amount",
+                                       "billing_cycle",
+                                       "payment_method",
+                                       "transaction_id",
+                                       "invoice_number",
+                                       "gateway_repsponse",
+                                       "paid_at",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "S6SRCgaNRh7czYgI0Zu5-571",
+                       "name":  "Product",
+                       "columns":  [
+                                       "Product",
+                                       "id",
+                                       "admin_id",
+                                       "product_name",
+                                       "product_category",
+                                       "product_price",
+                                       "discounted_product_price",
+                                       "commission_rate",
+                                       "status",
+                                       "product_images",
+                                       "is_affiliated_product",
+                                       "SKU",
+                                       "product_description",
+                                       "deleted_at",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-864",
+                       "name":  "refund_audit_log",
+                       "columns":  [
+                                       "refund_audit_log",
+                                       "id",
+                                       "refund_id",
+                                       "action",
+                                       "created_at",
+                                       "audited_by_admin",
+                                       "note"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-819",
+                       "name":  "refund_details",
+                       "columns":  [
+                                       "refund_details",
+                                       "id",
+                                       "return_id",
+                                       "order_id",
+                                       "admin_id",
+                                       "method",
+                                       "account_holder_name",
+                                       "bank_name",
+                                       "account_number",
+                                       "tring",
+                                       "ifsc_code",
+                                       "upi_id",
+                                       "status",
+                                       "transaction_id",
+                                       "processed_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-704",
+                       "name":  "return_request",
+                       "columns":  [
+                                       "return_request",
+                                       "id",
+                                       "order_id",
+                                       "product_id",
+                                       "user_id",
+                                       "admin_id",
+                                       "order_item_id",
+                                       "reason",
+                                       "description",
+                                       "images",
+                                       "status",
+                                       "requested_at",
+                                       "completed_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-745",
+                       "name":  "return_timeline",
+                       "columns":  [
+                                       "return_timeline",
+                                       "id",
+                                       "return_id",
+                                       "status",
+                                       "changed_at",
+                                       "note",
+                                       "changed_by_admin"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-1040",
+                       "name":  "Review_Rating",
+                       "columns":  [
+                                       "Review_Rating",
+                                       "id",
+                                       "product_id",
+                                       "user_id",
+                                       "order_id",
+                                       "admin_id",
+                                       "rating",
+                                       "title",
+                                       "comment",
+                                       "images",
+                                       "is_verified_purchase",
+                                       "helpful_count",
+                                       "status",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-926",
+                       "name":  "service_booking",
+                       "columns":  [
+                                       "service_booking",
+                                       "id",
+                                       "booking_number",
+                                       "user_id",
+                                       "service_id",
+                                       "created_by_admin",
+                                       "service_booking_email",
+                                       "service_bookin_phone",
+                                       "booking_date",
+                                       "time_slot",
+                                       "payment_option",
+                                       "payment_id",
+                                       "status",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "xTCH0kkEKKULhrX48QR8-162",
+                       "name":  "social_media_manage",
+                       "columns":  [
+                                       "social_media_manage",
+                                       "id",
+                                       "admin_id",
+                                       "platform_name",
+                                       "platform_url",
+                                       "is_active",
+                                       "enable_whatsapp_chat",
+                                       "phone_number",
+                                       "welcome_message",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "HqOmAL5r3-FvqXiCa7kx-98",
+                       "name":  "subscription_plan",
+                       "columns":  [
+                                       "subscription_plan",
+                                       "id",
+                                       "created_by",
+                                       "plan_name",
+                                       "plan_type",
+                                       "price",
+                                       "billing_cycle",
+                                       "max_products",
+                                       "storage_gb",
+                                       "features",
+                                       "is_popular",
+                                       "is_active",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "252dgiwtydv0Y4vqELdn-57",
+                       "name":  "super_admin",
+                       "columns":  [
+                                       "super_admin",
+                                       "id",
+                                       "full_name",
+                                       "email",
+                                       "password_hash",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-363",
+                       "name":  "User",
+                       "columns":  [
+                                       "User",
+                                       "id",
+                                       "admin_id",
+                                       "phone",
+                                       "email",
+                                       "password_hash",
+                                       "full_name",
+                                       "DoB",
+                                       "gender",
+                                       "is_Active",
+                                       "is_affiliate",
+                                       "referral_code",
+                                       "created_At",
+                                       "updated_At"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-251",
+                       "name":  "user_notification",
+                       "columns":  [
+                                       "user_notification",
+                                       "id",
+                                       "user_id",
+                                       "notification_id",
+                                       "admin_id",
+                                       "is_read",
+                                       "read_at",
+                                       "created_at"
+                                   ]
+                   },
+                   {
+                       "id":  "S6SRCgaNRh7czYgI0Zu5-1",
+                       "name":  "Web_Theme",
+                       "columns":  [
+                                       "Web_Theme",
+                                       "id",
+                                       "name",
+                                       "price",
+                                       "preset_name",
+                                       "primary_color",
+                                       "secondary_color",
+                                       "accent_color",
+                                       "button_color",
+                                       "background_color",
+                                       "is_public",
+                                       "is_premium",
+                                       "created_by_super_admin",
+                                       "created_at",
+                                       "updated_at"
+                                   ]
+                   },
+                   {
+                       "id":  "6qKLvp4HwFtF3ovfOyws-1023",
+                       "name":  "wishList_Items",
+                       "columns":  [
+                                       "wishList_Items",
+                                       "id",
+                                       "user_id",
+                                       "product_id",
+                                       "admin_id",
+                                       "added_at"
+                                   ]
+                   },
+                   {
+                       "id":  "HqOmAL5r3-FvqXiCa7kx-58",
+                       "name":  "withdrawal_audit",
+                       "columns":  [
+                                       "withdrawal_audit",
+                                       "id",
+                                       "withdrawal_id",
+                                       "action",
+                                       "audited_at",
+                                       "note",
+                                       "audited_by"
+                                   ]
+                   },
+                   {
+                       "id":  "HqOmAL5r3-FvqXiCa7kx-1",
+                       "name":  "withdrawal_request",
+                       "columns":  [
+                                       "withdrawal_request",
+                                       "id",
+                                       "affiliate_id",
+                                       "amount",
+                                       "method",
+                                       "upi_id",
+                                       "bank_name",
+                                       "account_number",
+                                       "ifsc_code",
+                                       "status",
+                                       "minimum_amount",
+                                       "note",
+                                       "requested_at",
+                                       "processed_at",
+                                       "paid_at",
+                                       "processed_by"
+                                   ]
+                   }
+               ]
+}
