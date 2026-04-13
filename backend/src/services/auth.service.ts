@@ -5,7 +5,6 @@ import {
 } from "../utils/jwt";
 import { hashPassword, comparePassword } from "../utils/password";
 import prisma from "../config/database";
-import { User } from "@prisma/client";
 import crypto from "crypto";
 
 const REFRESH_EXPIRY_DAYS = 7;
@@ -15,7 +14,7 @@ function getTokenExpiry(type: "access" | "refresh"): Date {
   if (type === "access") {
     return new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes
   }
-  return new Date(now.getTime() * REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000); // 7 days
+  return new Date(now.getTime() + REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000); // 7 days
 }
 
 export async function registerUser(data: {
@@ -235,11 +234,10 @@ export async function forgotPassword(email: string) {
     return { message: "If an account exists, a reset email has been sent" };
   }
 
-  // Generate reset token (in production, send via email)
+  // Generate reset token (in production, store in DB or send via email)
   const resetToken = crypto.randomBytes(32).toString("hex");
-  const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  // In production: await prisma.passwordResetToken.create({ data: { token: resetToken, email, expiresAt: new Date(Date.now() + 60 * 60 * 1000) } });
 
-  // In production, store reset token in a separate table or send via email
   console.log(`Password reset token for ${email}: ${resetToken}`);
 
   return { message: "If an account exists, a reset email has been sent" };

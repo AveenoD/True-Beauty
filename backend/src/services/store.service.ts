@@ -1,16 +1,19 @@
 import prisma from "../config/database";
 
-export async function listProducts(query: {
-  page?: number;
-  limit?: number;
-  category?: string;
-  search?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  status?: string;
-  sort?: string;
-  order?: "asc" | "desc";
-}) {
+export async function listProducts(
+  tenantId: string,
+  query: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    search?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    status?: string;
+    sort?: string;
+    order?: "asc" | "desc";
+  }
+) {
   const page = Math.max(1, query.page || 1);
   const limit = Math.min(100, Math.max(1, query.limit || 20));
   const skip = (page - 1) * limit;
@@ -18,6 +21,7 @@ export async function listProducts(query: {
   const where: Record<string, unknown> = {
     deletedAt: null,
     status: "active",
+    adminId: tenantId, // RULE #1: Tenant scope filter
   };
 
   if (query.category) {
@@ -79,12 +83,13 @@ export async function listProducts(query: {
   };
 }
 
-export async function getProduct(id: string) {
+export async function getProduct(tenantId: string, id: string) {
   const product = await prisma.product.findFirst({
     where: {
       id,
       deletedAt: null,
       status: "active",
+      adminId: tenantId, // RULE #1: Tenant scope filter
     },
     select: {
       id: true,
@@ -117,19 +122,23 @@ export async function getProduct(id: string) {
   return product;
 }
 
-export async function listServices(query: {
-  page?: number;
-  limit?: number;
-  category?: string;
-  search?: string;
-  status?: string;
-}) {
+export async function listServices(
+  tenantId: string,
+  query: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    search?: string;
+    status?: string;
+  }
+) {
   const page = Math.max(1, query.page || 1);
   const limit = Math.min(100, Math.max(1, query.limit || 20));
   const skip = (page - 1) * limit;
 
   const where: Record<string, unknown> = {
     status: "active",
+    adminId: tenantId, // RULE #1: Tenant scope filter
   };
 
   if (query.category) {
@@ -186,9 +195,13 @@ export async function listServices(query: {
   };
 }
 
-export async function getService(id: string) {
+export async function getService(tenantId: string, id: string) {
   const service = await prisma.myService.findFirst({
-    where: { id, status: "active" },
+    where: {
+      id,
+      status: "active",
+      adminId: tenantId, // RULE #1: Tenant scope filter
+    },
     select: {
       id: true,
       name: true,

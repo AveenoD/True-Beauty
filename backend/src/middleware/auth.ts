@@ -1,8 +1,14 @@
 import { Response, NextFunction } from "express";
-import { verifyAccessToken, verifyRefreshToken } from "../utils/jwt";
+import { verifyAccessToken } from "../utils/jwt";
 import { AuthenticatedRequest } from "../types";
 import prisma from "../config/database";
 import { ApiResponse } from "../utils/ApiResponse";
+
+function extractToken(authHeader: string | undefined): string | null {
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const parts = authHeader.split(" ");
+  return parts[1] ?? null;
+}
 
 export const authenticateUser = async (
   req: AuthenticatedRequest,
@@ -10,12 +16,11 @@ export const authenticateUser = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
+    const token = extractToken(req.headers.authorization);
+    if (!token) {
       return ApiResponse.unauthorized(res, "No token provided");
     }
 
-    const token = authHeader.split(" ")[1];
     const payload = verifyAccessToken(token);
 
     if (payload.type !== "access") {
@@ -41,6 +46,7 @@ export const authenticateUser = async (
 
     req.user = user;
     req.userId = user.id;
+    req.tenantId = user.adminId ?? undefined; // Multi-tenant: tenantId from adminId
     next();
   } catch (error) {
     next(error);
@@ -53,12 +59,11 @@ export const authenticateAdmin = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
+    const token = extractToken(req.headers.authorization);
+    if (!token) {
       return ApiResponse.unauthorized(res, "No token provided");
     }
 
-    const token = authHeader.split(" ")[1];
     const payload = verifyAccessToken(token);
 
     if (payload.type !== "access") {
@@ -84,6 +89,7 @@ export const authenticateAdmin = async (
 
     req.admin = admin;
     req.adminId = admin.id;
+    req.tenantId = admin.id; // Admin is the tenant
     next();
   } catch (error) {
     next(error);
@@ -92,16 +98,15 @@ export const authenticateAdmin = async (
 
 export const optionalAuth = async (
   req: AuthenticatedRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
+    const token = extractToken(req.headers.authorization);
+    if (!token) {
       return next();
     }
 
-    const token = authHeader.split(" ")[1];
     const payload = verifyAccessToken(token);
 
     if (payload.type === "access") {
@@ -117,6 +122,7 @@ export const optionalAuth = async (
         if (user?.isActive) {
           req.user = user;
           req.userId = user.id;
+          req.tenantId = user.adminId ?? undefined;
         }
       }
     }

@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ============================================================
@@ -204,6 +203,10 @@ model AuthToken {
   revokedAt   DateTime?
   createdAt   DateTime  @default(now())
 
+  // Relations
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin       Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
   @@index([token])
   @@index([userId])
   @@index([adminId])
@@ -254,13 +257,14 @@ model SuperAdmin {
 
 model User {
   id                String    @id @default(uuid())
-  adminId           String?
+  adminId           String?   // Links to Admin (tenant) — null for unaffiliated users
   name              String
   email             String    @unique
   password          String?
   phone             String?
   profileImage      String?
   isActive          Boolean   @default(true)
+  isAffiliate       Boolean   @default(false)  // Can be customer AND affiliate
   referralCode      String?   @unique
   referralBy        String?
   role              String    @default("customer")
@@ -280,18 +284,27 @@ model User {
   returns           ReturnRequest[]
   exchanges         ExchangeRequest[]
   affiliateProfile  AffiliateProfile?
+  userKyc           UserKyc?
 
+  @@index([adminId])
   @@map("user")
 }
 
 model UserKyc {
-  id          String       @id @default(uuid())
-  userId      String       @unique
-  aadharUrl   String?
-  panUrl      String?
-  status      UserKycStatus @default(not_submitted)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String        @id @default(uuid())
+  userId         String        @unique
+  aadharUrl      String?       // Document image URL only (NOT Aadhar number)
+  panUrl         String?       // Document image URL only (NOT PAN number)
+  aadharVerified Boolean       @default(false)
+  panVerified    Boolean       @default(false)
+  status         UserKycStatus @default(not_submitted)
+  verifiedAt     DateTime?
+  verifiedBy     String?       // Admin ID who verified
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_kyc")
 }
@@ -317,7 +330,9 @@ model Address {
   updatedAt       DateTime @updatedAt
 
   // Relations
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders  Order[]   @relation("OrderShippingAddress")
+  billingOrders   Order[]   @relation("OrderBillingAddress")
 
   @@map("address")
 }
@@ -467,6 +482,7 @@ model Product {
   couponApplicable  CouponApplicableProduct[]
   reviews           ReviewRating[]
   wishlistItems     WishlistItem[]
+  cartItems         CartItem[]
 
   @@map("product")
 }
@@ -512,6 +528,7 @@ model InventoryLog {
 
 model Coupon {
   id                      String              @id @default(uuid())
+  adminId                 String              // Tenant: each admin has their own coupons
   code                    String              @unique
   discountType            CouponDiscountType
   discountValue           Float
@@ -528,8 +545,10 @@ model Coupon {
 
   // Relations
   applicableProducts      CouponApplicableProduct[]
-  applicableCategories     CouponApplicableCategory[]
+  applicableCategories    CouponApplicableCategory[]
+  orders                  Order[]
 
+  @@index([adminId])
   @@map("coupon")
 }
 

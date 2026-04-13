@@ -2,7 +2,7 @@ type AsyncHandler = (
   req: import("express").Request,
   res: import("express").Response,
   next: import("express").NextFunction
-) => Promise<void>;
+) => Promise<unknown>;
 
 export const asyncHandler = (fn: AsyncHandler) => {
   return (

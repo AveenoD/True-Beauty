@@ -6,6 +6,7 @@ export interface AuthenticatedRequest extends Request {
   admin?: Admin;
   userId?: string;
   adminId?: string;
+  tenantId?: string; // Required for multi-tenant: must be set in auth middleware
 }
 
 export interface TokenPayload {
