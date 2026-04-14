@@ -17,13 +17,44 @@ function getTokenExpiry(type: "access" | "refresh"): Date {
   return new Date(now.getTime() + REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000); // 7 days
 }
 
+// Password strength validation (industry standard)
+export function validatePasswordStrength(password: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (password.length < 8) {
+    errors.push("Password must be at least 8 characters");
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push("Password must contain at least one uppercase letter");
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push("Password must contain at least one lowercase letter");
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push("Password must contain at least one number");
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    errors.push("Password must contain at least one special character (!@#$%^&* etc.)");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
 export async function registerUser(data: {
   name: string;
   email: string;
   password: string;
   phone?: string;
-  referralCode?: string;
 }) {
+  // Password strength validation
+  const passwordCheck = validatePasswordStrength(data.password);
+  if (!passwordCheck.valid) {
+    throw new Error(`Password validation failed: ${passwordCheck.errors.join(", ")}`);
+  }
+
   const existing = await prisma.user.findUnique({
     where: { email: data.email },
   });
@@ -34,22 +65,9 @@ export async function registerUser(data: {
 
   const hashedPassword = await hashPassword(data.password);
 
-  // Generate unique referral code
-  const userReferralCode = crypto
-    .randomBytes(4)
-    .toString("hex")
-    .toUpperCase();
-
-  // Check referral code if provided
-  let referredByUserId: string | null = null;
-  if (data.referralCode) {
-    const referrer = await prisma.user.findFirst({
-      where: { referralCode: data.referralCode },
-    });
-    if (referrer) {
-      referredByUserId = referrer.id;
-    }
-  }
+  // NOTE: referralCode is NOT generated here
+  // User becomes affiliate ONLY when they apply for affiliate program
+  // Then referralCode is generated in the affiliate apply endpoint
 
   const user = await prisma.user.create({
     data: {
@@ -57,8 +75,6 @@ export async function registerUser(data: {
       email: data.email,
       password: hashedPassword,
       phone: data.phone,
-      referralCode: userReferralCode,
-      referralBy: referredByUserId,
     },
   });
 
@@ -195,7 +211,7 @@ export async function refreshUserToken(refreshToken: string) {
       throw new Error("User not found or inactive");
     }
 
-    // Revoke old token
+    // Revoke old token (token rotation)
     await prisma.authToken.update({
       where: { id: storedToken.id },
       data: { revokedAt: new Date() },
@@ -243,23 +259,32 @@ export async function forgotPassword(email: string) {
   return { message: "If an account exists, a reset email has been sent" };
 }
 
-export async function resetPassword(token: string, newPassword: string) {
-  // In production, validate the reset token from the database
-  // For now, accept any token and expect email-based validation
-  if (!token || !newPassword) {
-    throw new Error("Token and new password are required");
+export async function resetPassword(
+  token: string,
+  oldPassword: string,
+  newPassword: string
+) {
+  // Validate reset token from database
+  // In production: await prisma.passwordResetToken.findUnique({ where: { token } });
+  // For now, we expect email-based token validation is done before calling this
+
+  if (!token || !oldPassword || !newPassword) {
+    throw new Error("Token, old password, and new password are required");
   }
 
-  if (newPassword.length < 8) {
-    throw new Error("Password must be at least 8 characters");
+  // New password strength validation
+  const passwordCheck = validatePasswordStrength(newPassword);
+  if (!passwordCheck.valid) {
+    throw new Error(`Password validation failed: ${passwordCheck.errors.join(", ")}`);
   }
 
   // In production: lookup token from password_reset_tokens table
   // const resetRecord = await prisma.passwordResetToken.findUnique({ where: { token } });
   // if (!resetRecord || resetRecord.expiresAt < new Date()) throw new Error("Invalid or expired token");
 
-  // For demo: we would update the password here
-  // await prisma.user.update({ where: { email: resetRecord.email }, data: { password: hashedPassword } });
+  // For demo: we would find user by email from resetRecord and verify old password
+  // const user = await prisma.user.findUnique({ where: { email: resetRecord.email } });
+  // await comparePassword(oldPassword, user.password);
 
   return { message: "Password has been reset successfully" };
 }

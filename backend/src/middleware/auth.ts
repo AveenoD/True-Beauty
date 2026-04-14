@@ -3,11 +3,36 @@ import { verifyAccessToken } from "../utils/jwt";
 import { AuthenticatedRequest } from "../types";
 import prisma from "../config/database";
 import { ApiResponse } from "../utils/ApiResponse";
+import { getAccessTokenFromCookie } from "../utils/cookies";
 
-function extractToken(authHeader: string | undefined): string | null {
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const parts = authHeader.split(" ");
-  return parts[1] ?? null;
+// Support both Authorization header and httpOnly cookie
+function extractToken(req: AuthenticatedRequest): string | null {
+  // First try Authorization header
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.split(" ")[1] ?? null;
+  }
+  // Fallback to cookie
+  return getAccessTokenFromCookie(req);
+}
+
+async function validateToken(token: string): Promise<{ sub: string; type: string; role?: string }> {
+  const payload = verifyAccessToken(token);
+
+  if (payload.type !== "access") {
+    throw new Error("Invalid token type");
+  }
+
+  // Check if token is revoked
+  const storedToken = await prisma.authToken.findUnique({
+    where: { token },
+  });
+
+  if (storedToken && storedToken.revokedAt) {
+    throw new Error("Token has been revoked");
+  }
+
+  return payload;
 }
 
 export const authenticateUser = async (
@@ -16,25 +41,12 @@ export const authenticateUser = async (
   next: NextFunction
 ) => {
   try {
-    const token = extractToken(req.headers.authorization);
+    const token = extractToken(req);
     if (!token) {
       return ApiResponse.unauthorized(res, "No token provided");
     }
 
-    const payload = verifyAccessToken(token);
-
-    if (payload.type !== "access") {
-      return ApiResponse.unauthorized(res, "Invalid token type");
-    }
-
-    // Check if token is revoked
-    const storedToken = await prisma.authToken.findUnique({
-      where: { token },
-    });
-
-    if (storedToken && storedToken.revokedAt) {
-      return ApiResponse.unauthorized(res, "Token has been revoked");
-    }
+    const payload = await validateToken(token);
 
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
@@ -59,25 +71,12 @@ export const authenticateAdmin = async (
   next: NextFunction
 ) => {
   try {
-    const token = extractToken(req.headers.authorization);
+    const token = extractToken(req);
     if (!token) {
       return ApiResponse.unauthorized(res, "No token provided");
     }
 
-    const payload = verifyAccessToken(token);
-
-    if (payload.type !== "access") {
-      return ApiResponse.unauthorized(res, "Invalid token type");
-    }
-
-    // Check if token is revoked
-    const storedToken = await prisma.authToken.findUnique({
-      where: { token },
-    });
-
-    if (storedToken && storedToken.revokedAt) {
-      return ApiResponse.unauthorized(res, "Token has been revoked");
-    }
+    const payload = await validateToken(token);
 
     const admin = await prisma.admin.findUnique({
       where: { id: payload.sub },
@@ -102,29 +101,25 @@ export const optionalAuth = async (
   next: NextFunction
 ) => {
   try {
-    const token = extractToken(req.headers.authorization);
+    const token = extractToken(req);
     if (!token) {
       return next();
     }
 
-    const payload = verifyAccessToken(token);
+    try {
+      const payload = await validateToken(token);
 
-    if (payload.type === "access") {
-      const storedToken = await prisma.authToken.findUnique({
-        where: { token },
+      const user = await prisma.user.findUnique({
+        where: { id: payload.sub },
       });
 
-      if (!storedToken?.revokedAt) {
-        const user = await prisma.user.findUnique({
-          where: { id: payload.sub },
-        });
-
-        if (user?.isActive) {
-          req.user = user;
-          req.userId = user.id;
-          req.tenantId = user.adminId ?? undefined;
-        }
+      if (user?.isActive) {
+        req.user = user;
+        req.userId = user.id;
+        req.tenantId = user.adminId ?? undefined;
       }
+    } catch {
+      // Invalid token, just continue without auth
     }
 
     next();

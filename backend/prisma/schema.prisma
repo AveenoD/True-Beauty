@@ -254,7 +254,6 @@ model Admin {
   email           String    @unique
   password        String
   role            AdminRole @default(admin)
-  profileImage    String?
   isActive        Boolean   @default(true)
   lastLoginAt     DateTime?
   createdAt       DateTime  @default(now())
@@ -293,12 +292,12 @@ model User {
   email             String    @unique
   password          String?
   phone             String?
-  profileImage      String?
   isActive          Boolean   @default(true)
   isAffiliate       Boolean   @default(false)  // Can be customer AND affiliate
   referralCode      String?   @unique
   referralBy        String?
   role              String    @default("customer")
+  emailPreferences  Boolean   @default(true)  // Email notifications toggle
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   deletedAt         DateTime?
@@ -377,7 +376,6 @@ model AffiliateProfile {
   userId                String   @unique
   referralCode          String   @unique
   referralLink          String?
-  commissionRate        Float    @default(10)
   walletBalance         Float    @default(0)
   totalEarnings         Float    @default(0)
   totalWithdrawals      Float    @default(0)
@@ -387,6 +385,7 @@ model AffiliateProfile {
   accountNumber         String?
   ifscCode              String?
   upiId                 String?
+  address               String?  // Full address for affiliate
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -635,8 +634,7 @@ model Order {
   billingAddressId  String?
   couponId          String?
   affiliateId       String?      // Affiliate who referred this order
-  commissionRate     Float?       // Commission rate at time of order
-  commissionAmount  Float?       // Calculated commission for affiliate
+  commissionAmount  Float?       // Calculated commission for affiliate (from product.commissionRate)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

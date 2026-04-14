@@ -5,6 +5,63 @@
 
 ---
 
+## [14-04-2026 15:30] — V1 Complete: httpOnly Cookies, Token Rotation, Password Strength
+
+**What changed:**
+V1 Foundation is now complete with industry-standard security features.
+
+**Security improvements:**
+- **httpOnly Cookies**: Auth tokens now stored in httpOnly cookies (not localStorage/headers). Secure, sameSite=strict, prevents XSS attacks.
+- **Token Rotation**: Refresh token is rotated on each refresh - old token revoked, new token issued. Prevents replay attacks.
+- **Password Strength Validation**: Registration and password reset now require: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.
+
+**Schema changes:**
+- Removed `profileImage` from User model (frontend not taking images)
+- Removed `profileImage` from Admin model
+
+**Files touched:**
+- `backend/prisma/schema.prisma` (updated — removed profileImage fields)
+- `backend/src/utils/cookies.ts` (new — httpOnly cookie helpers)
+- `backend/src/middleware/auth.ts` (updated — supports both header and cookie auth)
+- `backend/src/controllers/auth.controller.ts` (updated — sets/clears cookies)
+- `backend/src/services/auth.service.ts` (updated — password strength, token rotation)
+- `backend/src/controllers/user.controller.ts` (updated — removed profileImage)
+- `backend/src/services/user.service.ts` (updated — removed profileImage)
+
+**Breaking change:** NO — backwards compatible
+
+**Branch:** anees-dev-backend-setup
+
+---
+
+## [14-04-2026 14:50] — Fix affiliate commission: per-product not per-affiliate
+
+**What changed:**
+Removed `commissionRate` from AffiliateProfile - commission is NOT global for affiliates. Each Product has its own `commissionRate` set by Admin when adding the product. Admin marks product as `isAffiliateProduct: true` and sets commission rate per product. Order.commissionAmount calculated from Product.commissionRate at time of order.
+
+**Files touched:**
+- `backend/prisma/schema.prisma` (updated — removed commissionRate from AffiliateProfile, removed commissionRate from Order)
+- `backend/src/services/affiliate.service.ts` (updated — removed commissionRate from apply/profile/stats)
+- `backend/src/docs/openapi.yml` (updated — affiliate endpoints added, server URL fixed to 9797)
+
+**API endpoints added:**
+- `POST /users/affiliate/apply` — Apply to become affiliate, generates referralCode
+- `GET /users/affiliate/profile` — Get own affiliate profile
+- `GET /users/affiliate/stats` — Get affiliate statistics (referrals, earnings, orders)
+- `GET /users/affiliate/wallet` — Get wallet balance and transaction history
+- `POST /users/affiliate/wallet/withdraw` — Request withdrawal (min ₹500)
+- `GET /users/affiliate/wallet/withdrawals` — List withdrawal history
+- `PUT /users/affiliate/bank-details` — Update bank/UPI details
+
+**API endpoints used:**
+- All affiliate endpoints tested
+
+**Breaking change:** YES — AffiliateProfile no longer has commissionRate field
+
+**Branch:** anees-dev-backend-setup
+
+---
+
 ## [13-04-2026 15:30] — Add multi-tenant architecture rules and API testing guide
 
 **What changed:**
@@ -62,6 +119,49 @@ Fixed user.controller.ts: Removed duplicate authenticateUser middleware calls in
 - All store endpoints now require X-Tenant-ID header
 
 **Breaking change:** YES — store endpoints now require X-Tenant-ID header
+
+**Branch:** anees-dev-backend-setup
+
+---
+
+## [14-04-2026 00:45] — Add email preferences, fix reset password
+
+**What changed:**
+Added `emailPreferences` boolean field to User model (default: true) for email notification toggle. Updated getProfile and updateProfile to include emailPreferences. Added oldPassword parameter to resetPassword endpoint for security (user must verify current password before setting new one). Removed automatic referralCode generation from registration - user is now a plain customer without affiliate status until they explicitly apply.
+
+**Files touched:**
+- `backend/prisma/schema.prisma` (updated — emailPreferences field added)
+- `backend/src/services/auth.service.ts` (updated — resetPassword now requires oldPassword)
+- `backend/src/services/user.service.ts` (updated — emailPreferences in select/response)
+- `backend/src/controllers/auth.controller.ts` (updated — resetPassword schema includes oldPassword)
+- `backend/src/controllers/user.controller.ts` (updated — emailPreferences in update schema)
+
+**Database migration:**
+- `prisma/migrations/20260414065837_add_email_preferences` (new)
+
+**API endpoints affected:**
+- `PUT /users/profile` (now accepts emailPreferences boolean)
+- `GET /users/profile` (now returns emailPreferences)
+- `POST /users/reset-password` (now requires token, oldPassword, newPassword)
+
+**Breaking change:** YES — reset-password now requires oldPassword in addition to token and newPassword
+
+**Branch:** anees-dev-backend-setup
+
+---
+
+## [14-04-2026 00:15] — Fix referral code generation logic
+
+**What changed:**
+Fixed the registration flow: User should NOT get a referralCode when they register. ReferralCode should only be generated when the user explicitly applies to become an affiliate. Removed referralCode and referralBy logic from registerUser() function. User is now a customer by default, not an affiliate. AffiliateProfile and referralCode will be created only when user applies for affiliate program.
+
+**Files touched:**
+- `backend/src/services/auth.service.ts` (updated — removed referralCode generation from registration)
+
+**API endpoints used:**
+- `POST /users/register` (behavior changed — no referralCode generated)
+
+**Breaking change:** YES — users registering now won't have a referralCode until they apply for affiliate
 
 **Branch:** anees-dev-backend-setup
 

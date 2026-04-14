@@ -3,6 +3,7 @@ import usersRoutes from "./users.routes";
 import storeRoutes from "./store.routes";
 import plansRoutes from "./plans.routes";
 import swaggerRoutes from "./swagger.routes";
+import affiliateRoutes from "./affiliate.routes";
 
 const router = Router();
 
@@ -17,5 +18,8 @@ router.use("/store", storeRoutes);
 
 // Plans routes (public)
 router.use("/plans", plansRoutes);
+
+// Affiliate routes (authenticated)
+router.use("/users/affiliate", affiliateRoutes);
 
 export default router;

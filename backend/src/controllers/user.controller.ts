@@ -32,7 +32,7 @@ export const updateProfile = asyncHandler(
     const schema = z.object({
       name: z.string().min(2, "Name must be at least 2 characters").optional(),
       phone: z.string().optional(),
-      profileImage: z.string().url("Invalid URL").optional(),
+      emailPreferences: z.boolean().optional(),
     });
 
     const data = schema.parse(req.body);

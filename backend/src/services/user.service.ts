@@ -8,10 +8,10 @@ export async function getUserProfile(userId: string) {
       name: true,
       email: true,
       phone: true,
-      profileImage: true,
       referralCode: true,
       role: true,
       isActive: true,
+      emailPreferences: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -26,7 +26,7 @@ export async function getUserProfile(userId: string) {
 
 export async function updateUserProfile(
   userId: string,
-  data: { name?: string; phone?: string; profileImage?: string }
+  data: { name?: string; phone?: string; emailPreferences?: boolean }
 ) {
   const user = await prisma.user.update({
     where: { id: userId },
@@ -36,10 +36,10 @@ export async function updateUserProfile(
       name: true,
       email: true,
       phone: true,
-      profileImage: true,
       referralCode: true,
       role: true,
       isActive: true,
+      emailPreferences: true,
       createdAt: true,
       updatedAt: true,
     },
