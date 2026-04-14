@@ -6011,12 +6011,7 @@ components:
           type: string
           description: \Maps to ERD column withdrawal_request.processed_by\
 
-# ============================================================
-# IMPLEMENTED — Phase 0 / Day 1 (13-04-2026)
-# ============================================================
-
-paths:
-  # --- AUTH ---
+  # --- AUTH (Phase 0/1/2 IMPLEMENTED) ---
   /auth/register:
     post:
       tags:
@@ -6955,12 +6950,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
 
-# ============================================================
-# IMPLEMENTED SCHEMAS — Phase 0 / Day 1 (13-04-2026)
-# ============================================================
-
-components:
-  schemas:
     ApiResponse:
       type: object
       x-implemented: true

@@ -5,6 +5,60 @@
 
 ---
 
+## [14-04-2026 16:00] — V2 Complete: Email Verification & Notifications
+
+**What changed:**
+V2 features implemented: Email verification with disposable email blocking, In-app notifications system.
+
+**Schema changes:**
+- Added `isEmailVerified`, `emailVerificationToken`, `emailVerificationExpiry` to User model
+- Added `isAffiliate` and `emailPreferences` fields back to User model
+- Added `minWithdrawalAmount` back to AffiliateProfile model
+- Fixed all Prisma relations (AuthToken, Address, Coupon, Product relations)
+
+**Email verification:**
+- Disposable email blocking (20+ domains blocked)
+- Only reputable domains allowed (gmail, yahoo, outlook, etc.) OR valid domain structure
+- 24-hour verification token expiry
+- Resend verification option
+- Verification link: GET/POST `/users/verify-email?token=xxx`
+- Resend: POST `/users/resend-verification`
+
+**Notification system:**
+- Added notification endpoints to user controller/service
+- GET `/users/notifications` - List notifications with pagination
+- GET `/users/notifications/unread-count` - Get unread count
+- PUT `/users/notifications/:id/read` - Mark single as read
+- PUT `/users/notifications/read-all` - Mark all as read
+- Uses existing UserNotification model (no new table needed)
+
+**Files touched:**
+- `backend/prisma/schema.prisma` (updated — email verification fields, relation fixes)
+- `backend/src/services/auth.service.ts` (updated — email validation, verify, resend)
+- `backend/src/services/email.service.ts` (new — nodemailer email sending with beautiful HTML templates)
+- `backend/src/controllers/auth.controller.ts` (updated — verify-email, resend endpoints)
+- `backend/src/services/user.service.ts` (updated — notification CRUD functions)
+- `backend/src/controllers/user.controller.ts` (updated — notification endpoints)
+- `backend/src/routes/users.routes.ts` (updated — new routes)
+- `backend/src/docs/openapi.yml` (fixed — merged duplicate paths sections into single valid spec)
+- `backend/src/routes/swagger.routes.ts` (fixed — moved /json route before swaggerUi.serve middleware)
+- `backend/package.json` (added — @prisma/adapter-pg and pg for Prisma 7 PostgreSQL adapter)
+
+**New endpoints:**
+- `GET /users/verify-email` — Verify email with token
+- `POST /users/verify-email` — Same (token in body)
+- `POST /users/resend-verification` — Resend verification email
+- `GET /users/notifications` — List user notifications
+- `GET /users/notifications/unread-count` — Unread notification count
+- `PUT /users/notifications/:id/read` — Mark as read
+- `PUT /users/notifications/read-all` — Mark all as read
+
+**Breaking change:** NO — backwards compatible
+
+**Branch:** anees-dev-backend-setup
+
+---
+
 ## [13-04-2026 12:30] — Initial Prisma schema generation
 
 **What changed:**

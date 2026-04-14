@@ -8,10 +8,11 @@ export async function getUserProfile(userId: string) {
       name: true,
       email: true,
       phone: true,
-      profileImage: true,
       referralCode: true,
       role: true,
       isActive: true,
+      isEmailVerified: true,
+      emailPreferences: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -26,7 +27,7 @@ export async function getUserProfile(userId: string) {
 
 export async function updateUserProfile(
   userId: string,
-  data: { name?: string; phone?: string; profileImage?: string }
+  data: { name?: string; phone?: string; emailPreferences?: boolean }
 ) {
   const user = await prisma.user.update({
     where: { id: userId },
@@ -36,10 +37,11 @@ export async function updateUserProfile(
       name: true,
       email: true,
       phone: true,
-      profileImage: true,
       referralCode: true,
       role: true,
       isActive: true,
+      isEmailVerified: true,
+      emailPreferences: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -47,6 +49,10 @@ export async function updateUserProfile(
 
   return user;
 }
+
+// ============================================================
+// ADDRESSES
+// ============================================================
 
 export async function getUserAddresses(userId: string) {
   const addresses = await prisma.address.findMany({
@@ -154,4 +160,118 @@ export async function deleteUserAddress(userId: string, addressId: string) {
   });
 
   return { deleted: true };
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+export async function getUserNotifications(
+  userId: string,
+  options: { page?: number; limit?: number; unreadOnly?: boolean } = {}
+) {
+  const page = Math.max(1, options.page || 1);
+  const limit = Math.min(50, Math.max(1, options.limit || 20));
+  const skip = (page - 1) * limit;
+
+  const where: Record<string, unknown> = { userId };
+  if (options.unreadOnly) {
+    where.isRead = false;
+  }
+
+  const [notifications, total] = await Promise.all([
+    prisma.userNotification.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        title: true,
+        message: true,
+        imageUrl: true,
+        type: true,
+        referenceId: true,
+        isRead: true,
+        readAt: true,
+        createdAt: true,
+      },
+    }),
+    prisma.userNotification.count({ where }),
+  ]);
+
+  return {
+    notifications,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+export async function markNotificationRead(userId: string, notificationId: string) {
+  const notification = await prisma.userNotification.findFirst({
+    where: { id: notificationId, userId },
+  });
+
+  if (!notification) {
+    throw new Error("Notification not found");
+  }
+
+  await prisma.userNotification.update({
+    where: { id: notificationId },
+    data: {
+      isRead: true,
+      readAt: new Date(),
+    },
+  });
+
+  return { success: true };
+}
+
+export async function markAllNotificationsRead(userId: string) {
+  await prisma.userNotification.updateMany({
+    where: { userId, isRead: false },
+    data: {
+      isRead: true,
+      readAt: new Date(),
+    },
+  });
+
+  return { success: true };
+}
+
+export async function getUnreadNotificationCount(userId: string) {
+  return prisma.userNotification.count({
+    where: { userId, isRead: false },
+  });
+}
+
+// ============================================================
+// CREATE NOTIFICATION (used by other services)
+// ============================================================
+
+export async function createNotification(
+  userId: string,
+  data: {
+    title: string;
+    message: string;
+    type?: string;
+    imageUrl?: string;
+    referenceId?: string;
+  }
+) {
+  return prisma.userNotification.create({
+    data: {
+      userId,
+      title: data.title,
+      message: data.message,
+      type: data.type,
+      imageUrl: data.imageUrl,
+      referenceId: data.referenceId,
+      isRead: false,
+    },
+  });
 }

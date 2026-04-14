@@ -2,47 +2,40 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/ApiResponse";
-import { authenticateUser } from "../middleware/auth";
 import * as userService from "../services/user.service";
+import { AuthenticatedRequest } from "../types";
 
-const userIdFromRequest = (req: Request): string => {
-  const authReq = req as any;
-  return authReq.userId as string;
-};
+// Note: authenticateUser middleware is applied at route level in users.routes.ts
+// Do NOT call it again inside controllers
 
 export const getProfile = asyncHandler(
   async (req: Request, res: Response) => {
-    await new Promise<void>((resolve, reject) => {
-      authenticateUser(req, res, (err?: any) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const { userId } = req as AuthenticatedRequest;
 
-    const userId = userIdFromRequest(req);
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
+
     const user = await userService.getUserProfile(userId);
-
     return ApiResponse.success(res, user, "User profile retrieved");
   }
 );
 
 export const updateProfile = asyncHandler(
   async (req: Request, res: Response) => {
-    await new Promise<void>((resolve, reject) => {
-      authenticateUser(req, res, (err?: any) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const { userId } = req as AuthenticatedRequest;
+
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
 
     const schema = z.object({
       name: z.string().min(2, "Name must be at least 2 characters").optional(),
       phone: z.string().optional(),
-      profileImage: z.string().url("Invalid URL").optional(),
+      emailPreferences: z.boolean().optional(),
     });
 
     const data = schema.parse(req.body);
-    const userId = userIdFromRequest(req);
     const user = await userService.updateUserProfile(userId, data);
 
     return ApiResponse.success(res, user, "Profile updated");
@@ -51,28 +44,24 @@ export const updateProfile = asyncHandler(
 
 export const getAddresses = asyncHandler(
   async (req: Request, res: Response) => {
-    await new Promise<void>((resolve, reject) => {
-      authenticateUser(req, res, (err?: any) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const { userId } = req as AuthenticatedRequest;
 
-    const userId = userIdFromRequest(req);
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
+
     const addresses = await userService.getUserAddresses(userId);
-
     return ApiResponse.success(res, addresses, "Addresses retrieved");
   }
 );
 
 export const createAddress = asyncHandler(
   async (req: Request, res: Response) => {
-    await new Promise<void>((resolve, reject) => {
-      authenticateUser(req, res, (err?: any) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const { userId } = req as AuthenticatedRequest;
+
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
 
     const schema = z.object({
       name: z.string().min(2, "Name must be at least 2 characters"),
@@ -88,7 +77,6 @@ export const createAddress = asyncHandler(
     });
 
     const data = schema.parse(req.body);
-    const userId = userIdFromRequest(req);
     const address = await userService.createUserAddress(userId, data);
 
     return ApiResponse.created(res, address, "Address created");
@@ -97,14 +85,13 @@ export const createAddress = asyncHandler(
 
 export const updateAddress = asyncHandler(
   async (req: Request, res: Response) => {
-    await new Promise<void>((resolve, reject) => {
-      authenticateUser(req, res, (err?: any) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const { userId } = req as AuthenticatedRequest;
 
-    const { id } = req.params;
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
+
+    const id = String(req.params.id ?? "");
 
     const schema = z.object({
       name: z.string().min(2).optional(),
@@ -120,7 +107,6 @@ export const updateAddress = asyncHandler(
     });
 
     const data = schema.parse(req.body);
-    const userId = userIdFromRequest(req);
     const address = await userService.updateUserAddress(userId, id, data);
 
     return ApiResponse.success(res, address, "Address updated");
@@ -129,17 +115,88 @@ export const updateAddress = asyncHandler(
 
 export const deleteAddress = asyncHandler(
   async (req: Request, res: Response) => {
-    await new Promise<void>((resolve, reject) => {
-      authenticateUser(req, res, (err?: any) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const { userId } = req as AuthenticatedRequest;
 
-    const { id } = req.params;
-    const userId = userIdFromRequest(req);
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
+
+    const id = String(req.params.id ?? "");
+    if (!id) {
+      return ApiResponse.badRequest(res, "Address ID is required");
+    }
     await userService.deleteUserAddress(userId, id);
 
     return ApiResponse.success(res, null, "Address deleted");
+  }
+);
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+export const getNotifications = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { userId } = req as AuthenticatedRequest;
+
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const unreadOnly = req.query.unreadOnly === "true";
+
+    const notifications = await userService.getUserNotifications(userId, {
+      page,
+      limit,
+      unreadOnly,
+    });
+
+    return ApiResponse.success(res, notifications, "Notifications retrieved");
+  }
+);
+
+export const markNotificationRead = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { userId } = req as AuthenticatedRequest;
+
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
+
+    const id = String(req.params.id ?? "");
+    if (!id) {
+      return ApiResponse.badRequest(res, "Notification ID is required");
+    }
+
+    await userService.markNotificationRead(userId, id);
+    return ApiResponse.success(res, null, "Notification marked as read");
+  }
+);
+
+export const markAllNotificationsRead = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { userId } = req as AuthenticatedRequest;
+
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
+
+    await userService.markAllNotificationsRead(userId);
+    return ApiResponse.success(res, null, "All notifications marked as read");
+  }
+);
+
+export const getUnreadCount = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { userId } = req as AuthenticatedRequest;
+
+    if (!userId) {
+      return ApiResponse.unauthorized(res, "Authentication required");
+    }
+
+    const count = await userService.getUnreadNotificationCount(userId);
+    return ApiResponse.success(res, { unreadCount: count }, "Unread count retrieved");
   }
 );

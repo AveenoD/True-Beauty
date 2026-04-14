@@ -20,7 +20,7 @@ export const register = asyncHandler(
     return ApiResponse.created(
       res,
       result,
-      "Registration successful"
+      "Registration successful. Please verify your email."
     );
   }
 );
@@ -64,6 +64,32 @@ export const refreshToken = asyncHandler(
     const result = await authService.refreshUserToken(refreshToken);
 
     return ApiResponse.success(res, result, "Token refreshed");
+  }
+);
+
+export const verifyEmail = asyncHandler(
+  async (req: Request, res: Response) => {
+    // Token can be in query param or body
+    const token = (req.query.token as string) || req.body?.token;
+
+    if (!token) {
+      return ApiResponse.badRequest(res, "Verification token is required");
+    }
+
+    const result = await authService.verifyEmail(token);
+    return ApiResponse.success(res, result, "Email verified successfully");
+  }
+);
+
+export const resendVerification = asyncHandler(
+  async (req: Request, res: Response) => {
+    const schema = z.object({
+      email: z.string().email("Invalid email address"),
+    });
+
+    const { email } = schema.parse(req.body);
+    const result = await authService.resendVerificationEmail(email);
+    return ApiResponse.success(res, result, "Verification email sent if account exists");
   }
 );
 

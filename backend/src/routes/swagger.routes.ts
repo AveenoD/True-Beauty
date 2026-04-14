@@ -4,6 +4,12 @@ import { swaggerSpec } from "../config/swagger";
 
 const router = Router();
 
+// JSON spec MUST be before swaggerUi.serve (otherwise it gets caught by the catch-all)
+router.get("/json", (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
 // Swagger UI
 router.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: `
@@ -21,11 +27,5 @@ router.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     showCommonExtensions: true,
   },
 }));
-
-// JSON spec (optional — useful for code generation)
-router.get("/json", (_req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
-});
 
 export default router;
