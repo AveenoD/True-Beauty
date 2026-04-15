@@ -6,7 +6,7 @@ info:
     OpenAPI contract derived from True_Beauty_ERD_final.drawio.xml and the project endpoint inventory.
     Each operation includes vendor extensions for phase/day priority and ERD table mapping.
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:9797
     description: Local development
 tags:
   - name: Admin
@@ -650,30 +650,19 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/notification
-  /admin/onboarding/addons:
-    put:
+  /admin/onboarding/progress:
+    get:
       tags:
         - Admin Onboarding
-      summary: Select addons
+      summary: Get onboarding progress
       description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: admin_onboarding_progress
-        Shared IDs:
-          - admin_onboarding_progress: id, user_id, selected_plan_id
-      operationId: op_32_put
-      x-phase: Phase 2
-      x-day: Day 3
-      x-erd-tables:
-        - admin_onboarding_progress
-      x-priority-order: 32
+        Returns current onboarding progress for the authenticated admin.
+        Includes admin info, step completed, business details, selected plan/addons.
+      operationId: op_onboarding_progress_get
+      x-phase: Phase 3
+      x-priority-order: 100
       security:
         - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: #/components/schemas/admin_onboarding_progress
       responses:
         '200':
           description: OK
@@ -685,20 +674,13 @@ paths:
     put:
       tags:
         - Admin Onboarding
-      summary: Update business details
+      summary: Save business details
       description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: Admin, admin_onboarding_progress
-        Shared IDs:
-          - Admin: id, user_id, current_subscription_id, selected_theme_id
-          - admin_onboarding_progress: id, user_id, selected_plan_id
-      operationId: op_31_put
-      x-phase: Phase 2
-      x-day: Day 3
-      x-erd-tables:
-        - Admin
-        - admin_onboarding_progress
-      x-priority-order: 31
+        Step 1: Save business details (companyName, website, businessType, teamSize, preferredStartDate, storeName, etc.)
+        Advances onboarding to step 2.
+      operationId: op_onboarding_business_details_put
+      x-phase: Phase 3
+      x-priority-order: 101
       security:
         - bearerAuth: []
       requestBody:
@@ -706,98 +688,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Admin
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: #/components/schemas/ApiEnvelope
-  /admin/onboarding/documents:
-    post:
-      tags:
-        - Admin Onboarding
-      summary: Upload onboarding documents
-      description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: admin_kyc_document
-        Shared IDs:
-          - admin_kyc_document: id, admin_id
-      operationId: op_33_post
-      x-phase: Phase 2
-      x-day: Day 3
-      x-erd-tables:
-        - admin_kyc_document
-      x-priority-order: 33
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: #/components/schemas/admin_kyc_document
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: #/components/schemas/admin_kyc_document
-  /admin/onboarding/payment:
-    post:
-      tags:
-        - Admin Onboarding
-      summary: Create subscription payment
-      description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: admin_subscription, platform_payment, Admin
-        Shared IDs:
-          - admin_subscription: id, admin_id, plan_id, payment_id
-          - platform_payment: id, user_id, subscription_plan_id, theme_id, admin_theme_id, addon_id, transaction_id
-          - Admin: id, user_id, current_subscription_id, selected_theme_id
-      operationId: op_34_post
-      x-phase: Phase 2
-      x-day: Day 3
-      x-erd-tables:
-        - admin_subscription
-        - platform_payment
-        - Admin
-      x-priority-order: 34
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: #/components/schemas/admin_subscription
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: #/components/schemas/ApiEnvelope
-  /admin/onboarding/progress:
-    get:
-      tags:
-        - Admin Onboarding
-      summary: Get onboarding progress
-      description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: admin_onboarding_progress
-        Shared IDs:
-          - admin_onboarding_progress: id, user_id, selected_plan_id
-      operationId: op_35_get
-      x-phase: Phase 2
-      x-day: Day 3
-      x-erd-tables:
-        - admin_onboarding_progress
-      x-priority-order: 35
-      security:
-        - bearerAuth: []
+              $ref: '#/components/schemas/OnboardingBusinessDetails'
       responses:
         '200':
           description: OK
@@ -805,22 +696,17 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/admin_onboarding_progress
-  /admin/onboarding/start:
+  /admin/onboarding/select-plan:
     post:
       tags:
         - Admin Onboarding
-      summary: Start admin onboarding
+      summary: Select plan and addons
       description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: admin_onboarding_progress
-        Shared IDs:
-          - admin_onboarding_progress: id, user_id, selected_plan_id
-      operationId: op_30_post
-      x-phase: Phase 2
-      x-day: Day 3
-      x-erd-tables:
-        - admin_onboarding_progress
-      x-priority-order: 30
+        Step 2: Select subscription plan and optional addons.
+        Validates plan exists and is active. Advances onboarding to step 3.
+      operationId: op_onboarding_select_plan_post
+      x-phase: Phase 3
+      x-priority-order: 102
       security:
         - bearerAuth: []
       requestBody:
@@ -828,7 +714,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/admin_onboarding_progress
+              $ref: '#/components/schemas/OnboardingSelectPlan'
       responses:
         '200':
           description: OK
@@ -836,6 +722,90 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/admin_onboarding_progress
+  /admin/onboarding/kyc-documents:
+    post:
+      tags:
+        - Admin Onboarding
+      summary: Upload KYC documents
+      description: |
+        Step 3: Upload KYC documents (Aadhar, PAN, etc.)
+        Creates AdminKycDocument records. Advances onboarding to step 4.
+      operationId: op_onboarding_kyc_documents_post
+      x-phase: Phase 3
+      x-priority-order: 103
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingKycDocuments'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kycDocuments:
+                    type: array
+                    items:
+                      $ref: #/components/schemas/admin_kyc_document
+                  onboardingProgress:
+                    $ref: #/components/schemas/admin_onboarding_progress
+  /admin/onboarding/bank-details:
+    put:
+      tags:
+        - Admin Onboarding
+      summary: Save bank details
+      description: |
+        Step 4: Save bank/UPI details for withdrawals. Advances onboarding to step 5.
+      operationId: op_onboarding_bank_details_put
+      x-phase: Phase 3
+      x-priority-order: 104
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingBankDetails'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: #/components/schemas/admin_onboarding_progress
+  /admin/onboarding/complete:
+    post:
+      tags:
+        - Admin Onboarding
+      summary: Complete onboarding
+      description: |
+        Step 5: Complete onboarding. Creates AdminSubscription record with selected plan.
+        Calculates expiry based on plan duration (monthly/quarterly/yearly).
+        Marks onboarding as complete (step 6).
+      operationId: op_onboarding_complete_post
+      x-phase: Phase 3
+      x-priority-order: 105
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription:
+                    $ref: #/components/schemas/admin_subscription
+                  onboardingProgress:
+                    $ref: #/components/schemas/admin_onboarding_progress
   /admin/orders:
     get:
       tags:
@@ -1820,7 +1790,7 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/Admin_Theme
-  /auth/forgot-password:
+  /users/forgot-password:
     post:
       tags:
         - Auth
@@ -1849,7 +1819,7 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/User
-  /auth/login:
+  /users/login:
     post:
       tags:
         - Auth
@@ -1878,7 +1848,7 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/User
-  /auth/logout:
+  /users/logout:
     post:
       tags:
         - Auth
@@ -1909,7 +1879,7 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/User
-  /auth/refresh-token:
+  /users/refresh-token:
     post:
       tags:
         - Auth
@@ -1938,7 +1908,7 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/User
-  /auth/register:
+  /users/register:
     post:
       tags:
         - Auth
@@ -1967,7 +1937,7 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/User
-  /auth/reset-password:
+  /users/reset-password:
     post:
       tags:
         - Auth
@@ -2081,6 +2051,25 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/subscription_plan
+  /plans/addons:
+    get:
+      tags:
+        - Plans
+      summary: List all addons (public)
+      description: |
+        Returns all available plan addons that admins can select during onboarding.
+      operationId: op_plans_addons_get
+      x-phase: Phase 3
+      x-priority-order: 99
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: #/components/schemas/plan_addon
   /plans/{id}/addons:
     get:
       tags:
@@ -4176,37 +4165,182 @@ components:
           description: \Maps to ERD column admin_kyc_document.uploaded_at\
     admin_onboarding_progress:
       type: object
-      description: \ERD-derived schema for table admin_onboarding_progress\
+      description: 'ERD-derived schema for table admin_onboarding_progress'
       x-erd-columns:
         - id
-        - user_id
-        - current_step
-        - selected_plan_id
-        - selected_addon_ids
-        - created_at
-        - updated_at
+        - adminId
+        - companyName
+        - website
+        - businessType
+        - teamSize
+        - preferredStartDate
+        - storeName
+        - storeDescription
+        - businessCategory
+        - selectedPlanId
+        - selectedAddonIds
+        - stepCompleted
+        - storeLogoUploaded
+        - storeBannerUploaded
+        - contactInfoUpdated
+        - bankDetailsUpdated
+        - kycUploaded
+        - subscriptionActivated
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: string
-          description: \Maps to ERD column admin_onboarding_progress.id\
-        user_id:
+          format: uuid
+        adminId:
           type: string
-          description: \Maps to ERD column admin_onboarding_progress.user_id\
-        current_step:
+        companyName:
           type: string
-          description: \Maps to ERD column admin_onboarding_progress.current_step\
-        selected_plan_id:
+          nullable: true
+        website:
           type: string
-          description: \Maps to ERD column admin_onboarding_progress.selected_plan_id\
-        selected_addon_ids:
+          nullable: true
+        businessType:
           type: string
-          description: \Maps to ERD column admin_onboarding_progress.selected_addon_ids\
-        created_at:
+          enum: [ecommerce, retail_store, brand_manufacturer, other]
+          nullable: true
+        teamSize:
           type: string
-          description: \Maps to ERD column admin_onboarding_progress.created_at\
-        updated_at:
+          enum: [one_to_five, six_to_twenty, twentyone_to_hundred, hundred_plus]
+          nullable: true
+        preferredStartDate:
           type: string
-          description: \Maps to ERD column admin_onboarding_progress.updated_at\
+          format: date-time
+          nullable: true
+        storeName:
+          type: string
+          nullable: true
+        storeDescription:
+          type: string
+          nullable: true
+        businessCategory:
+          type: string
+          nullable: true
+        selectedPlanId:
+          type: string
+          nullable: true
+        selectedAddonIds:
+          type: array
+          items:
+            type: string
+          nullable: true
+        stepCompleted:
+          type: integer
+        storeLogoUploaded:
+          type: boolean
+        storeBannerUploaded:
+          type: boolean
+        contactInfoUpdated:
+          type: boolean
+        bankDetailsUpdated:
+          type: boolean
+        kycUploaded:
+          type: boolean
+        subscriptionActivated:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OnboardingBusinessDetails:
+      type: object
+      required: []
+      properties:
+        companyName:
+          type: string
+          nullable: true
+          example: "True Beauty Studio"
+        website:
+          type: string
+          nullable: true
+          example: "https://truebeauty.com"
+        businessType:
+          type: string
+          enum: [ecommerce, retail_store, brand_manufacturer, other]
+          nullable: true
+          example: "ecommerce"
+        teamSize:
+          type: string
+          enum: [one_to_five, six_to_twenty, twentyone_to_hundred, hundred_plus]
+          nullable: true
+          example: "one_to_five"
+        preferredStartDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-05-01T00:00:00.000Z"
+        storeName:
+          type: string
+          nullable: true
+          example: "True Beauty"
+        storeDescription:
+          type: string
+          nullable: true
+          example: "Beauty and skincare products"
+        businessCategory:
+          type: string
+          nullable: true
+          example: "Skincare"
+    OnboardingSelectPlan:
+      type: object
+      required: [planId]
+      properties:
+        planId:
+          type: string
+          format: uuid
+          description: "Subscription plan ID"
+          example: "uuid-of-plan"
+        addonIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: "Selected addon IDs"
+          example: ["uuid-of-addon-1"]
+    OnboardingKycDocuments:
+      type: object
+      required: [documents]
+      properties:
+        documents:
+          type: array
+          items:
+            type: object
+            required: [type, fileUrl]
+            properties:
+              type:
+                type: string
+                example: "aadhar"
+              fileUrl:
+                type: string
+                format: uri
+                example: "https://storage.com/kyc/aadhar.pdf"
+    OnboardingBankDetails:
+      type: object
+      required: []
+      properties:
+        bankName:
+          type: string
+          nullable: true
+          example: "HDFC Bank"
+        accountNumber:
+          type: string
+          nullable: true
+          example: "1234567890"
+        ifscCode:
+          type: string
+          nullable: true
+          example: "HDFC0001234"
+        upiId:
+          type: string
+          nullable: true
+          example: "truebeauty@upi"
     admin_subscription:
       type: object
       description: \ERD-derived schema for table admin_subscription\
@@ -6012,7 +6146,7 @@ components:
           description: \Maps to ERD column withdrawal_request.processed_by\
 
   # --- AUTH (Phase 0/1/2 IMPLEMENTED) ---
-  /auth/register:
+  /users/register:
     post:
       tags:
         - Auth
@@ -6078,7 +6212,7 @@ components:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
 
-  /auth/login:
+  /users/login:
     post:
       tags:
         - Auth
@@ -6128,7 +6262,7 @@ components:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
 
-  /auth/logout:
+  /users/logout:
     post:
       tags:
         - Auth
@@ -6164,7 +6298,7 @@ components:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
 
-  /auth/refresh-token:
+  /users/refresh-token:
     post:
       tags:
         - Auth
@@ -6213,7 +6347,7 @@ components:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
 
-  /auth/forgot-password:
+  /users/forgot-password:
     post:
       tags:
         - Auth
@@ -6259,7 +6393,7 @@ components:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
 
-  /auth/reset-password:
+  /users/reset-password:
     post:
       tags:
         - Auth
@@ -6950,6 +7084,1862 @@ components:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
 
+  # ============================================================
+  # V3 — Catalog & Basic Ecommerce (15-04-2026)
+  # ============================================================
+
+  # --- ADMIN AUTH ---
+  /admin/auth/register:
+    post:
+      tags:
+        - Admin Auth
+      summary: Register admin account
+      description: |
+        Priority: V3
+        ERD tables: Admin, AuthToken
+        Implementation: Creates admin, generates JWT tokens, stores refresh token in DB.
+      operationId: op_300_post
+      x-phase: V3
+      x-erd-tables:
+        - Admin
+        - AuthToken
+      x-priority-order: 300
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/admin.controller.ts
+      x-service: src/services/admin.service.ts
+      x-route-file: src/routes/admin.routes.ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRegisterRequest'
+            example:
+              name: "Store Admin"
+              email: "admin@store.com"
+              phone: "+919876543210"
+              password: "SecurePass@123"
+              role: "admin"
+      responses:
+        '201':
+          description: Admin registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAuthResponse'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/auth/login:
+    post:
+      tags:
+        - Admin Auth
+      summary: Admin login
+      description: |
+        Priority: V3
+        ERD tables: Admin, AuthToken
+      operationId: op_301_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/admin.controller.ts
+      x-service: src/services/admin.service.ts
+      x-route-file: src/routes/admin.routes.ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "admin@store.com"
+              password: "SecurePass@123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/auth/logout:
+    post:
+      tags:
+        - Admin Auth
+      summary: Admin logout
+      description: |
+        Priority: V3
+        Revokes refresh token(s) for admin.
+      operationId: op_302_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/admin.controller.ts
+      x-service: src/services/admin.service.ts
+      x-route-file: src/routes/admin.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/auth/refresh-token:
+    post:
+      tags:
+        - Admin Auth
+      summary: Refresh admin access token
+      description: |
+        Priority: V3
+        Token rotation — old token revoked, new pair issued.
+      operationId: op_303_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/admin.controller.ts
+      x-service: src/services/admin.service.ts
+      x-route-file: src/routes/admin.routes.ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+
+  # --- ADMIN PRODUCTS ---
+  /admin/products:
+    get:
+      tags:
+        - Products
+      summary: List admin products
+      description: |
+        Priority: V3
+        ERD tables: Product, Inventory
+        Multi-tenant: filtered by adminId from auth token.
+      operationId: op_310_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/product.controller.ts
+      x-service: src/services/product.service.ts
+      x-route-file: src/routes/product.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name, price, stock, createdAt]
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      tags:
+        - Products
+      summary: Create product
+      description: |
+        Priority: V3
+        ERD tables: Product, Inventory, InventoryLog
+        Auto-creates Inventory record and initial stock log.
+      operationId: op_311_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/product.controller.ts
+      x-service: src/services/product.service.ts
+      x-route-file: src/routes/product.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+            example:
+              name: "Face Cream"
+              category: "Skincare"
+              price: 499
+              discountPrice: 399
+              stock: 50
+              description: "Hydrating face cream"
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /admin/products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get admin product
+      operationId: op_312_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/product.controller.ts
+      x-service: src/services/product.service.ts
+      x-route-file: src/routes/product.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    put:
+      tags:
+        - Products
+      summary: Update product
+      description: |
+        Priority: V3
+        Updates stock if provided. Creates InventoryLog entry on stock change.
+      operationId: op_313_put
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/product.controller.ts
+      x-service: src/services/product.service.ts
+      x-route-file: src/routes/product.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    delete:
+      tags:
+        - Products
+      summary: Delete product (soft delete)
+      operationId: op_314_delete
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/product.controller.ts
+      x-service: src/services/product.service.ts
+      x-route-file: src/routes/product.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- USER CART ---
+  /users/cart:
+    get:
+      tags:
+        - Cart
+      summary: Get user cart
+      description: |
+        Priority: V3
+        Returns cart items with product details and subtotal.
+      operationId: op_320_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/cart.controller.ts
+      x-service: src/services/cart.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CartItem'
+                      subtotal:
+                        type: number
+                      itemCount:
+                        type: integer
+    delete:
+      tags:
+        - Cart
+      summary: Clear cart
+      operationId: op_321_delete
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/cart.controller.ts
+      x-service: src/services/cart.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Add item to cart
+      description: |
+        Priority: V3
+        Upserts if item already exists in cart.
+      operationId: op_322_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/cart.controller.ts
+      x-service: src/services/cart.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId, quantity]
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        '201':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/cart/items/{id}:
+    put:
+      tags:
+        - Cart
+      summary: Update cart item quantity
+      description: Quantity 0 removes the item.
+      operationId: op_323_put
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/cart.controller.ts
+      x-service: src/services/cart.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: Cart updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      tags:
+        - Cart
+      summary: Remove item from cart
+      operationId: op_324_delete
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/cart.controller.ts
+      x-service: src/services/cart.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- USER WISHLIST ---
+  /users/wishlist:
+    get:
+      tags:
+        - Wishlist
+      summary: Get user wishlist
+      operationId: op_330_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/cart.controller.ts
+      x-service: src/services/cart.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Wishlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WishlistItem'
+    post:
+      tags:
+        - Wishlist
+      summary: Add to wishlist
+      operationId: op_331_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/cart.controller.ts
+      x-service: src/services/cart.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId]
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Added to wishlist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/wishlist/{productId}:
+    delete:
+      tags:
+        - Wishlist
+      summary: Remove from wishlist
+      operationId: op_332_delete
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/cart.controller.ts
+      x-service: src/services/cart.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- USER ORDERS ---
+  /users/orders:
+    post:
+      tags:
+        - Orders
+      summary: Place order from cart
+      description: |
+        Priority: V3
+        ERD tables: Order, OrderItem, CartItem, Inventory, InventoryLog, Payment, Coupon
+        Validates stock, applies coupon, calculates totals, deducts inventory, clears cart.
+      operationId: op_340_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/order.controller.ts
+      x-service: src/services/order.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrderRequest'
+      responses:
+        '201':
+          description: Order placed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPlacedResponse'
+        '400':
+          description: Cart empty or stock unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    get:
+      tags:
+        - Orders
+      summary: List user orders
+      operationId: op_341_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/order.controller.ts
+      x-service: src/services/order.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Orders list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /users/orders/{id}:
+    get:
+      tags:
+        - Orders
+      summary: Get order details
+      operationId: op_342_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/order.controller.ts
+      x-service: src/services/order.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /users/orders/{id}/cancel:
+    post:
+      tags:
+        - Orders
+      summary: Cancel order
+      description: Only pending/confirmed orders can be cancelled. Restores inventory.
+      operationId: op_343_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/order.controller.ts
+      x-service: src/services/order.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- ADMIN ORDERS ---
+  /admin/orders:
+    get:
+      tags:
+        - Orders
+      summary: List all orders (admin)
+      description: |
+        Priority: V3
+        Admin sees orders containing their products.
+      operationId: op_350_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/order.controller.ts
+      x-service: src/services/order.service.ts
+      x-route-file: src/routes/order.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Orders list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+    post:
+      tags:
+        - Orders
+      summary: Cancel order (admin)
+      operationId: op_351_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/order.controller.ts
+      x-service: src/services/order.service.ts
+      x-route-file: src/routes/order.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/orders/{id}/status:
+    put:
+      tags:
+        - Orders
+      summary: Update order status
+      description: |
+        Priority: V3
+        Valid statuses: pending, confirmed, preparing, shipped, out_for_delivery, delivered, cancelled.
+      operationId: op_352_put
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/order.controller.ts
+      x-service: src/services/order.service.ts
+      x-route-file: src/routes/order.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  # --- ADMIN COUPONS ---
+  /admin/coupons:
+    get:
+      tags:
+        - Coupons
+      summary: List admin coupons
+      operationId: op_360_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/coupon.controller.ts
+      x-service: src/services/coupon.service.ts
+      x-route-file: src/routes/coupon.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: isActive
+          in: query
+          schema:
+            type: string
+            enum: [true, false]
+      responses:
+        '200':
+          description: Coupon list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Coupon'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+    post:
+      tags:
+        - Coupons
+      summary: Create coupon
+      description: |
+        Priority: V3
+        ERD tables: Coupon, CouponApplicableProduct, CouponApplicableCategory
+      operationId: op_361_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/coupon.controller.ts
+      x-service: src/services/coupon.service.ts
+      x-route-file: src/routes/coupon.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCouponRequest'
+      responses:
+        '201':
+          description: Coupon created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coupon'
+        '409':
+          description: Coupon code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/coupons/{id}:
+    get:
+      tags:
+        - Coupons
+      summary: Get coupon details
+      operationId: op_362_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/coupon.controller.ts
+      x-service: src/services/coupon.service.ts
+      x-route-file: src/routes/coupon.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Coupon details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coupon'
+    put:
+      tags:
+        - Coupons
+      summary: Update coupon
+      operationId: op_363_put
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/coupon.controller.ts
+      x-service: src/services/coupon.service.ts
+      x-route-file: src/routes/coupon.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCouponRequest'
+      responses:
+        '200':
+          description: Coupon updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coupon'
+    delete:
+      tags:
+        - Coupons
+      summary: Delete coupon (soft delete)
+      operationId: op_364_delete
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/coupon.controller.ts
+      x-service: src/services/coupon.service.ts
+      x-route-file: src/routes/coupon.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Coupon deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/coupons/{id}/toggle-active:
+    post:
+      tags:
+        - Coupons
+      summary: Toggle coupon active/inactive
+      operationId: op_365_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/coupon.controller.ts
+      x-service: src/services/coupon.service.ts
+      x-route-file: src/routes/coupon.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Coupon toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- USER COUPON VALIDATION ---
+  /users/coupons/validate:
+    post:
+      tags:
+        - Coupons
+      summary: Validate coupon code
+      description: |
+        Priority: V3
+        Validates coupon against cart and returns calculated discount.
+      operationId: op_366_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/coupon.controller.ts
+      x-service: src/services/coupon.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [couponCode]
+              properties:
+                couponCode:
+                  type: string
+                cartSubtotal:
+                  type: number
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      valid:
+                        type: boolean
+                      couponCode:
+                        type: string
+                      calculatedDiscount:
+                        type: number
+                      message:
+                        type: string
+        '400':
+          description: Invalid coupon
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- PAYMENTS (DUMMY) ---
+  /payments/initiate:
+    post:
+      tags:
+        - Payments
+      summary: Initiate payment for order
+      description: |
+        Priority: V3
+        DUMMY implementation — returns mock payment URL.
+        For COD, immediately confirms order.
+        For online payments, returns mock Razorpay-style checkout URL.
+      operationId: op_370_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/payment.controller.ts
+      x-service: src/services/payment.service.ts
+      x-route-file: src/routes/payment.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId, paymentMethod]
+              properties:
+                orderId:
+                  type: string
+                  format: uuid
+                paymentMethod:
+                  type: string
+                  enum: [upi, card, netbanking, cod]
+      responses:
+        '200':
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      paymentId:
+                        type: string
+                      orderId:
+                        type: string
+                      amount:
+                        type: number
+                      status:
+                        type: string
+                      paymentUrl:
+                        type: string
+                      message:
+                        type: string
+
+  /payments/verify:
+    post:
+      tags:
+        - Payments
+      summary: Verify payment (mock)
+      description: |
+        Priority: V3
+        DUMMY: Always succeeds. Marks order as paid.
+        In production, verifies Razorpay/Stripe signature.
+      operationId: op_371_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/payment.controller.ts
+      x-service: src/services/payment.service.ts
+      x-route-file: src/routes/payment.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId]
+              properties:
+                orderId:
+                  type: string
+                  format: uuid
+                paymentId:
+                  type: string
+                signature:
+                  type: string
+      responses:
+        '200':
+          description: Payment verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      orderId:
+                        type: string
+                      status:
+                        type: string
+                      message:
+                        type: string
+
+  /payments/status/{orderId}:
+    get:
+      tags:
+        - Payments
+      summary: Get payment status for order
+      operationId: op_372_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/payment.controller.ts
+      x-service: src/services/payment.service.ts
+      x-route-file: src/routes/payment.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      orderId:
+                        type: string
+                      paymentStatus:
+                        type: string
+                      paymentMethod:
+                        type: string
+                        nullable: true
+                      amount:
+                        type: number
+                      transactionId:
+                        type: string
+                        nullable: true
+
+  # --- USER RETURNS ---
+  /users/returns:
+    post:
+      tags:
+        - Returns
+      summary: Create return request
+      description: |
+        Priority: V3
+        ERD tables: ReturnRequest, ReturnTimeline, Order
+        Only delivered orders can be returned.
+      operationId: op_380_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/return.controller.ts
+      x-service: src/services/return.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId, reason]
+              properties:
+                orderId:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+                  minLength: 10
+                productId:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: integer
+                images:
+                  type: array
+                  items:
+                    type: string
+                pickupAddressId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Return request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    get:
+      tags:
+        - Returns
+      summary: List user returns
+      operationId: op_381_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/return.controller.ts
+      x-service: src/services/return.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Returns list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /users/returns/{id}:
+    get:
+      tags:
+        - Returns
+      summary: Get return details
+      operationId: op_382_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/return.controller.ts
+      x-service: src/services/return.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Return details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- ADMIN RETURNS ---
+  /admin/returns:
+    get:
+      tags:
+        - Returns
+      summary: List all return requests (admin)
+      operationId: op_390_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/return.controller.ts
+      x-service: src/services/return.service.ts
+      x-route-file: src/routes/return.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /admin/returns/{id}/status:
+    put:
+      tags:
+        - Returns
+      summary: Update return status (admin)
+      description: |
+        Priority: V3
+        Valid statuses: approved, rejected, in_transit, received, refund_initiated, refund_completed, closed.
+      operationId: op_391_put
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/return.controller.ts
+      x-service: src/services/return.service.ts
+      x-route-file: src/routes/return.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                adminNote:
+                  type: string
+                refundAmount:
+                  type: number
+      responses:
+        '200':
+          description: Return status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- ADMIN SERVICES ---
+  /admin/services:
+    get:
+      tags:
+        - Services
+      summary: List admin services
+      operationId: op_395_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/service.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Services list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+    post:
+      tags:
+        - Services
+      summary: Create service
+      description: "Priority: V3. ERD tables: MyService."
+      operationId: op_396_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/service.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceRequest'
+      responses:
+        '201':
+          description: Service created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+    put:
+      tags:
+        - Services
+      summary: Update service
+      operationId: op_397_put
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/service.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateServiceRequest'
+      responses:
+        '200':
+          description: Service updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+    delete:
+      tags:
+        - Services
+      summary: Delete service (soft)
+      operationId: op_398_delete
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/service.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Service deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /admin/services/bookings:
+    get:
+      tags:
+        - Services
+      summary: List service bookings (admin)
+      operationId: op_399_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/service.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: date
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bookings list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /admin/services/bookings/{id}/status:
+    put:
+      tags:
+        - Services
+      summary: Update booking status
+      description: "Valid statuses: pending, confirmed, completed, cancelled."
+      operationId: op_400_put
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/service.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, confirmed, completed, cancelled]
+      responses:
+        '200':
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- USER SERVICE BOOKINGS ---
+  /users/service-bookings:
+    post:
+      tags:
+        - Bookings
+      summary: Book a service
+      description: |
+        Priority: V3
+        Checks slot availability. Auto-confirms if service mode is instant.
+      operationId: op_410_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Service booked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    get:
+      tags:
+        - Bookings
+      summary: List user service bookings
+      operationId: op_411_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bookings list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /users/service-bookings/{id}:
+    get:
+      tags:
+        - Bookings
+      summary: Get booking details
+      operationId: op_412_get
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/service-bookings/{id}/cancel:
+    post:
+      tags:
+        - Bookings
+      summary: Cancel booking
+      operationId: op_413_post
+      x-phase: V3
+      x-implemented: true
+      x-implemented-date: "15-04-2026"
+      x-controller: src/controllers/booking.controller.ts
+      x-service: src/services/booking.service.ts
+      x-route-file: src/routes/users.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
     ApiResponse:
       type: object
       x-implemented: true
@@ -7633,3 +9623,771 @@ components:
         totalPages:
           type: integer
           example: 5
+
+    # ============================================================
+    # V3 SCHEMAS — Catalog & Basic Ecommerce (15-04-2026)
+    # ============================================================
+
+    AdminRegisterRequest:
+      type: object
+      x-implemented: true
+      required: [name, email, phone, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: "Store Admin"
+        email:
+          type: string
+          format: email
+          example: "admin@store.com"
+        phone:
+          type: string
+          minLength: 10
+          description: "Phone number (required)"
+          example: "+919876543210"
+        password:
+          type: string
+          minLength: 8
+          description: Min 8 chars
+          example: "SecurePass@123"
+        role:
+          type: string
+          enum: [admin, super_admin]
+          nullable: true
+          default: admin
+          example: "admin"
+
+    AdminAuthResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login successful"
+        data:
+          type: object
+          properties:
+            admin:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+
+    Product:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        adminId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          format: float
+        discountPrice:
+          type: number
+          format: float
+          nullable: true
+        commissionRate:
+          type: number
+          format: float
+          nullable: true
+        stock:
+          type: integer
+          example: 50
+        stockStatus:
+          type: string
+          example: "in_stock"
+        status:
+          type: string
+          example: "active"
+        image:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        sku:
+          type: string
+          nullable: true
+        isAffiliateProduct:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        inventory:
+          type: object
+          properties:
+            id:
+              type: string
+            quantity:
+              type: integer
+            availableQty:
+              type: integer
+
+    CreateProductRequest:
+      type: object
+      x-implemented: true
+      required: [name, category, price]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: "Face Cream"
+        category:
+          type: string
+          example: "Skincare"
+        price:
+          type: number
+          minimum: 0
+          example: 499
+        discountPrice:
+          type: number
+          minimum: 0
+          nullable: true
+          example: 399
+        commissionRate:
+          type: number
+          minimum: 0
+          maximum: 100
+          nullable: true
+          example: 10
+        stock:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 50
+        stockStatus:
+          type: string
+          example: "in_stock"
+        status:
+          type: string
+          example: "active"
+        image:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        sku:
+          type: string
+          nullable: true
+        stockThreshold:
+          type: integer
+          nullable: true
+        stockLocation:
+          type: string
+          nullable: true
+        supplier:
+          type: string
+          nullable: true
+        inventoryNotes:
+          type: string
+          nullable: true
+
+    UpdateProductRequest:
+      type: object
+      x-implemented: true
+      properties:
+        name:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        price:
+          type: number
+          nullable: true
+        discountPrice:
+          type: number
+          nullable: true
+        commissionRate:
+          type: number
+          nullable: true
+        stock:
+          type: integer
+          nullable: true
+        stockStatus:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        image:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    CartItem:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        product:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            price:
+              type: number
+            discountPrice:
+              type: number
+              nullable: true
+            stock:
+              type: integer
+            stockStatus:
+              type: string
+            image:
+              type: string
+              nullable: true
+            category:
+              type: string
+
+    WishlistItem:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        addedAt:
+          type: string
+          format: date-time
+        product:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            price:
+              type: number
+            discountPrice:
+              type: number
+              nullable: true
+            stock:
+              type: integer
+            stockStatus:
+              type: string
+            image:
+              type: string
+              nullable: true
+            category:
+              type: string
+
+    PlaceOrderRequest:
+      type: object
+      x-implemented: true
+      required: [shippingAddressId, paymentMethod]
+      properties:
+        shippingAddressId:
+          type: string
+          format: uuid
+          description: Must be user's address
+        billingAddressId:
+          type: string
+          format: uuid
+          nullable: true
+        paymentMethod:
+          type: string
+          enum: [upi, card, netbanking, cod]
+        couponCode:
+          type: string
+          nullable: true
+          description: Optional coupon code to apply
+        notes:
+          type: string
+          nullable: true
+
+    OrderPlacedResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Order placed successfully"
+        data:
+          type: object
+          properties:
+            orderId:
+              type: string
+              format: uuid
+            orderNumber:
+              type: string
+              example: "TB-L5K7M-ABCD"
+            totalAmount:
+              type: number
+              format: float
+            paymentStatus:
+              type: string
+              example: "pending"
+            message:
+              type: string
+              example: "Order placed. Proceed to payment."
+
+    Order:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          example: "TB-L5K7M-ABCD"
+        orderStatus:
+          type: string
+          example: "pending"
+        paymentStatus:
+          type: string
+          example: "pending"
+        paymentMethod:
+          type: string
+          nullable: true
+        refundStatus:
+          type: string
+          example: "none"
+        trackingNumber:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        productsCount:
+          type: integer
+        subTotal:
+          type: number
+          format: float
+        discount:
+          type: number
+          format: float
+        tax:
+          type: number
+          format: float
+        shipping:
+          type: number
+          format: float
+        totalAmount:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              productId:
+                type: string
+              productName:
+                type: string
+              quantity:
+                type: integer
+              price:
+                type: number
+              discount:
+                type: number
+              total:
+                type: number
+        payment:
+          type: object
+          nullable: true
+          properties:
+            status:
+              type: string
+            method:
+              type: string
+              nullable: true
+            transactionId:
+              type: string
+              nullable: true
+        shippingAddress:
+          type: object
+          nullable: true
+
+    Coupon:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        adminId:
+          type: string
+          format: uuid
+          nullable: true
+        code:
+          type: string
+          example: "SAVE20"
+        discountType:
+          type: string
+          enum: [percentage, fixed]
+        discountValue:
+          type: number
+          format: float
+        minimumOrderAmount:
+          type: number
+          format: float
+          nullable: true
+        usageLimitTotal:
+          type: integer
+          nullable: true
+        usageLimitPerUser:
+          type: integer
+          nullable: true
+        maxDiscountCap:
+          type: number
+          format: float
+          nullable: true
+        applicableRole:
+          type: string
+          example: "all"
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateCouponRequest:
+      type: object
+      x-implemented: true
+      required: [discountType, discountValue]
+      properties:
+        code:
+          type: string
+          nullable: true
+          description: Auto-generated if not provided
+          example: "SAVE20"
+        discountType:
+          type: string
+          enum: [percentage, fixed]
+        discountValue:
+          type: number
+          minimum: 0
+          example: 20
+        minimumOrderAmount:
+          type: number
+          nullable: true
+          example: 500
+        usageLimitTotal:
+          type: integer
+          nullable: true
+          example: 100
+        usageLimitPerUser:
+          type: integer
+          nullable: true
+          example: 1
+        maxDiscountCap:
+          type: number
+          nullable: true
+          example: 100
+        applicableRole:
+          type: string
+          enum: [all, customers, affiliate]
+          default: all
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        applicableProductIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+        applicableCategories:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    UpdateCouponRequest:
+      type: object
+      x-implemented: true
+      properties:
+        discountType:
+          type: string
+          enum: [percentage, fixed]
+          nullable: true
+        discountValue:
+          type: number
+          nullable: true
+        minimumOrderAmount:
+          type: number
+          nullable: true
+        usageLimitTotal:
+          type: integer
+          nullable: true
+        usageLimitPerUser:
+          type: integer
+          nullable: true
+        maxDiscountCap:
+          type: number
+          nullable: true
+        applicableRole:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+          nullable: true
+
+    Service:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        adminId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: float
+        discountedPrice:
+          type: number
+          format: float
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        bookingConfirmationMode:
+          type: string
+        status:
+          type: string
+        isFeatured:
+          type: boolean
+        totalBookings:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateServiceRequest:
+      type: object
+      x-implemented: true
+      required: [name, category, price]
+      properties:
+        name:
+          type: string
+          example: "Facial Treatment"
+        category:
+          type: string
+          example: "Spa"
+        description:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          nullable: true
+          example: "60 min"
+        price:
+          type: number
+          minimum: 0
+          example: 999
+        discountedPrice:
+          type: number
+          nullable: true
+          example: 799
+        images:
+          type: array
+          items:
+            type: string
+          nullable: true
+        howToUseText:
+          type: string
+          nullable: true
+        workingHours:
+          type: string
+          nullable: true
+          example: "9 AM - 6 PM"
+        workingDays:
+          type: string
+          nullable: true
+          example: "Mon-Sat"
+        bookingConfirmationMode:
+          type: string
+          enum: [instant, after_24h]
+          default: instant
+        status:
+          type: string
+          default: "active"
+
+    UpdateServiceRequest:
+      type: object
+      x-implemented: true
+      properties:
+        name:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          nullable: true
+        price:
+          type: number
+          nullable: true
+        discountedPrice:
+          type: number
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+          nullable: true
+        howToUseText:
+          type: string
+          nullable: true
+        workingHours:
+          type: string
+          nullable: true
+        workingDays:
+          type: string
+          nullable: true
+        bookingConfirmationMode:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+
+    CreateBookingRequest:
+      type: object
+      x-implemented: true
+      required: [serviceId, bookingDate, bookingTime]
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+        bookingDate:
+          type: string
+          description: Date in YYYY-MM-DD format
+          example: "2026-04-20"
+        bookingTime:
+          type: string
+          example: "10:00 AM"
+        customerName:
+          type: string
+          nullable: true
+        customerPhone:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        couponCode:
+          type: string
+          nullable: true
+

@@ -18,6 +18,20 @@ enum AdminRole {
   super_admin
 }
 
+enum BusinessType {
+  ecommerce
+  retail_store
+  brand_manufacturer
+  other
+}
+
+enum TeamSize {
+  one_to_five      // 1-5 employees
+  six_to_twenty     // 6-20 employees
+  twentyone_to_hundred // 21-100 employees
+  hundred_plus     // 100+ employees
+}
+
 enum UserKycStatus {
   not_submitted
   pending
@@ -221,6 +235,7 @@ model Admin {
   id           String    @id @default(uuid())
   name         String
   email        String    @unique
+  phone        String
   password     String
   role         AdminRole @default(admin)
   profileImage String?
@@ -231,6 +246,7 @@ model Admin {
 
   // Relations
   authTokens           AuthToken[]
+  coupons              Coupon[]
   theme                AdminTheme?
   kycDocuments         AdminKycDocument[]
   withdrawalsProcessed WithdrawalRequest[]      @relation("ProcessedBy")
@@ -261,7 +277,7 @@ model User {
   name                    String
   email                   String    @unique
   password                String?
-  phone                   String?
+  phone                   String?    @unique
   profileImage            String?
   isActive                Boolean   @default(true)
   isEmailVerified         Boolean   @default(false) // Email verification status
@@ -524,6 +540,7 @@ model InventoryLog {
 
 model Coupon {
   id                 String               @id @default(uuid())
+  adminId            String?
   code               String               @unique
   discountType       CouponDiscountType
   discountValue      Float
@@ -539,10 +556,12 @@ model Coupon {
   updatedAt          DateTime             @updatedAt
 
   // Relations
+  admin                Admin?  @relation(fields: [adminId], references: [id])
   applicableProducts   CouponApplicableProduct[]
   applicableCategories CouponApplicableCategory[]
   orders               Order[]
 
+  @@index([adminId])
   @@map("coupon")
 }
 
@@ -974,17 +993,18 @@ model PlanAddon {
 }
 
 model AdminSubscription {
-  id              String             @id @default(uuid())
-  adminId         String             @unique
-  planId          String
-  startDate       DateTime
-  expiryDate      DateTime
-  status          SubscriptionStatus @default(active)
-  billingCycle    String?
-  autoRenew       Boolean            @default(false)
+  id               String             @id @default(uuid())
+  adminId          String             @unique
+  planId           String
+  selectedAddonIds String[]            @default([])
+  startDate        DateTime
+  expiryDate       DateTime
+  status           SubscriptionStatus @default(active)
+  billingCycle     String?
+  autoRenew        Boolean            @default(false)
   nextBillingDate DateTime?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   // Relations
   admin Admin            @relation(fields: [adminId], references: [id], onDelete: Cascade)
@@ -994,19 +1014,27 @@ model AdminSubscription {
 }
 
 model AdminOnboardingProgress {
-  id                  String   @id @default(uuid())
-  adminId             String   @unique
-  storeName           String?
-  storeDescription    String?
-  businessCategory    String?
-  stepCompleted       Int      @default(1)
-  storeLogoUploaded   Boolean  @default(false)
-  storeBannerUploaded Boolean  @default(false)
-  contactInfoUpdated  Boolean  @default(false)
-  bankDetailsUpdated  Boolean  @default(false)
-  kycUploaded         Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                    String       @id @default(uuid())
+  adminId               String       @unique
+  companyName           String?
+  website               String?
+  businessType          BusinessType?
+  teamSize              TeamSize?
+  preferredStartDate     DateTime?
+  storeName             String?
+  storeDescription      String?
+  businessCategory      String?
+  selectedPlanId        String?
+  selectedAddonIds      String[]      @default([])
+  stepCompleted         Int          @default(1)
+  storeLogoUploaded     Boolean      @default(false)
+  storeBannerUploaded   Boolean      @default(false)
+  contactInfoUpdated    Boolean      @default(false)
+  bankDetailsUpdated    Boolean      @default(false)
+  kycUploaded           Boolean      @default(false)
+  subscriptionActivated Boolean      @default(false)
+  createdAt            DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
   // Relations
   admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)

@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import mailchecker from "mailchecker";
 
 // Email configuration
 const EMAIL_HOST = process.env.EMAIL_HOST || "smtp.gmail.com";
@@ -8,6 +7,30 @@ const EMAIL_USER = process.env.EMAIL_USER || "";
 const EMAIL_PASS = process.env.EMAIL_PASS || "";
 const EMAIL_FROM = process.env.EMAIL_FROM || "True Beauty <noreply@truebeauty.com>";
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
+
+// Allowed email domains for user registration (trusted providers only)
+const ALLOWED_EMAIL_DOMAINS = [
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "yahoo.co.in",
+  "yahoo.co.uk",
+  "hotmail.com",
+  "hotmail.co.uk",
+  "outlook.com",
+  "live.com",
+  "msn.com",
+  "aol.com",
+  "icloud.com",
+  "me.com",
+  "mac.com",
+  "rediffmail.com",
+  "protonmail.com",
+  "zoho.com",
+  "mail.com",
+  "gmx.com",
+  "gmx.net",
+];
 
 // Create transporter
 const transporter = nodemailer.createTransport({
@@ -20,14 +43,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Validate email domain using mailchecker
+// Validate email domain - only trusted providers allowed
 export function isDisposableEmail(email: string): boolean {
   const domain = email.split("@")[1]?.toLowerCase();
-  if (!domain) return true;
-
-  // mailchecker returns list of disposable domains
-  const disposableDomains = mailchecker.getList();
-  return disposableDomains.includes(domain);
+  return !ALLOWED_EMAIL_DOMAINS.includes(domain);
 }
 
 // Validate email format and domain
@@ -38,11 +57,12 @@ export function validateEmail(email: string): { valid: boolean; error?: string }
     return { valid: false, error: "Invalid email format" };
   }
 
-  // Check for disposable email
-  if (isDisposableEmail(email)) {
+  // Check for allowed email domain
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (!ALLOWED_EMAIL_DOMAINS.includes(domain)) {
     return {
       valid: false,
-      error: "Disposable email addresses are not allowed. Please use a valid email like gmail.com or yahoo.com"
+      error: "Only email addresses from trusted providers are allowed (gmail.com, yahoo.com, outlook.com, hotmail.com, etc.)"
     };
   }
 
