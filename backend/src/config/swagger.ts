@@ -1,4 +1,7 @@
 import swaggerJsdoc from "swagger-jsdoc";
+import path from "path";
+
+const docsDir = path.join(process.cwd(), "src", "docs");
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -13,7 +16,9 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: process.env.API_BASE_URL || "http://localhost:3000",
+        url:
+          process.env.API_BASE_URL ||
+          `http://localhost:${process.env.PORT || 3000}`,
         description: "Local development server",
       },
     ],
@@ -33,8 +38,8 @@ const options: swaggerJsdoc.Options = {
     ],
   },
   apis: [
-    "./src/docs/*.yml",
-    "./src/docs/*.yaml",
+    path.join(docsDir, "openapi.yml"),
+    path.join(docsDir, "openapi.implemented.yml"),
     "./src/routes/*.ts",
   ],
 };

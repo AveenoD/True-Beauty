@@ -67,7 +67,6 @@ export async function createUserAddress(
     city: string;
     state: string;
     pincode: string;
-    country?: string;
     addressType?: string;
     isDefault?: boolean;
   }
@@ -90,8 +89,7 @@ export async function createUserAddress(
       city: data.city,
       state: data.state,
       pincode: data.pincode,
-      country: data.country || "India",
-      addressType: data.addressType || "home",
+      addressType: data.addressType,
       isDefault: data.isDefault || false,
     },
   });
@@ -110,7 +108,6 @@ export async function updateUserAddress(
     city?: string;
     state?: string;
     pincode?: string;
-    country?: string;
     addressType?: string;
     isDefault?: boolean;
   }

@@ -7,6 +7,8 @@ const router = Router();
 
 // --- Public Auth Routes ---
 router.post("/register", authController.register);
+router.get("/verify-email", authController.verifyEmail);
+router.post("/resend-verification", authController.resendVerificationEmail);
 router.post("/login", authController.login);
 router.post("/refresh-token", authController.refreshToken);
 router.post("/forgot-password", authController.forgotPassword);
@@ -16,6 +18,7 @@ router.post("/reset-password", authController.resetPassword);
 router.use(authenticateUser);
 
 router.post("/logout", authController.logout);
+router.post("/change-password", authController.changePassword);
 router.get("/profile", userController.getProfile);
 router.put("/profile", userController.updateProfile);
 router.get("/addresses", userController.getAddresses);

@@ -22,7 +22,7 @@ export const getProfile = asyncHandler(
     const userId = userIdFromRequest(req);
     const user = await userService.getUserProfile(userId);
 
-    return ApiResponse.success(res, user, "User profile retrieved");
+    ApiResponse.success(res, user, "User profile retrieved");
   }
 );
 
@@ -45,7 +45,7 @@ export const updateProfile = asyncHandler(
     const userId = userIdFromRequest(req);
     const user = await userService.updateUserProfile(userId, data);
 
-    return ApiResponse.success(res, user, "Profile updated");
+    ApiResponse.success(res, user, "Profile updated");
   }
 );
 
@@ -61,7 +61,7 @@ export const getAddresses = asyncHandler(
     const userId = userIdFromRequest(req);
     const addresses = await userService.getUserAddresses(userId);
 
-    return ApiResponse.success(res, addresses, "Addresses retrieved");
+    ApiResponse.success(res, addresses, "Addresses retrieved");
   }
 );
 
@@ -82,8 +82,7 @@ export const createAddress = asyncHandler(
       city: z.string().min(2, "City is required"),
       state: z.string().min(2, "State is required"),
       pincode: z.string().min(4, "Pincode is required"),
-      country: z.string().optional(),
-      addressType: z.enum(["home", "work", "other"]).optional(),
+      addressType: z.string().optional(),
       isDefault: z.boolean().optional(),
     });
 
@@ -91,7 +90,7 @@ export const createAddress = asyncHandler(
     const userId = userIdFromRequest(req);
     const address = await userService.createUserAddress(userId, data);
 
-    return ApiResponse.created(res, address, "Address created");
+    ApiResponse.created(res, address, "Address created");
   }
 );
 
@@ -104,7 +103,7 @@ export const updateAddress = asyncHandler(
       });
     });
 
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const schema = z.object({
       name: z.string().min(2).optional(),
@@ -114,8 +113,7 @@ export const updateAddress = asyncHandler(
       city: z.string().min(2).optional(),
       state: z.string().min(2).optional(),
       pincode: z.string().min(4).optional(),
-      country: z.string().optional(),
-      addressType: z.enum(["home", "work", "other"]).optional(),
+      addressType: z.string().optional(),
       isDefault: z.boolean().optional(),
     });
 
@@ -123,7 +121,7 @@ export const updateAddress = asyncHandler(
     const userId = userIdFromRequest(req);
     const address = await userService.updateUserAddress(userId, id, data);
 
-    return ApiResponse.success(res, address, "Address updated");
+    ApiResponse.success(res, address, "Address updated");
   }
 );
 
@@ -136,10 +134,10 @@ export const deleteAddress = asyncHandler(
       });
     });
 
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = userIdFromRequest(req);
     await userService.deleteUserAddress(userId, id);
 
-    return ApiResponse.success(res, null, "Address deleted");
+    ApiResponse.success(res, null, "Address deleted");
   }
 );

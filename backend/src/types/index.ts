@@ -12,6 +12,7 @@ export interface TokenPayload {
   sub: string;
   type: "access" | "refresh";
   role?: string;
+  jti?: string;
 }
 
 export interface LoginInput {

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { TokenPayload } from "../types";
+import crypto from "crypto";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || "access-secret-change-me";
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "refresh-secret-change-me";
@@ -11,7 +12,7 @@ export function generateAccessToken(
   role?: string
 ): string {
   return jwt.sign(
-    { sub: userId, type: "access", role } as TokenPayload,
+    { sub: userId, type: "access", role, jti: crypto.randomUUID() } as TokenPayload,
     ACCESS_SECRET,
     { expiresIn: ACCESS_EXPIRY } as jwt.SignOptions
   );
@@ -19,7 +20,7 @@ export function generateAccessToken(
 
 export function generateRefreshToken(userId: string): string {
   return jwt.sign(
-    { sub: userId, type: "refresh" } as TokenPayload,
+    { sub: userId, type: "refresh", jti: crypto.randomUUID() } as TokenPayload,
     REFRESH_SECRET,
     { expiresIn: REFRESH_EXPIRY } as jwt.SignOptions
   );

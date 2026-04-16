@@ -1,14 +1,11 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import { config } from "dotenv";
 import rateLimit from "express-rate-limit";
 import routes from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
-
-// Load env vars
-config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

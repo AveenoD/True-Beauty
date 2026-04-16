@@ -122,3 +122,172 @@ Installed swagger-ui-express and swagger-jsdoc packages for API documentation. C
 **Breaking change:** YES — all auth/user routes changed from `/auth/*` and `/user/*` to `/users/*`
 
 **Branch:** master
+
+---
+
+## [16-04-2026 13:10] — Fix backend boot + Swagger spec
+
+**What changed:**
+Fixed backend dev server startup by configuring Prisma Client to use the Postgres driver adapter (`pg` + `@prisma/adapter-pg`) and updating TypeScript module settings for Node16 resolution. Fixed Swagger “API testing” UI by removing duplicate top-level `paths`/`components` keys from `src/docs/openapi.yml` (split implemented endpoints/schemas into a separate `openapi.implemented.yml` that swagger-jsdoc merges).
+
+**Files touched:**
+- `backend/src/config/database.ts` (updated)
+- `backend/tsconfig.json` (updated)
+- `backend/src/docs/openapi.yml` (updated)
+- `backend/src/docs/openapi.implemented.yml` (new)
+- `backend/package-lock.json` (updated)
+
+**API endpoints used:**
+- `GET /docs` — Swagger UI
+- `GET /docs/json` — OpenAPI JSON spec
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-v3-setup
+
+---
+
+## [16-04-2026 13:55] — Add email verification signup flow
+
+**What changed:**
+Updated user signup/login flow to require email verification before login. Registration no longer generates a referral code; instead it creates a one-time email verification token and sends a Gmail SMTP verification email with a verify button. Added `GET /users/verify-email` endpoint to verify and redirect to frontend address page (`APP_URL/address?verified=1`). Added registration email-domain allowlist (gmail/yahoo/outlook-type domains).
+
+**Files touched:**
+- `backend/prisma/schema.prisma` (updated — `emailVerifiedAt`, `TokenType.email_verify`, relation fixes)
+- `backend/prisma/migrations/20260416140500_add_user_email_verification/migration.sql` (new)
+- `backend/src/services/auth.service.ts` (updated)
+- `backend/src/controllers/auth.controller.ts` (updated)
+- `backend/src/routes/users.routes.ts` (updated)
+- `backend/src/utils/mailer.ts` (new)
+- `backend/src/docs/openapi.implemented.yml` (updated)
+- `backend/package-lock.json` (updated)
+
+**API endpoints used:**
+- `POST /users/register` — creates user + sends verification email
+- `GET /users/verify-email` — verifies and redirects
+- `POST /users/login` — blocked until verified
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-v3-setup
+
+---
+
+## [16-04-2026 14:05] — Add resend verification + password policy
+
+**What changed:**
+Added `POST /users/resend-verification` to re-send email verification (max 3 requests per 24 hours, verification link valid 24 hours). Removed `referralCode` from registration API docs/examples. Enforced strong password policy for registration and reset-password (uppercase, lowercase, number, special).
+
+**Files touched:**
+- `backend/src/services/auth.service.ts` (updated)
+- `backend/src/controllers/auth.controller.ts` (updated)
+- `backend/src/routes/users.routes.ts` (updated)
+- `backend/src/docs/openapi.implemented.yml` (updated)
+- `backend/changelog.md` (updated)
+
+**API endpoints used:**
+- `POST /users/register`
+- `POST /users/resend-verification`
+- `POST /users/forgot-password`
+- `POST /users/reset-password`
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-v3-setup
+
+---
+
+## [16-04-2026 13:34] — Fix Swagger Try-It-Out + token expiry bug
+
+**What changed:**
+Fixed Swagger “Try it out” so it hits the correct backend base URL and real route prefixes (`/users/*` instead of `/auth/*` and `/user/*`). Also fixed refresh-token expiry calculation that was creating an invalid `Date` and causing `POST /users/register` to fail with 500 when persisting refresh tokens.
+
+**Files touched:**
+- `backend/src/index.ts` (updated)
+- `backend/src/config/swagger.ts` (updated)
+- `backend/src/routes/swagger.routes.ts` (updated)
+- `backend/src/docs/openapi.yml` (updated)
+- `backend/src/docs/openapi.implemented.yml` (updated)
+- `backend/src/services/auth.service.ts` (updated)
+
+**API endpoints used:**
+- `GET /docs` — Swagger UI
+- `GET /docs/json` — OpenAPI JSON spec
+- `POST /users/register` — verified 201 after fix
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-v3-setup
+
+---
+
+## [16-04-2026 14:30] — Secure password reset + protected change password
+
+**What changed:**
+Implemented an industry-standard forgot/reset password flow: forgot-password now issues a one-time reset token (stored as SHA-256 hash in `AuthToken` with short expiry) and sends a reset email link; reset-password now validates token (exists, not used, not expired), updates password, and revokes refresh tokens. Added protected `POST /users/change-password` (Bearer token + currentPassword) and upgraded verification + reset email templates to a more professional layout. Updated Prisma schema to reflect `User.phone @unique` and added `TokenType.password_reset`.
+
+**Files touched:**
+- `backend/prisma/schema.prisma` (updated)
+- `backend/prisma/migrations/20260416143000_add_password_reset_token_type_and_user_phone_unique/migration.sql` (new)
+- `backend/src/services/auth.service.ts` (updated)
+- `backend/src/controllers/auth.controller.ts` (updated)
+- `backend/src/routes/users.routes.ts` (updated)
+- `backend/src/utils/mailer.ts` (updated)
+- `backend/src/docs/openapi.implemented.yml` (updated)
+- `backend/changelog.md` (updated)
+
+**API endpoints used:**
+- `POST /users/forgot-password`
+- `POST /users/reset-password`
+- `POST /users/change-password`
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-v3-setup
+
+---
+
+## [16-04-2026 14:47] — Fix refresh token rotation + docs/errors
+
+**What changed:**
+Fixed refresh-token rotation failures caused by duplicate JWTs being generated within the same second (unique constraint on `auth_token.token`). Added `jti` (UUID) claim to access/refresh tokens so each token is always unique. Also fixed global error handler compatibility with Zod v4 (`issues` vs `errors`) and removed duplicate OpenAPI path keys for forgot/reset password in `openapi.implemented.yml` so Swagger spec parsing is stable.
+
+**Files touched:**
+- `backend/src/utils/jwt.ts` (updated)
+- `backend/src/types/index.ts` (updated)
+- `backend/src/middleware/errorHandler.ts` (updated)
+- `backend/src/docs/openapi.implemented.yml` (updated)
+- `backend/changelog.md` (updated)
+
+**API endpoints used:**
+- `POST /users/login`
+- `POST /users/refresh-token`
+- `POST /users/logout`
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-v3-setup
+
+---
+
+## [16-04-2026 17:12] — Relax addressType and simplify address payload
+
+**What changed:**
+Removed the strict enum validation for `addressType` (home/work/other) so the frontend can send any label string. Also removed `country` from address create/update request validation and docs; database default still applies when not provided. Verified user profile get/update works with a fresh access token (token expiry requires re-login after expiry).
+
+**Files touched:**
+- `backend/src/controllers/user.controller.ts` (updated)
+- `backend/src/services/user.service.ts` (updated)
+- `backend/src/docs/openapi.implemented.yml` (updated)
+- `backend/changelog.md` (updated)
+
+**API endpoints used:**
+- `POST /users/login`
+- `GET /users/profile`
+- `PUT /users/profile`
+- `POST /users/addresses`
+- `PUT /users/addresses/{id}`
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-backend-v3-setup

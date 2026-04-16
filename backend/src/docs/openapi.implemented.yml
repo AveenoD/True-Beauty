@@ -1,0 +1,1667 @@
+# ============================================================
+# IMPLEMENTED — Phase 0 / Day 1 (13-04-2026)
+# ============================================================
+
+paths:
+  # --- AUTH ---
+  /users/register:
+    post:
+      tags:
+        - Auth
+      summary: Register new user account
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: User, AuthToken
+        Implementation: Creates user, generates access+refresh JWT tokens, stores refresh token in DB.
+        AuthToken expiry: access=15min, refresh=7days.
+      operationId: op_1_post_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - User
+        - AuthToken
+      x-priority-order: 1
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/auth.controller.ts
+      x-service: src/services/auth.service.ts
+      x-route-file: src/routes/auth.routes.ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              name: "John Doe"
+              email: "john@example.com"
+              password: "Securepassword123!"
+              phone: "+919876543210"
+      responses:
+        '201':
+          description: Created — user registered successfully (email verification required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                message: "Registration successful. Please verify your email to login."
+                data:
+                  user:
+                    id: "uuid"
+                    name: "John Doe"
+                    email: "john@example.com"
+                    role: "customer"
+                  verificationEmailSent: true
+        '409':
+          description: Conflict — email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Unprocessable — validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /users/login:
+    post:
+      tags:
+        - Auth
+      summary: Login user
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: User, AuthToken
+        Implementation: Validates credentials, issues access+refresh JWT tokens.
+      operationId: op_2_post_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - User
+        - AuthToken
+      x-priority-order: 2
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/auth.controller.ts
+      x-service: src/services/auth.service.ts
+      x-route-file: src/routes/auth.routes.ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "john@example.com"
+              password: "Securepassword123!"
+      responses:
+        '200':
+          description: OK — login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Unauthorized — invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Unprocessable — validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /users/verify-email:
+    get:
+      tags:
+        - Auth
+      summary: Verify email address
+      description: |
+        Verifies the user's email using a one-time token sent via email.
+        On success, redirects to frontend address page.
+      operationId: op_verify_email_get_impl
+      x-implemented: true
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to frontend address page
+        '400':
+          description: Invalid token
+
+  /users/resend-verification:
+    post:
+      tags:
+        - Auth
+      summary: Re-send verification email
+      description: |
+        Re-sends the email verification link.
+        Max 3 requests per user per 24 hours.
+      operationId: op_resend_verify_post_impl
+      x-implemented: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '429':
+          description: Too many requests
+
+  /users/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Request password reset
+      description: |
+        Sends a password reset link to the user's email (if the account exists).
+        Always returns success to prevent email enumeration.
+      operationId: op_forgot_password_post_impl
+      x-implemented: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset password using email token
+      description: |
+        Resets password using a one-time token sent via email.
+        Token is single-use and expires after a short window.
+      operationId: op_reset_password_post_impl
+      x-implemented: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+            example:
+              token: "raw-reset-token-from-email"
+              newPassword: "Securepassword123!"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid/expired token
+
+  /users/change-password:
+    post:
+      tags:
+        - Auth
+      summary: Change password (logged-in)
+      description: |
+        Changes password for the authenticated user.
+        Requires current password and a strong new password.
+      operationId: op_change_password_post_impl
+      x-implemented: true
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+            example:
+              currentPassword: "Securepassword123!"
+              newPassword: "Securepassword123!#"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout user
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: AuthToken
+        Implementation: Revokes the provided refresh token (or all tokens if none provided).
+      operationId: op_3_post_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - AuthToken
+      x-priority-order: 3
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/auth.controller.ts
+      x-service: src/services/auth.service.ts
+      x-route-file: src/routes/auth.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: OK — logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/refresh-token:
+    post:
+      tags:
+        - Auth
+      summary: Refresh access token
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: AuthToken, User
+        Implementation: Validates refresh token, revokes old token, issues new access+refresh tokens.
+      operationId: op_4_post_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - AuthToken
+        - User
+      x-priority-order: 4
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/auth.controller.ts
+      x-service: src/services/auth.service.ts
+      x-route-file: src/routes/auth.routes.ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+            example:
+              refreshToken: "eyJhbG..."
+      responses:
+        '200':
+          description: OK — tokens refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+        '401':
+          description: Unauthorized — invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Unprocessable — validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  # --- USER ---
+  /users/profile:
+    get:
+      tags:
+        - User
+      summary: Get current user profile
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: User
+        Implementation: Returns authenticated user's profile (password excluded).
+      operationId: op_7_get_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - User
+      x-priority-order: 7
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/user.controller.ts
+      x-service: src/services/user.service.ts
+      x-route-file: src/routes/user.routes.ts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    put:
+      tags:
+        - User
+      summary: Update user profile
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: User
+        Implementation: Updates authenticated user's name, phone, or profileImage.
+      operationId: op_8_put_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - User
+      x-priority-order: 8
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/user.controller.ts
+      x-service: src/services/user.service.ts
+      x-route-file: src/routes/user.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+            example:
+              name: "John Updated"
+              phone: "+919876543210"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Unprocessable — validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /users/addresses:
+    get:
+      tags:
+        - User
+      summary: List user addresses
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: Address
+        Implementation: Returns all addresses for the authenticated user.
+      operationId: op_9_get_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - Address
+      x-priority-order: 9
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/user.controller.ts
+      x-service: src/services/user.service.ts
+      x-route-file: src/routes/user.routes.ts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Addresses retrieved"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    post:
+      tags:
+        - User
+      summary: Create user address
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: Address
+        Implementation: Creates a new address. If isDefault=true, unsets other defaults.
+      operationId: op_10_post_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - Address
+      x-priority-order: 10
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/user.controller.ts
+      x-service: src/services/user.service.ts
+      x-route-file: src/routes/user.routes.ts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAddressRequest'
+            example:
+              name: "John Doe"
+              phone: "+919876543210"
+              addressLine1: "123 Main Street"
+              addressLine2: "Apt 4B"
+              city: "Mumbai"
+              state: "Maharashtra"
+              pincode: "400001"
+              addressType: "home"
+              isDefault: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Unprocessable — validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /users/addresses/{id}:
+    put:
+      tags:
+        - User
+      summary: Update user address
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: Address
+        Implementation: Updates address. If isDefault=true, unsets other user defaults.
+      operationId: op_11_put_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - Address
+      x-priority-order: 11
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/user.controller.ts
+      x-service: src/services/user.service.ts
+      x-route-file: src/routes/user.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Address ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAddressRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Unprocessable — validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+    delete:
+      tags:
+        - User
+      summary: Delete user address
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: Address
+        Implementation: Deletes address. Returns 404 if not found or not owned by user.
+      operationId: op_12_delete_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - Address
+      x-priority-order: 12
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/user.controller.ts
+      x-service: src/services/user.service.ts
+      x-route-file: src/routes/user.routes.ts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Address ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- STORE (Public) ---
+  /store/products:
+    get:
+      tags:
+        - Store
+      summary: List products (public)
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: Product
+        Implementation: Returns paginated, publicly visible products (status=active, deletedAt=null).
+        Supports filtering by category, search, minPrice, maxPrice.
+      operationId: op_48_get_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - Product
+      x-priority-order: 48
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/store.controller.ts
+      x-service: src/services/store.service.ts
+      x-route-file: src/routes/store.routes.ts
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Items per page
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by category
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search in name and description
+        - name: minPrice
+          in: query
+          required: false
+          schema:
+            type: number
+          description: Minimum price filter
+        - name: maxPrice
+          in: query
+          required: false
+          schema:
+            type: number
+          description: Maximum price filter
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Sort field (defaults to createdAt)
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductsResponse'
+        '422':
+          description: Unprocessable — validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /store/products/{id}:
+    get:
+      tags:
+        - Store
+      summary: Get product (public)
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: Product
+        Implementation: Returns a single product by ID (active, non-deleted).
+      operationId: op_49_get_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - Product
+      x-priority-order: 49
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/store.controller.ts
+      x-service: src/services/store.service.ts
+      x-route-file: src/routes/store.routes.ts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Product ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetailResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /store/services:
+    get:
+      tags:
+        - Store
+      summary: List services (public)
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: My_Service
+        Implementation: Returns paginated, publicly visible services (status=active).
+        Supports filtering by category and search.
+      operationId: op_61_get_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - My_Service
+      x-priority-order: 61
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/store.controller.ts
+      x-service: src/services/store.service.ts
+      x-route-file: src/routes/store.routes.ts
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedServicesResponse'
+        '422':
+          description: Unprocessable — validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /store/services/{id}:
+    get:
+      tags:
+        - Store
+      summary: Get service (public)
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: My_Service
+        Implementation: Returns a single service by ID (active only).
+      operationId: op_62_get_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - My_Service
+      x-priority-order: 62
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/store.controller.ts
+      x-service: src/services/store.service.ts
+      x-route-file: src/routes/store.routes.ts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Service ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceDetailResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # --- PLANS (Public) ---
+  /plans:
+    get:
+      tags:
+        - Plans
+      summary: List subscription plans (public)
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: subscription_plan
+        Implementation: Returns all active subscription plans sorted by sortOrder.
+      operationId: op_28_get_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - subscription_plan
+      x-priority-order: 28
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/plans.controller.ts
+      x-service: src/services/plans.service.ts
+      x-route-file: src/routes/plans.routes.ts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Plans retrieved"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubscriptionPlan'
+
+  /plans/{id}/addons:
+    get:
+      tags:
+        - Plans
+      summary: List addons for a subscription plan (public)
+      description: |
+        Priority: Phase 0 / Day 1
+        ERD tables: plan_addon, subscription_plan
+        Implementation: Returns addons accessible by the specified plan.
+      operationId: op_29_get_impl
+      x-phase: Phase 0
+      x-day: Day 1
+      x-erd-tables:
+        - plan_addon
+        - subscription_plan
+      x-priority-order: 29
+      x-implemented: true
+      x-implemented-date: "13-04-2026"
+      x-controller: src/controllers/plans.controller.ts
+      x-service: src/services/plans.service.ts
+      x-route-file: src/routes/plans.routes.ts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Plan ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Addons retrieved"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlanAddon'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '422':
+          description: Unprocessable — invalid plan ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+# ============================================================
+# IMPLEMENTED SCHEMAS — Phase 0 / Day 1 (13-04-2026)
+# ============================================================
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Success"
+        data:
+          type: object
+          nullable: true
+
+    ValidationErrorResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Validation failed"
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            email: "Invalid email address"
+            password: "Password must be at least 8 characters"
+
+    # Auth Request/Response Schemas
+    RegisterRequest:
+      type: object
+      x-implemented: true
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+          description: Full name of the user
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: Unique email address
+          example: "john@example.com"
+        password:
+          type: string
+          minLength: 8
+          description: Must include uppercase, lowercase, number, and special character
+          example: "Securepassword123!"
+        phone:
+          type: string
+          description: Optional phone number
+          example: "+919876543210"
+
+    LoginRequest:
+      type: object
+      x-implemented: true
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        password:
+          type: string
+          example: "securepassword123"
+
+    LogoutRequest:
+      type: object
+      x-implemented: true
+      properties:
+        refreshToken:
+          type: string
+          description: Specific refresh token to revoke. If omitted, all user tokens are revoked.
+          example: "eyJhbG..."
+
+    RefreshTokenRequest:
+      type: object
+      x-implemented: true
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Valid refresh token
+          example: "eyJhbG..."
+
+    ForgotPasswordRequest:
+      type: object
+      x-implemented: true
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+
+    ResetPasswordRequest:
+      type: object
+      x-implemented: true
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          description: Password reset token from email
+          example: "abc123def456..."
+        newPassword:
+          type: string
+          minLength: 8
+          description: New password (min 8 characters)
+          example: "newSecurePass123"
+
+    AuthResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login successful"
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/UserPublic'
+            accessToken:
+              type: string
+              description: JWT access token (15 min expiry)
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            refreshToken:
+              type: string
+              description: JWT refresh token (7 day expiry)
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    TokenRefreshResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Token refreshed"
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+
+    UserPublic:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        phone:
+          type: string
+          nullable: true
+          example: "+919876543210"
+        profileImage:
+          type: string
+          nullable: true
+          example: "https://..."
+        referralCode:
+          type: string
+          nullable: true
+          example: "X1Y2Z3"
+        role:
+          type: string
+          enum: [customer, affiliate, admin]
+          example: "customer"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserProfileResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "User profile retrieved"
+        data:
+          $ref: '#/components/schemas/UserPublic'
+
+    UpdateProfileRequest:
+      type: object
+      x-implemented: true
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: "John Updated"
+        phone:
+          type: string
+          example: "+919876543210"
+        profileImage:
+          type: string
+          format: uri
+          example: "https://..."
+
+    # Address Schemas
+    CreateAddressRequest:
+      type: object
+      x-implemented: true
+      required:
+        - name
+        - phone
+        - addressLine1
+        - city
+        - state
+        - pincode
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: "John Doe"
+        phone:
+          type: string
+          minLength: 10
+          example: "+919876543210"
+        addressLine1:
+          type: string
+          minLength: 5
+          example: "123 Main Street"
+        addressLine2:
+          type: string
+          nullable: true
+          example: "Apt 4B"
+        city:
+          type: string
+          minLength: 2
+          example: "Mumbai"
+        state:
+          type: string
+          minLength: 2
+          example: "Maharashtra"
+        pincode:
+          type: string
+          minLength: 4
+          example: "400001"
+        addressType:
+          type: string
+          description: Optional label (e.g. Home, Office, etc.)
+          example: "Home"
+        isDefault:
+          type: boolean
+          default: false
+          example: true
+
+    UpdateAddressRequest:
+      type: object
+      x-implemented: true
+      properties:
+        name:
+          type: string
+          minLength: 2
+        phone:
+          type: string
+          minLength: 10
+        addressLine1:
+          type: string
+          minLength: 5
+        addressLine2:
+          type: string
+          nullable: true
+        city:
+          type: string
+          minLength: 2
+        state:
+          type: string
+          minLength: 2
+        pincode:
+          type: string
+          minLength: 4
+        addressType:
+          type: string
+        isDefault:
+          type: boolean
+
+    Address:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phone:
+          type: string
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+          nullable: true
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        addressType:
+          type: string
+          example: "Home"
+        isDefault:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AddressResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Address'
+
+    # Product/Store Schemas
+    ProductSummary:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          format: float
+        discountPrice:
+          type: number
+          format: float
+          nullable: true
+        stock:
+          type: integer
+        stockStatus:
+          type: string
+        image:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        commissionRate:
+          type: number
+          nullable: true
+        isAffiliateProduct:
+          type: boolean
+        sku:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProductDetail:
+      type: object
+      x-implemented: true
+      allOf:
+        - $ref: '#/components/schemas/ProductSummary'
+        - type: object
+          properties:
+            status:
+              type: string
+            commissionRate:
+              type: number
+              nullable: true
+            stockThreshold:
+              type: integer
+              nullable: true
+            stockLocation:
+              type: string
+              nullable: true
+            supplier:
+              type: string
+              nullable: true
+            inventoryNotes:
+              type: string
+              nullable: true
+
+    PaginatedProductsResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Products retrieved"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSummary'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 150
+            totalPages:
+              type: integer
+              example: 8
+
+    ProductDetailResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/ProductDetail'
+
+    # Service Schemas
+    ServiceSummary:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+          nullable: true
+        duration:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: float
+        discountedPrice:
+          type: number
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        howToUseType:
+          type: string
+          enum: [text, video]
+        howToUseText:
+          type: string
+          nullable: true
+        howToUseVideo:
+          type: string
+          nullable: true
+        workingHours:
+          type: string
+          nullable: true
+        workingDays:
+          type: string
+          nullable: true
+        bookingConfirmationMode:
+          type: string
+          enum: [instant, after_24h]
+        status:
+          type: string
+        isFeatured:
+          type: boolean
+        totalBookings:
+          type: integer
+        avgRating:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaginatedServicesResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Services retrieved"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceSummary'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+
+    ServiceDetailResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/ServiceSummary'
+
+    # Plan Schemas
+    SubscriptionPlan:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Professional"
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: float
+          example: 2999
+        duration:
+          type: string
+          enum: [monthly, quarterly, yearly]
+        features:
+          type: array
+          items:
+            type: string
+        maxProducts:
+          type: integer
+          nullable: true
+          example: 100
+        maxOrders:
+          type: integer
+          nullable: true
+          example: 500
+        addonAccess:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PlanAddon:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: float
+        features:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Pagination Schema
+    Pagination:
+      type: object
+      x-implemented: true
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 5
