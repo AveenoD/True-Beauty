@@ -22,6 +22,17 @@ const corsOrigins = (process.env.CORS_ORIGIN || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
+const port = String(process.env.PORT || 3000);
+const apiBase =
+  (process.env.API_BASE_URL || "").replace(/\/$/, "") ||
+  `http://localhost:${port}`;
+// Same-origin browser calls (e.g. Swagger UI at /docs on this API) send Origin = API host
+const sameOriginAllowlist = new Set<string>([
+  apiBase,
+  `http://localhost:${port}`,
+  `http://127.0.0.1:${port}`,
+]);
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -34,7 +45,11 @@ app.use(
       // Support comma-separated origins in CORS_ORIGIN
       if (corsOrigins.includes(origin)) return callback(null, true);
 
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      // Allow this API's own origin (Swagger UI, etc.)
+      if (sameOriginAllowlist.has(origin)) return callback(null, true);
+
+      // Do not pass Error — that becomes a 500; CORS deny is not an application error
+      return callback(null, false);
     },
     credentials: true,
   })

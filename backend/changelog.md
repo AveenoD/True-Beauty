@@ -166,6 +166,37 @@ Added `backend/.env.example` documenting `DATABASE_URL`, `PORT`, `CORS_ORIGIN`, 
 
 ---
 
+## [17-04-2026 17:03] — SuperAdmin auth + tenant Admin management endpoints
+
+**What changed:**
+Added platform-only SuperAdmin authentication (JWT) and implemented tenant Admin management endpoints:
+`POST /superadmin/login`, `POST /superadmin/admins`, `GET /superadmin/admins`, `GET /superadmin/admins/:id`, `PUT /superadmin/admins/:id/disable`, `PUT /superadmin/admins/:id/enable`.
+Mounted `/superadmin` router and updated OpenAPI specs to include these routes. SuperAdmin endpoints (except login) require Bearer token.
+
+**Files touched:**
+- `backend/src/utils/superadminJwt.ts` (new)
+- `backend/src/middleware/superadminAuth.ts` (new)
+- `backend/src/services/superadmin.service.ts` (new)
+- `backend/src/controllers/superadmin.controller.ts` (new)
+- `backend/src/routes/superadmin.routes.ts` (new)
+- `backend/src/routes/index.ts` (updated)
+- `backend/src/docs/openapi.yml` (updated)
+- `backend/docs/openapi.yml` (updated)
+
+**API endpoints used:**
+- `POST /superadmin/login`
+- `POST /superadmin/admins`
+- `GET /superadmin/admins`
+- `GET /superadmin/admins/:id`
+- `PUT /superadmin/admins/:id/disable`
+- `PUT /superadmin/admins/:id/enable`
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
 ## [17-04-2026 16:00] — Register DB errors: phone/email normalization and clearer Prisma messages
 
 **What changed:**
@@ -243,5 +274,87 @@ Implemented production-grade forgot/reset password flow: generates one-time rand
 - `POST /users/change-password`, `DELETE /users/delete-account`
 
 **Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 17:08] — SuperAdmin seed SQL (local dev)
+
+**What changed:**
+Added `backend/prisma/sql/seed_superadmin.sql` to upsert a `super_admin` row (bcrypt-hashed password) for local testing of `POST /superadmin/login` and tenant admin routes. Script is idempotent on `email`.
+
+**Files touched:**
+- `backend/prisma/sql/seed_superadmin.sql` (new)
+
+**API endpoints used:**
+- None (database seed only)
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 17:22] — CORS: allow API origin (Swagger UI)
+
+**What changed:**
+Swagger UI runs on the same host/port as the API and sends `Origin: http://localhost:9797`, which was not in `CORS_ORIGIN` (3000 only), causing failures. Added same-origin allowlist from `API_BASE_URL` / `http://localhost:${PORT}`. Replaced `callback(new Error(...))` on CORS deny with `callback(null, false)` so blocked origins do not surface as HTTP 500.
+
+**Files touched:**
+- `backend/src/index.ts`
+- `backend/.env.example`
+- `CHANGELOG.md`
+
+**API endpoints used:** None
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 17:15] — Swagger: load openapi.yml + fix /docs/json
+
+**What changed:**
+`swagger-jsdoc` was not merging YAML into `paths`, so Swagger UI showed “No operations defined”. Swagger spec is now built by parsing `src/docs/openapi.yml` with the `yaml` package; server URL is overridden from `API_BASE_URL` or `http://localhost:${PORT}`. Moved `GET /docs/json` before Swagger UI middleware so `/docs/json` returns JSON. Added optional `API_BASE_URL` to `.env.example`.
+
+**Files touched:**
+- `backend/src/config/swagger.ts`
+- `backend/src/routes/swagger.routes.ts`
+- `backend/package.json`, `backend/package-lock.json` (dependency: `yaml`)
+- `backend/.env.example`
+
+**API endpoints used:**
+- `GET /docs/json` (behavior)
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 18:30] — SuperAdmin: verify onboarding instead of create Admin
+
+**What changed:**
+Replaced `POST /superadmin/admins` (direct tenant Admin creation) with `PUT /superadmin/admins/:id/verify`, which updates `AdminOnboardingProgress` (`verificationStatus`, `verificationNote`, `verifiedAt`, `verifiedBySuperAdminId`) and aligns KYC document flags on approve/reject. Added Prisma enum `AdminVerificationStatus` and onboarding columns. List/get responses now include onboarding summary; get-by-id includes subscription and KYC documents for review.
+
+**Files touched:**
+- `backend/prisma/schema.prisma`
+- `backend/prisma/migrations/20260417140000_admin_onboarding_verification/migration.sql`
+- `backend/src/services/superadmin.service.ts`
+- `backend/src/controllers/superadmin.controller.ts`
+- `backend/src/routes/superadmin.routes.ts`
+- `backend/src/types/express.d.ts`
+- `backend/src/docs/openapi.yml`
+- `backend/docs/openapi.yml`
+- `CHANGELOG.md`
+- `backend/changelog.md`
+
+**API endpoints used:**
+- `PUT /superadmin/admins/:id/verify` (new)
+- `POST /superadmin/admins` (removed)
+
+**Breaking change:** YES
 
 **Branch:** anees-dev-frontend-integration-backend

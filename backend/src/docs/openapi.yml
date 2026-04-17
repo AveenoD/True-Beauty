@@ -61,7 +61,7 @@ tags:
     description: "User endpoints"
   - name: Wishlist
     description: "Wishlist endpoints"
-paths:
+x-paths-inventory:
   /admin/affiliate/withdrawals:
     get:
       tags:
@@ -3967,7 +3967,7 @@ paths:
             application/json:
               schema:
                 $ref: #/components/schemas/wishList_Items
-components:
+x-components-inventory:
   securitySchemes:
     bearerAuth:
       type: http
@@ -6016,6 +6016,179 @@ components:
 # ============================================================
 
 paths:
+  # --- SUPERADMIN ---
+  /superadmin/login:
+    post:
+      tags:
+        - Super Admin
+      summary: SuperAdmin login
+      description: |
+        Platform-only authentication. Returns a SuperAdmin JWT for managing tenant Admin accounts.
+      operationId: superadmin_login
+      x-implemented: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuperAdminLoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuperAdminLoginResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /superadmin/admins:
+    get:
+      tags:
+        - Super Admin
+      summary: List tenant Admins
+      operationId: superadmin_list_admins
+      x-implemented: true
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantAdminResponseData'
+
+  /superadmin/admins/{id}:
+    get:
+      tags:
+        - Super Admin
+      summary: Get tenant Admin by id
+      operationId: superadmin_get_admin
+      x-implemented: true
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantAdminDetailResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /superadmin/admins/{id}/verify:
+    put:
+      tags:
+        - Super Admin
+      summary: Set tenant Admin onboarding verification
+      description: |
+        Updates `AdminOnboardingProgress.verificationStatus` after the tenant has purchased a plan and submitted business/KYC details.
+        Does not create Admin accounts (tenants register and onboard separately).
+      operationId: superadmin_verify_admin_onboarding
+      x-implemented: true
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantAdminVerifyRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantAdminDetailResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /superadmin/admins/{id}/disable:
+    put:
+      tags:
+        - Super Admin
+      summary: Disable tenant Admin
+      operationId: superadmin_disable_admin
+      x-implemented: true
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantAdminResponse'
+
+  /superadmin/admins/{id}/enable:
+    put:
+      tags:
+        - Super Admin
+      summary: Enable tenant Admin
+      operationId: superadmin_enable_admin
+      x-implemented: true
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantAdminResponse'
+
   # --- AUTH ---
   /auth/register:
     post:
@@ -6994,6 +7167,239 @@ components:
             password: "Password must be at least 8 characters"
 
     # Auth Request/Response Schemas
+    SuperAdminLoginRequest:
+      type: object
+      x-implemented: true
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    SuperAdminLoginResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login successful"
+        data:
+          type: object
+          properties:
+            superAdmin:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                email:
+                  type: string
+                  format: email
+                createdAt:
+                  type: string
+                updatedAt:
+                  type: string
+            accessToken:
+              type: string
+
+    TenantAdminVerifyRequest:
+      type: object
+      x-implemented: true
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending_review, approved, rejected]
+          description: Tenant onboarding verification state (after plan purchase and business/KYC submission).
+        note:
+          type: string
+          description: Optional note (e.g. rejection reason).
+          maxLength: 2000
+
+    TenantAdminOnboardingSummary:
+      type: object
+      x-implemented: true
+      nullable: true
+      properties:
+        verificationStatus:
+          type: string
+          enum: [draft, pending_review, approved, rejected]
+        verificationNote:
+          type: string
+          nullable: true
+        verifiedAt:
+          type: string
+          nullable: true
+        verifiedBySuperAdminId:
+          type: string
+          format: uuid
+          nullable: true
+        storeName:
+          type: string
+          nullable: true
+        kycUploaded:
+          type: boolean
+        stepCompleted:
+          type: integer
+
+    TenantAdminResponseData:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        onboardingProgress:
+          $ref: '#/components/schemas/TenantAdminOnboardingSummary'
+
+    TenantAdminDetailData:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        subscription:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            planId:
+              type: string
+            status:
+              type: string
+            startDate:
+              type: string
+            expiryDate:
+              type: string
+            billingCycle:
+              type: string
+              nullable: true
+        kycDocuments:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              type:
+                type: string
+              fileUrl:
+                type: string
+              isVerified:
+                type: boolean
+              verifiedAt:
+                type: string
+                nullable: true
+              createdAt:
+                type: string
+        onboardingProgress:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            storeName:
+              type: string
+              nullable: true
+            storeDescription:
+              type: string
+              nullable: true
+            businessCategory:
+              type: string
+              nullable: true
+            stepCompleted:
+              type: integer
+            storeLogoUploaded:
+              type: boolean
+            storeBannerUploaded:
+              type: boolean
+            contactInfoUpdated:
+              type: boolean
+            bankDetailsUpdated:
+              type: boolean
+            kycUploaded:
+              type: boolean
+            verificationStatus:
+              type: string
+              enum: [draft, pending_review, approved, rejected]
+            verificationNote:
+              type: string
+              nullable: true
+            verifiedAt:
+              type: string
+              nullable: true
+            verifiedBySuperAdminId:
+              type: string
+              format: uuid
+              nullable: true
+            createdAt:
+              type: string
+            updatedAt:
+              type: string
+
+    TenantAdminResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Success"
+        data:
+          $ref: '#/components/schemas/TenantAdminResponseData'
+
+    TenantAdminDetailResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Success"
+        data:
+          $ref: '#/components/schemas/TenantAdminDetailData'
+
     RegisterRequest:
       type: object
       x-implemented: true
