@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import { ApiResponse } from "../utils/ApiResponse";
+import { logError } from "../utils/logger";
 
 export class AppError extends Error {
   constructor(
@@ -20,8 +21,11 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  // Log error
-  console.error(`[ERROR] ${err.name}: ${err.message}`);
+  logError("request_error", err, {
+    requestId: req.requestId,
+    method: req.method,
+    path: req.originalUrl,
+  });
 
   // Zod validation errors
   if (err instanceof ZodError) {

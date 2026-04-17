@@ -38,6 +38,16 @@ export const updateProfile = asyncHandler(
     const schema = z.object({
       name: z.string().min(2, "Name must be at least 2 characters").optional(),
       phone: z.string().optional(),
+      dateOfBirth: z
+        .preprocess(
+          (v) => (typeof v === "string" && v.trim() ? new Date(v) : v),
+          z.date().optional()
+        )
+        .optional(),
+      gender: z
+        .enum(["male", "female", "other"])
+        .optional()
+        .or(z.literal("").transform(() => undefined)),
     });
 
     const data = schema.parse(req.body);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Link from "next/link";
@@ -28,6 +28,7 @@ import {
 import { AxiosError } from "axios";
 import { api, ApiSuccess } from "../../lib/api";
 import { useAuth, AuthUser } from "../../lib/auth-context";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 type Step = "personal" | "address" | "complete";
 
@@ -45,6 +46,7 @@ type Address = {
 
 export default function ProfileClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user: authUser, isReady, isLoggedIn, logout, setUserFromProfile } =
     useAuth();
 
@@ -97,10 +99,15 @@ export default function ProfileClient() {
     setFormData({
       name: authUser.name || "",
       email: authUser.email || "",
-      dateOfBirth: "",
-      gender: "",
+      dateOfBirth: authUser.dateOfBirth ? String(authUser.dateOfBirth).slice(0, 10) : "",
+      gender: authUser.gender || "",
     });
   }, [authUser]);
+
+  useEffect(() => {
+    const edit = searchParams.get("edit");
+    if (edit === "1") setIsEditing(true);
+  }, [searchParams]);
 
   useEffect(() => {
     if (isLoggedIn && isReady) {
@@ -124,6 +131,20 @@ export default function ProfileClient() {
     router.push("/");
   };
 
+  const requestLogout = () => {
+    setConfirmState({
+      open: true,
+      title: "Log out?",
+      description: "You will be signed out from this device.",
+      confirmText: "Log out",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmState({ open: false });
+        await handleLogout();
+      },
+    });
+  };
+
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState("");
@@ -138,6 +159,17 @@ export default function ProfileClient() {
     confirm: false,
   });
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmState, setConfirmState] = useState<
+    | { open: false }
+    | {
+        open: true;
+        title: string;
+        description?: string;
+        confirmText?: string;
+        variant?: "danger" | "default";
+        onConfirm: () => Promise<void> | void;
+      }
+  >({ open: false });
 
   const validatePersonal = () => {
     const newErrors: Record<string, string> = {};
@@ -173,8 +205,17 @@ export default function ProfileClient() {
         newPassword: "",
         confirmNewPassword: "",
       });
-      alert("Password changed. Please log in again.");
-      await handleLogout();
+      setConfirmState({
+        open: true,
+        title: "Password changed",
+        description: "For security, please sign in again.",
+        confirmText: "OK",
+        variant: "default",
+        onConfirm: async () => {
+          setConfirmState({ open: false });
+          await handleLogout();
+        },
+      });
     } catch (err) {
       const ax = err as AxiosError<{ message?: string }>;
       setChangePasswordError(
@@ -187,16 +228,27 @@ export default function ProfileClient() {
   };
 
   const submitDeleteAccount = async () => {
-    if (!confirm("Are you sure? This will delete your account.")) return;
-    setDeleteLoading(true);
-    try {
-      await api.delete("/users/delete-account");
-      await handleLogout();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not delete account");
-    } finally {
-      setDeleteLoading(false);
-    }
+    setConfirmState({
+      open: true,
+      title: "Delete account?",
+      description: "This will deactivate your account and log you out. You can’t undo this action.",
+      confirmText: "Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        setDeleteLoading(true);
+        try {
+          await api.delete("/users/delete-account");
+          await handleLogout();
+        } catch (err) {
+          setErrors({
+            _form: err instanceof Error ? err.message : "Could not delete account",
+          });
+        } finally {
+          setDeleteLoading(false);
+          setConfirmState({ open: false });
+        }
+      },
+    });
   };
 
   const handleSavePersonal = async () => {
@@ -206,6 +258,8 @@ export default function ProfileClient() {
       const { data } = await api.put<ApiSuccess<AuthUser>>("/users/profile", {
         name: formData.name.trim(),
         phone: authUser?.phone || undefined,
+        dateOfBirth: formData.dateOfBirth || undefined,
+        gender: formData.gender || undefined,
       });
       setUserFromProfile(data.data);
       setIsSaving(false);
@@ -296,7 +350,11 @@ export default function ProfileClient() {
       setStepperStep("complete");
     } catch (err) {
       const ax = err as AxiosError<{ message?: string }>;
-      alert(ax.response?.data?.message || "Could not save address");
+      setErrors({
+        _form:
+          ax.response?.data?.message ||
+          (err instanceof Error ? err.message : "Could not save address"),
+      });
     }
   };
 
@@ -336,21 +394,36 @@ export default function ProfileClient() {
       setEditingAddress(null);
     } catch (err) {
       const ax = err as AxiosError<{ message?: string }>;
-      alert(ax.response?.data?.message || "Could not save address");
+      setErrors({
+        _form:
+          ax.response?.data?.message ||
+          (err instanceof Error ? err.message : "Could not save address"),
+      });
     }
   };
 
   const handleAddressDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this address?")) return;
-    setDeletingId(id);
-    try {
-      await api.delete(`/users/addresses/${id}`);
-      setAddresses((prev) => prev.filter((a) => a.id !== id));
-    } catch {
-      alert("Could not delete address");
-    } finally {
-      setDeletingId(null);
-    }
+    setConfirmState({
+      open: true,
+      title: "Delete address?",
+      description: "This address will be removed from your saved addresses.",
+      confirmText: "Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        setDeletingId(id);
+        try {
+          await api.delete(`/users/addresses/${id}`);
+          setAddresses((prev) => prev.filter((a) => a.id !== id));
+        } catch (err) {
+          setErrors({
+            _form: err instanceof Error ? err.message : "Could not delete address",
+          });
+        } finally {
+          setDeletingId(null);
+          setConfirmState({ open: false });
+        }
+      },
+    });
   };
 
   const handleSetDefault = async (id: string | undefined) => {
@@ -365,8 +438,10 @@ export default function ProfileClient() {
           isDefault: a.id === id,
         }))
       );
-    } catch {
-      alert("Could not update default address");
+    } catch (err) {
+      setErrors({
+        _form: err instanceof Error ? err.message : "Could not update default address",
+      });
     }
   };
 
@@ -588,7 +663,7 @@ export default function ProfileClient() {
                           <p className="text-sm text-gray-600 mb-2">Session</p>
                           <button
                             type="button"
-                            onClick={handleLogout}
+                            onClick={requestLogout}
                             className="text-sm text-rose-600 hover:text-rose-700 font-medium"
                           >
                             Log out
@@ -904,6 +979,19 @@ export default function ProfileClient() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.open ? confirmState.title : ""}
+        description={confirmState.open ? confirmState.description : undefined}
+        confirmText={confirmState.open ? confirmState.confirmText : undefined}
+        variant={confirmState.open ? confirmState.variant : "default"}
+        loading={deleteLoading || deletingId !== null}
+        onCancel={() => setConfirmState({ open: false })}
+        onConfirm={() => {
+          if (confirmState.open) confirmState.onConfirm();
+        }}
+      />
     </div>
   );
 }

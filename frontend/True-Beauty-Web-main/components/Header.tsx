@@ -8,6 +8,7 @@ import { Search, User, ShoppingBag, Menu, X, Grid3x3, Heart, ChevronRight, Chevr
 import { getThemeById } from '../utils/themeUtils';
 import { categories } from '../utils/categories';
 import { useAuth } from '../lib/auth-context';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function Header() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function Header() {
   const [currentThemeName, setCurrentThemeName] = useState<string>('Blush Rose');
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -124,6 +126,10 @@ export default function Header() {
     window.location.href = '/';
   };
 
+  const requestLogout = () => {
+    setConfirmLogoutOpen(true);
+  };
+
   const activeCategoryData = categories.find(cat => cat.id === activeCategory);
   const displayInitials =
     user?.name
@@ -183,7 +189,7 @@ export default function Header() {
                           <Link href="/profile/orders" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"><Package className="w-5 h-5 flex-shrink-0" /><span>Orders</span></Link>
                           <Link href="/profile/my-coupons" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"><TicketPercent className="w-5 h-5 flex-shrink-0" /><span>My Coupons</span></Link>
                           <Link href="/profile/wishlist" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"><Heart className="w-5 h-5 flex-shrink-0" /><span>Wishlist</span></Link>
-                          <button type="button" onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50"><LogOut className="w-5 h-5 flex-shrink-0" /><span>Logout</span></button>
+                          <button type="button" onClick={requestLogout} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50"><LogOut className="w-5 h-5 flex-shrink-0" /><span>Logout</span></button>
                         </nav>
                       </div>
                     </>
@@ -531,6 +537,21 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmLogoutOpen}
+        title="Log out?"
+        description="You will be signed out from this device."
+        confirmText="Log out"
+        cancelText="Cancel"
+        variant="danger"
+        onCancel={() => setConfirmLogoutOpen(false)}
+        onConfirm={async () => {
+          setConfirmLogoutOpen(false);
+          setProfileDropdownOpen(false);
+          await handleLogout();
+        }}
+      />
     </>
   );
 }

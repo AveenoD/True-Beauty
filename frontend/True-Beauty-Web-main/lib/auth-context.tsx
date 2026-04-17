@@ -15,6 +15,8 @@ export type AuthUser = {
   name: string;
   email: string;
   phone?: string | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
   role?: string;
   emailVerifiedAt?: string | null;
 };

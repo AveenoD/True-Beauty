@@ -8,6 +8,8 @@ export async function getUserProfile(userId: string) {
       name: true,
       email: true,
       phone: true,
+      dateOfBirth: true,
+      gender: true,
       emailVerifiedAt: true,
       referralCode: true,
       role: true,
@@ -26,7 +28,7 @@ export async function getUserProfile(userId: string) {
 
 export async function updateUserProfile(
   userId: string,
-  data: { name?: string; phone?: string }
+  data: { name?: string; phone?: string; dateOfBirth?: Date | null; gender?: string | null }
 ) {
   const user = await prisma.user.update({
     where: { id: userId },
@@ -36,6 +38,8 @@ export async function updateUserProfile(
       name: true,
       email: true,
       phone: true,
+      dateOfBirth: true,
+      gender: true,
       emailVerifiedAt: true,
       referralCode: true,
       role: true,

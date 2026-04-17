@@ -39,15 +39,15 @@ export default function ThemeSelector({ onClose }: ThemeSelectorProps) {
     
     // If there's a theme to purchase from previous session, redirect to pricing
     if (themeToPurchase && window.location.pathname !== '/pricing') {
-      const shouldRedirect = confirm(`You were previewing the ${themes.find(t => t.id === themeToPurchase)?.name} theme. Continue to purchase?`);
-      if (shouldRedirect) {
-        window.location.href = '/pricing';
-      } else {
-        localStorage.removeItem('theme_to_purchase');
-        // Restore default theme
-        applyTheme('blush-rose');
-        setCurrentTheme('blush-rose');
-        localStorage.setItem('active_theme', 'blush-rose');
+      const shouldRedirect = window.confirm(
+        `You were previewing the ${themes.find((t) => t.id === themeToPurchase)?.name} theme. Continue to purchase?`
+      );
+      if (shouldRedirect) window.location.href = "/pricing";
+      else {
+        localStorage.removeItem("theme_to_purchase");
+        applyTheme("blush-rose");
+        setCurrentTheme("blush-rose");
+        localStorage.setItem("active_theme", "blush-rose");
       }
     }
   }, []);

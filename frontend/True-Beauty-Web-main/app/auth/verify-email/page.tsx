@@ -27,7 +27,7 @@ function VerifyInner() {
         if (!cancelled) {
           setStatus("ok");
           setMessage("Your email is verified. You can sign in.");
-          router.replace("/profile");
+          router.replace("/login?verified=1&redirect=/profile?edit=1");
         }
       } catch (err) {
         const ax = err as AxiosError<{ message?: string }>;

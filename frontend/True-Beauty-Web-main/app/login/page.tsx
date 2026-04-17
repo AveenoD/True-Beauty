@@ -20,6 +20,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = getRedirectPath(searchParams.get("redirect"));
   const registered = searchParams.get("registered");
+  const verified = searchParams.get("verified");
   const { login, isLoggedIn, isReady } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +47,7 @@ function LoginForm() {
     setIsLoading(true);
     try {
       await login(email.trim(), password);
-      router.push(redirectTo || "/profile");
+      router.push(redirectTo || "/profile?edit=1");
     } catch (err) {
       const ax = err as AxiosError<{ message?: string }>;
       setError(
@@ -92,6 +93,11 @@ function LoginForm() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-rose-100/80 p-6 md:p-8">
+          {verified === "1" && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
+              Email verified. Please sign in to continue.
+            </div>
+          )}
           {registered === "1" && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
               Account created. Verify your email, then sign in.
