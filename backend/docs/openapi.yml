@@ -6357,7 +6357,7 @@ paths:
       description: |
         Priority: Phase 0 / Day 1
         ERD tables: User
-        Implementation: Updates authenticated user's name, phone, or profileImage.
+        Implementation: Updates authenticated user's name or phone.
       operationId: op_8_put_impl
       x-phase: Phase 0
       x-day: Day 1
@@ -7150,10 +7150,10 @@ components:
           type: string
           nullable: true
           example: "+919876543210"
-        profileImage:
+        emailVerifiedAt:
           type: string
+          format: date-time
           nullable: true
-          example: "https://..."
         referralCode:
           type: string
           nullable: true
@@ -7196,10 +7196,6 @@ components:
         phone:
           type: string
           example: "+919876543210"
-        profileImage:
-          type: string
-          format: uri
-          example: "https://..."
 
     # Address Schemas
     CreateAddressRequest:

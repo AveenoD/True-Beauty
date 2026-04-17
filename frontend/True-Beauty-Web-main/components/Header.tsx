@@ -7,14 +7,14 @@ import Link from 'next/link';
 import { Search, User, ShoppingBag, Menu, X, Grid3x3, Heart, ChevronRight, ChevronDown, ChevronLeft, MapPin, Package, LogOut, Palette, IndianRupee, Users, TicketPercent } from 'lucide-react';
 import { getThemeById } from '../utils/themeUtils';
 import { categories } from '../utils/categories';
+import { useAuth } from '../lib/auth-context';
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const { user, isLoggedIn, logout: authLogout } = useAuth();
   const [isAffiliate, setIsAffiliate] = useState(false);
   const [categoriesMenuOpen, setCategoriesMenuOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(80);
@@ -48,19 +48,7 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    const authToken = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('user');
-    const profileData = localStorage.getItem('profile');
-    setIsLoggedIn(!!authToken);
-    if (authToken && userData) {
-      const parsedUser = JSON.parse(userData);
-      const parsedProfile = profileData ? JSON.parse(profileData) : null;
-      setUser({ ...parsedUser, ...parsedProfile });
-      setIsAffiliate(!!localStorage.getItem('isAffiliate') || !!parsedProfile?.isAffiliate);
-    } else {
-      setUser(null);
-      setIsAffiliate(false);
-    }
+    setIsAffiliate(false);
 
     // Function to update theme name
     const updateThemeName = () => {
@@ -131,11 +119,8 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [profileDropdownOpen]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('profile');
-    sessionStorage.clear();
+  const handleLogout = async () => {
+    await authLogout();
     window.location.href = '/';
   };
 

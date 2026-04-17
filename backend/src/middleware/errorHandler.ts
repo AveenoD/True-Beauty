@@ -26,8 +26,9 @@ export function errorHandler(
   // Zod validation errors
   if (err instanceof ZodError) {
     const errors: Record<string, string> = {};
-    err.errors.forEach((e) => {
-      const path = e.path.join(".");
+    const issues = (err as ZodError).issues ?? [];
+    issues.forEach((e) => {
+      const path = e.path.join(".") || "_root";
       errors[path] = e.message;
     });
     return ApiResponse.unprocessable(res, "Validation failed", errors);
@@ -35,14 +36,53 @@ export function errorHandler(
 
   // Prisma errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    const devDetail =
+      process.env.NODE_ENV !== "production"
+        ? `${err.code}: ${err.message}`
+        : undefined;
     switch (err.code) {
-      case "P2002":
-        return ApiResponse.conflict(res, "A record with this value already exists");
+      case "P2002": {
+        const target = (err.meta?.target as string[] | undefined)?.join(", ");
+        return ApiResponse.conflict(
+          res,
+          target
+            ? `This value already exists (${target})`
+            : "A record with this value already exists"
+        );
+      }
+      case "P2003":
+        return ApiResponse.error(
+          res,
+          process.env.NODE_ENV !== "production"
+            ? `Invalid reference (foreign key): ${err.message}`
+            : "Invalid related record",
+          400
+        );
+      case "P2021":
+      case "P2022":
+        return ApiResponse.error(
+          res,
+          "Database schema is out of date. Run: npx prisma migrate deploy",
+          500
+        );
       case "P2025":
         return ApiResponse.notFound(res, "Record not found");
       default:
-        return ApiResponse.error(res, "Database error", 500);
+        return ApiResponse.error(
+          res,
+          process.env.NODE_ENV !== "production"
+            ? devDetail ?? "Database error"
+            : "Database error",
+          500
+        );
     }
+  }
+
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    return ApiResponse.unprocessable(
+      res,
+      process.env.NODE_ENV !== "production" ? err.message : "Invalid data"
+    );
   }
 
   // AppError

@@ -3,6 +3,22 @@ import { z } from "zod";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/ApiResponse";
 import * as authService from "../services/auth.service";
+import {
+  clearRefreshTokenCookie,
+  getRefreshTokenFromRequest,
+  setRefreshTokenCookie,
+} from "../utils/authCookies";
+
+export const verifyEmail = asyncHandler(
+  async (req: Request, res: Response) => {
+    const token = z
+      .string()
+      .min(1, "Token is required")
+      .parse(req.query.token as string);
+    await authService.verifyEmailWithToken(token);
+    return ApiResponse.success(res, { verified: true }, "Email verified");
+  }
+);
 
 export const register = asyncHandler(
   async (req: Request, res: Response) => {
@@ -19,9 +35,25 @@ export const register = asyncHandler(
 
     return ApiResponse.created(
       res,
-      result,
-      "Registration successful"
+      {
+        user: result.user,
+        ...(process.env.NODE_ENV !== "production"
+          ? { verifyUrl: result.verifyUrl }
+          : {}),
+      },
+      "Registration successful. Please verify your email to sign in."
     );
+  }
+);
+
+export const resendVerification = asyncHandler(
+  async (req: Request, res: Response) => {
+    const schema = z.object({
+      email: z.string().email("Invalid email address"),
+    });
+    const { email } = schema.parse(req.body);
+    const result = await authService.resendVerificationEmail(email);
+    return ApiResponse.success(res, result, "Verification email sent");
   }
 );
 
@@ -35,7 +67,16 @@ export const login = asyncHandler(
     const data = schema.parse(req.body);
     const result = await authService.loginUser(data);
 
-    return ApiResponse.success(res, result, "Login successful");
+    setRefreshTokenCookie(res, result.refreshToken);
+
+    return ApiResponse.success(
+      res,
+      {
+        user: result.user,
+        accessToken: result.accessToken,
+      },
+      "Login successful"
+    );
   }
 );
 
@@ -45,10 +86,13 @@ export const logout = asyncHandler(
       refreshToken: z.string().optional(),
     });
 
-    const { refreshToken } = schema.parse(req.body);
+    const parsed = schema.parse(req.body);
     const userId = (req as any).userId;
+    const refreshToken =
+      parsed.refreshToken ?? getRefreshTokenFromRequest(req);
 
     await authService.logoutUser(userId, refreshToken);
+    clearRefreshTokenCookie(res);
 
     return ApiResponse.success(res, null, "Logout successful");
   }
@@ -57,13 +101,25 @@ export const logout = asyncHandler(
 export const refreshToken = asyncHandler(
   async (req: Request, res: Response) => {
     const schema = z.object({
-      refreshToken: z.string().min(1, "Refresh token is required"),
+      refreshToken: z.string().optional(),
     });
 
-    const { refreshToken } = schema.parse(req.body);
-    const result = await authService.refreshUserToken(refreshToken);
+    const parsed = schema.parse(req.body);
+    const refreshToken =
+      parsed.refreshToken ?? getRefreshTokenFromRequest(req);
 
-    return ApiResponse.success(res, result, "Token refreshed");
+    if (!refreshToken) {
+      return ApiResponse.unauthorized(res, "Refresh token missing");
+    }
+
+    const result = await authService.refreshUserToken(refreshToken);
+    setRefreshTokenCookie(res, result.refreshToken);
+
+    return ApiResponse.success(
+      res,
+      { accessToken: result.accessToken },
+      "Token refreshed"
+    );
   }
 );
 

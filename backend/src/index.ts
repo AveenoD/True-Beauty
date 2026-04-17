@@ -1,24 +1,25 @@
+import "dotenv/config";
 import express from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import { config } from "dotenv";
 import rateLimit from "express-rate-limit";
 import routes from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
-
-// Load env vars
-config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || "*",
-  credentials: true,
-}));
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || "*",
+    credentials: true,
+  })
+);
 
 // Rate limiting
 const limiter = rateLimit({

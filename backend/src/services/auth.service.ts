@@ -5,17 +5,23 @@ import {
 } from "../utils/jwt";
 import { hashPassword, comparePassword } from "../utils/password";
 import prisma from "../config/database";
-import { User } from "@prisma/client";
 import crypto from "crypto";
+import { buildVerifyEmailHtml, sendMail } from "../utils/mailer";
 
 const REFRESH_EXPIRY_DAYS = 7;
+const EMAIL_VERIFY_EXPIRY_HOURS = 24;
 
-function getTokenExpiry(type: "access" | "refresh"): Date {
+function getTokenExpiry(type: "access" | "refresh" | "email_verify"): Date {
   const now = new Date();
   if (type === "access") {
-    return new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes
+    return new Date(now.getTime() + 15 * 60 * 1000);
   }
-  return new Date(now.getTime() * REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000); // 7 days
+  if (type === "email_verify") {
+    return new Date(now.getTime() + EMAIL_VERIFY_EXPIRY_HOURS * 60 * 60 * 1000);
+  }
+  return new Date(
+    now.getTime() + REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+  );
 }
 
 export async function registerUser(data: {
@@ -25,8 +31,14 @@ export async function registerUser(data: {
   phone?: string;
   referralCode?: string;
 }) {
+  const email = data.email.trim().toLowerCase();
+  const phone =
+    data.phone && data.phone.trim().length > 0
+      ? data.phone.trim()
+      : undefined;
+
   const existing = await prisma.user.findUnique({
-    where: { email: data.email },
+    where: { email },
   });
 
   if (existing) {
@@ -35,13 +47,6 @@ export async function registerUser(data: {
 
   const hashedPassword = await hashPassword(data.password);
 
-  // Generate unique referral code
-  const userReferralCode = crypto
-    .randomBytes(4)
-    .toString("hex")
-    .toUpperCase();
-
-  // Check referral code if provided
   let referredByUserId: string | null = null;
   if (data.referralCode) {
     const referrer = await prisma.user.findFirst({
@@ -54,45 +59,150 @@ export async function registerUser(data: {
 
   const user = await prisma.user.create({
     data: {
-      name: data.name,
-      email: data.email,
+      name: data.name.trim(),
+      email,
       password: hashedPassword,
-      phone: data.phone,
-      referralCode: userReferralCode,
-      referralBy: referredByUserId,
+      phone,
+      referralCode: null,
+      referralBy: referredByUserId ?? undefined,
+      emailVerifiedAt: null,
     },
   });
 
-  // Generate tokens
-  const accessToken = generateAccessToken(user.id, user.role);
-  const refreshToken = generateRefreshToken(user.id);
+  const verificationToken = crypto.randomBytes(32).toString("hex");
 
-  // Store refresh token
   await prisma.authToken.create({
     data: {
-      token: refreshToken,
-      type: "refresh",
+      token: verificationToken,
+      type: "email_verify",
       userId: user.id,
-      expiresAt: getTokenExpiry("refresh"),
+      expiresAt: getTokenExpiry("email_verify"),
     },
   });
 
-  // Remove password from response
+  const frontendBase =
+    process.env.FRONTEND_URL || "http://localhost:3000";
+  const verifyUrl = `${frontendBase.replace(/\/$/, "")}/auth/verify-email?token=${encodeURIComponent(verificationToken)}`;
+
+  await sendMail({
+    to: user.email,
+    subject: "Verify your True Beauty account",
+    html: buildVerifyEmailHtml({ name: user.name, verifyUrl }),
+  });
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[email verify] ${user.email} → ${verifyUrl}`);
+  }
+
   const { password: _, ...userWithoutPassword } = user;
 
   return {
     user: userWithoutPassword,
-    accessToken,
-    refreshToken,
+    verifyUrl,
   };
 }
 
-export async function loginUser(data: {
-  email: string;
-  password: string;
-}) {
+export async function resendVerificationEmail(emailRaw: string) {
+  const email = emailRaw.trim().toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  // Always return success to avoid email enumeration
+  if (!user) {
+    return { message: "If an account exists, a verification email was sent" };
+  }
+
+  if (user.emailVerifiedAt) {
+    return { message: "Email is already verified" };
+  }
+
+  const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const sentLast24h = await prisma.authToken.count({
+    where: {
+      userId: user.id,
+      type: "email_verify",
+      createdAt: { gte: windowStart },
+    },
+  });
+
+  if (sentLast24h >= 3) {
+    throw new Error("Verification email limit reached. Try again after 24 hours.");
+  }
+
+  await prisma.authToken.updateMany({
+    where: {
+      userId: user.id,
+      type: "email_verify",
+      revokedAt: null,
+    },
+    data: { revokedAt: new Date() },
+  });
+
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+  await prisma.authToken.create({
+    data: {
+      token: verificationToken,
+      type: "email_verify",
+      userId: user.id,
+      expiresAt: getTokenExpiry("email_verify"),
+    },
+  });
+
+  const frontendBase = process.env.FRONTEND_URL || "http://localhost:3000";
+  const verifyUrl = `${frontendBase.replace(/\/$/, "")}/auth/verify-email?token=${encodeURIComponent(verificationToken)}`;
+
+  await sendMail({
+    to: user.email,
+    subject: "Verify your True Beauty account",
+    html: buildVerifyEmailHtml({ name: user.name, verifyUrl }),
+  });
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[email verify resend] ${user.email} → ${verifyUrl}`);
+  }
+
+  return { message: "If an account exists, a verification email was sent" };
+}
+
+export async function verifyEmailWithToken(token: string) {
+  const stored = await prisma.authToken.findUnique({
+    where: { token },
+  });
+
+  if (!stored || stored.type !== "email_verify") {
+    throw new Error("Invalid or expired verification link");
+  }
+
+  if (stored.revokedAt) {
+    throw new Error("This verification link has already been used");
+  }
+
+  if (stored.expiresAt < new Date()) {
+    throw new Error("Verification link has expired");
+  }
+
+  const userId = stored.userId;
+  if (!userId) {
+    throw new Error("Invalid verification link");
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { emailVerifiedAt: new Date() },
+    }),
+    prisma.authToken.update({
+      where: { id: stored.id },
+      data: { revokedAt: new Date() },
+    }),
+  ]);
+
+  return { userId };
+}
+
+export async function loginUser(data: { email: string; password: string }) {
+  const email = data.email.trim().toLowerCase();
   const user = await prisma.user.findUnique({
-    where: { email: data.email },
+    where: { email },
   });
 
   if (!user) {
@@ -112,11 +222,13 @@ export async function loginUser(data: {
     throw new Error("Account is deactivated");
   }
 
-  // Generate tokens
+  if (!user.emailVerifiedAt) {
+    throw new Error("Please verify your email before logging in");
+  }
+
   const accessToken = generateAccessToken(user.id, user.role);
   const refreshToken = generateRefreshToken(user.id);
 
-  // Store refresh token
   await prisma.authToken.create({
     data: {
       token: refreshToken,
@@ -126,7 +238,6 @@ export async function loginUser(data: {
     },
   });
 
-  // Update last login
   await prisma.user.update({
     where: { id: user.id },
     data: { updatedAt: new Date() },
@@ -154,7 +265,6 @@ export async function logoutUser(userId: string, refreshToken?: string) {
       },
     });
   } else {
-    // Revoke all tokens for this user
     await prisma.authToken.updateMany({
       where: {
         userId,
@@ -180,6 +290,10 @@ export async function refreshUserToken(refreshToken: string) {
       throw new Error("Token not found");
     }
 
+    if (storedToken.type !== "refresh") {
+      throw new Error("Invalid token type");
+    }
+
     if (storedToken.revokedAt) {
       throw new Error("Token has been revoked");
     }
@@ -196,17 +310,14 @@ export async function refreshUserToken(refreshToken: string) {
       throw new Error("User not found or inactive");
     }
 
-    // Revoke old token
     await prisma.authToken.update({
       where: { id: storedToken.id },
       data: { revokedAt: new Date() },
     });
 
-    // Generate new tokens
     const newAccessToken = generateAccessToken(user.id, user.role);
     const newRefreshToken = generateRefreshToken(user.id);
 
-    // Store new refresh token
     await prisma.authToken.create({
       data: {
         token: newRefreshToken,
@@ -220,34 +331,31 @@ export async function refreshUserToken(refreshToken: string) {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     };
-  } catch {
+  } catch (e: unknown) {
+    if (process.env.NODE_ENV !== "production" && e instanceof Error) {
+      throw e;
+    }
     throw new Error("Invalid refresh token");
   }
 }
 
 export async function forgotPassword(email: string) {
+  const normalized = email.trim().toLowerCase();
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: normalized },
   });
 
-  // Always return success to prevent email enumeration
   if (!user) {
     return { message: "If an account exists, a reset email has been sent" };
   }
 
-  // Generate reset token (in production, send via email)
   const resetToken = crypto.randomBytes(32).toString("hex");
-  const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-  // In production, store reset token in a separate table or send via email
-  console.log(`Password reset token for ${email}: ${resetToken}`);
+  console.log(`Password reset token for ${normalized}: ${resetToken}`);
 
   return { message: "If an account exists, a reset email has been sent" };
 }
 
 export async function resetPassword(token: string, newPassword: string) {
-  // In production, validate the reset token from the database
-  // For now, accept any token and expect email-based validation
   if (!token || !newPassword) {
     throw new Error("Token and new password are required");
   }
@@ -255,13 +363,6 @@ export async function resetPassword(token: string, newPassword: string) {
   if (newPassword.length < 8) {
     throw new Error("Password must be at least 8 characters");
   }
-
-  // In production: lookup token from password_reset_tokens table
-  // const resetRecord = await prisma.passwordResetToken.findUnique({ where: { token } });
-  // if (!resetRecord || resetRecord.expiresAt < new Date()) throw new Error("Invalid or expired token");
-
-  // For demo: we would update the password here
-  // await prisma.user.update({ where: { email: resetRecord.email }, data: { password: hashedPassword } });
 
   return { message: "Password has been reset successfully" };
 }

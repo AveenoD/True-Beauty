@@ -1,0 +1,21 @@
+# Local PostgreSQL for Prisma — avoids P1000 from wrong Windows Postgres password.
+# Port 5433 → host so it does not clash with an existing PostgreSQL on 5432.
+#
+# From repo root:  docker compose up -d
+# Then:            cd backend && npx prisma migrate deploy
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: truebeauty
+    ports:
+      - "5433:5432"
+    volumes:
+      - truebeauty_pgdata:/var/lib/postgresql/data
+
+volumes:
+  truebeauty_pgdata:

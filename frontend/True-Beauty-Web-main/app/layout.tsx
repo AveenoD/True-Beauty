@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import ThemeSelector from "../components/ThemeSelector";
+import { Providers } from "./providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,10 +28,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${playfair.variable} antialiased`}
+        suppressHydrationWarning
       >
-        <div className="theme-container">
-          {children}
-        </div>
+        <Providers>
+          <div className="theme-container">{children}</div>
+        </Providers>
         {/* Initialize theme system */}
         <script
           dangerouslySetInnerHTML={{

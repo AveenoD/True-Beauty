@@ -6,7 +6,9 @@ import { authenticateUser } from "../middleware/auth";
 const router = Router();
 
 // --- Public Auth Routes ---
+router.get("/verify-email", authController.verifyEmail);
 router.post("/register", authController.register);
+router.post("/resend-verification", authController.resendVerification);
 router.post("/login", authController.login);
 router.post("/refresh-token", authController.refreshToken);
 router.post("/forgot-password", authController.forgotPassword);

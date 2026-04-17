@@ -122,3 +122,101 @@ Installed swagger-ui-express and swagger-jsdoc packages for API documentation. C
 **Breaking change:** YES — all auth/user routes changed from `/auth/*` and `/user/*` to `/users/*`
 
 **Branch:** master
+
+---
+
+## [17-04-2026 12:00] — User profile image removal, email verification, httpOnly refresh cookie, frontend auth integration
+
+**What changed:**
+Removed `profileImage` from the `User` model; added `emailVerifiedAt` and aligned `TokenType` with DB (`email_verify`, `password_reset`). Registration now creates an email verification token (no JWT until verified); `GET /users/verify-email?token=` verifies the account; login requires a verified email. Login, refresh, and logout set/clear an httpOnly `tb_refresh` cookie; refresh and logout accept the refresh token from the cookie or body; login/refresh responses omit refresh token from JSON (access token only in body). Added `cookie-parser` and `FRONTEND_URL` for verification links (dev console logs link). OpenAPI docs updated for profile fields. New migration drops `profileImage` on `user`, ensures `emailVerifiedAt`, and backfills existing rows so current users remain able to log in. Frontend (`True-Beauty-Web-main`): axios client with `withCredentials`, auth context (session bootstrap via refresh cookie), email/password login and register, verify-email page, profile/addresses wired to `/users/*` APIs; removed phone OTP demo flow.
+
+**Files touched:**
+- `backend/prisma/schema.prisma`, `backend/prisma/migrations/20260417120000_user_drop_profile_image_email_verified/migration.sql`
+- `backend/src/index.ts`, `backend/src/utils/authCookies.ts`, `backend/src/controllers/auth.controller.ts`, `backend/src/services/auth.service.ts`, `backend/src/routes/users.routes.ts`
+- `backend/src/controllers/user.controller.ts`, `backend/src/services/user.service.ts`
+- `backend/src/docs/openapi.yml`, `backend/docs/openapi.yml`
+- `frontend/True-Beauty-Web-main/package.json`, `lib/api.ts`, `lib/auth-context.tsx`, `app/providers.tsx`, `app/layout.tsx`, `app/login/page.tsx`, `app/auth/register/page.tsx`, `app/auth/verify-email/page.tsx`, `app/profile/page.tsx`, `app/profile/ProfileClient.tsx`, `components/Header.tsx`
+
+**API endpoints used:**
+- `GET /users/verify-email`, `POST /users/register`, `POST /users/login`, `POST /users/refresh-token`, `POST /users/logout`, `GET /users/profile`, `PUT /users/profile`, `GET /users/addresses`, `POST /users/addresses`, `PUT /users/addresses/:id`, `DELETE /users/addresses/:id`
+
+**Breaking change:** YES — registration no longer returns access/refresh tokens until email is verified; `User.profileImage` removed; login blocked until `emailVerifiedAt` is set.
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 14:30] — Local env templates and dev run notes
+
+**What changed:**
+Added `backend/.env.example` documenting `DATABASE_URL`, `PORT`, `CORS_ORIGIN`, `FRONTEND_URL`, and JWT secrets for local testing. Created local `backend/.env` and `frontend/True-Beauty-Web-main/.env.local` for dev (adjust `DATABASE_URL` to your Postgres user/password). Updated `frontend/True-Beauty-Web-main/.env.example` comments. Set `ignoreDeprecations` in `backend/tsconfig.json` so TypeScript 6 / `ts-node-dev` can compile without the `moduleResolution=node10` hard error.
+
+**Files touched:**
+- `backend/.env.example` (new), `backend/.env` (local — gitignored)
+- `frontend/True-Beauty-Web-main/.env.example`, `frontend/True-Beauty-Web-main/.env.local` (local — gitignored)
+- `backend/tsconfig.json`
+- `backend/src/index.ts`, `backend/src/config/database.ts` — load `dotenv` before Prisma; `PrismaClient` uses `@prisma/adapter-pg` + `pg` pool (Prisma 7 driver adapter). Dependencies: `@prisma/adapter-pg`, `pg`, `@types/pg`.
+
+**API endpoints used:**
+- None (configuration only)
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 16:00] — Register DB errors: phone/email normalization and clearer Prisma messages
+
+**What changed:**
+Registration stores email lowercased/trimmed and omits phone when empty (empty string could violate the unique phone index). Login and forgot-password normalize email the same way. Error handler uses Zod `issues`, maps Prisma `P2002`/`P2003`/`P2021`/`P2022` to clearer messages (including migrate hint when schema/columns are missing), and handles `PrismaClientValidationError`.
+
+**Files touched:**
+- `backend/src/services/auth.service.ts`
+- `backend/src/middleware/errorHandler.ts`
+
+**API endpoints used:**
+- `POST /users/register`, `POST /users/login`, `POST /users/forgot-password` (behavior)
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 17:15] — Docker Postgres (P1000), Prisma relations, hydration
+
+**What changed:**
+Added repo-root `docker-compose.yml` (Postgres 16 on host port **5433**, credentials `postgres`/`postgres`, database `truebeauty`). Updated `backend/.env` / `.env.example` to `postgresql://postgres:postgres@localhost:5433/...`. Scripts `db:up`, `db:down`, `prisma:deploy`. Prisma 7: datasource `url` only in `prisma.config.ts`; added relation back-references on `AuthToken`, `Address`, `Coupon`, `Product`. `layout.tsx`: `suppressHydrationWarning` on `body`.
+
+**Files touched:**
+- `docker-compose.yml`, `backend/.env`, `backend/.env.example`, `backend/package.json`, `backend/prisma/schema.prisma`, `frontend/True-Beauty-Web-main/app/layout.tsx`
+
+**API endpoints used:** None
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 18:05] — Send verification emails via SMTP + resend from frontend
+
+**What changed:**
+Added Nodemailer-based SMTP mailer and professional HTML template for email verification. Registration now attempts to send the verification email (falls back to dev console log if SMTP isn’t configured). Added `POST /users/resend-verification` with a limit of 3 sends per user per 24h and revokes previous unused verification tokens. Frontend login now shows a **Resend** option when login is blocked due to unverified email.
+
+**Files touched:**
+- `backend/src/utils/mailer.ts`
+- `backend/src/services/auth.service.ts`
+- `backend/src/controllers/auth.controller.ts`
+- `backend/src/routes/users.routes.ts`
+- `backend/.env`, `backend/.env.example`
+- `frontend/True-Beauty-Web-main/app/login/page.tsx`
+
+**API endpoints used:**
+- `POST /users/register`
+- `POST /users/resend-verification`
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend

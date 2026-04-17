@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ============================================================
@@ -188,6 +187,8 @@ enum PlanDuration {
 enum TokenType {
   access
   refresh
+  email_verify
+  password_reset
 }
 
 // ============================================================
@@ -203,6 +204,9 @@ model AuthToken {
   expiresAt   DateTime
   revokedAt   DateTime?
   createdAt   DateTime  @default(now())
+
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin       Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([userId])
@@ -259,7 +263,7 @@ model User {
   email             String    @unique
   password          String?
   phone             String?
-  profileImage      String?
+  emailVerifiedAt   DateTime?
   isActive          Boolean   @default(true)
   referralCode      String?   @unique
   referralBy        String?
@@ -318,6 +322,8 @@ model Address {
 
   // Relations
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders  Order[]  @relation("OrderShippingAddress")
+  billingOrders   Order[]  @relation("OrderBillingAddress")
 
   @@map("address")
 }
@@ -467,6 +473,7 @@ model Product {
   couponApplicable  CouponApplicableProduct[]
   reviews           ReviewRating[]
   wishlistItems     WishlistItem[]
+  cartItems         CartItem[]
 
   @@map("product")
 }
@@ -529,6 +536,7 @@ model Coupon {
   // Relations
   applicableProducts      CouponApplicableProduct[]
   applicableCategories     CouponApplicableCategory[]
+  orders                  Order[]
 
   @@map("coupon")
 }

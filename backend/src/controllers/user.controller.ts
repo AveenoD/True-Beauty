@@ -38,7 +38,6 @@ export const updateProfile = asyncHandler(
     const schema = z.object({
       name: z.string().min(2, "Name must be at least 2 characters").optional(),
       phone: z.string().optional(),
-      profileImage: z.string().url("Invalid URL").optional(),
     });
 
     const data = schema.parse(req.body);
@@ -82,8 +81,7 @@ export const createAddress = asyncHandler(
       city: z.string().min(2, "City is required"),
       state: z.string().min(2, "State is required"),
       pincode: z.string().min(4, "Pincode is required"),
-      country: z.string().optional(),
-      addressType: z.enum(["home", "work", "other"]).optional(),
+      addressType: z.string().optional(),
       isDefault: z.boolean().optional(),
     });
 
@@ -114,8 +112,7 @@ export const updateAddress = asyncHandler(
       city: z.string().min(2).optional(),
       state: z.string().min(2).optional(),
       pincode: z.string().min(4).optional(),
-      country: z.string().optional(),
-      addressType: z.enum(["home", "work", "other"]).optional(),
+      addressType: z.string().optional(),
       isDefault: z.boolean().optional(),
     });
 
