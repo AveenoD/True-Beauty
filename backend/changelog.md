@@ -220,3 +220,28 @@ Added Nodemailer-based SMTP mailer and professional HTML template for email veri
 **Breaking change:** NO
 
 **Branch:** anees-dev-frontend-integration-backend
+
+---
+
+## [17-04-2026 19:45] — Forgot/reset password + change password + delete account (backend + profile UI)
+
+**What changed:**
+Implemented production-grade forgot/reset password flow: generates one-time random reset token, stores only SHA-256 hash in `auth_token` with `password_reset` type, expires in 1 hour, revokes prior tokens, and sends a reset email. Reset consumes token, updates password, and revokes refresh sessions. Added protected `POST /users/change-password` and `DELETE /users/delete-account` (soft delete via `isActive=false` and `deletedAt`, revoke tokens, clear refresh cookie). Frontend: added “Forgot password” link on login with new pages `/auth/forgot-password` and `/auth/reset-password`; profile Security section now includes Change password (modal) and Delete account (danger zone) wired to backend APIs.
+
+**Files touched:**
+- `backend/src/services/auth.service.ts`
+- `backend/src/controllers/auth.controller.ts`
+- `backend/src/routes/users.routes.ts`
+- `backend/src/utils/mailer.ts`
+- `frontend/True-Beauty-Web-main/app/login/page.tsx`
+- `frontend/True-Beauty-Web-main/app/auth/forgot-password/page.tsx`
+- `frontend/True-Beauty-Web-main/app/auth/reset-password/page.tsx`
+- `frontend/True-Beauty-Web-main/app/profile/ProfileClient.tsx`
+
+**API endpoints used:**
+- `POST /users/forgot-password`, `POST /users/reset-password`
+- `POST /users/change-password`, `DELETE /users/delete-account`
+
+**Breaking change:** NO
+
+**Branch:** anees-dev-frontend-integration-backend

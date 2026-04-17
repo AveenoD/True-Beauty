@@ -6,10 +6,11 @@ import {
 import { hashPassword, comparePassword } from "../utils/password";
 import prisma from "../config/database";
 import crypto from "crypto";
-import { buildVerifyEmailHtml, sendMail } from "../utils/mailer";
+import { buildResetPasswordHtml, buildVerifyEmailHtml, sendMail } from "../utils/mailer";
 
 const REFRESH_EXPIRY_DAYS = 7;
 const EMAIL_VERIFY_EXPIRY_HOURS = 24;
+const PASSWORD_RESET_EXPIRY_HOURS = 1;
 
 function getTokenExpiry(type: "access" | "refresh" | "email_verify"): Date {
   const now = new Date();
@@ -22,6 +23,14 @@ function getTokenExpiry(type: "access" | "refresh" | "email_verify"): Date {
   return new Date(
     now.getTime() + REFRESH_EXPIRY_DAYS * 24 * 60 * 60 * 1000
   );
+}
+
+function getPasswordResetExpiry(): Date {
+  return new Date(Date.now() + PASSWORD_RESET_EXPIRY_HOURS * 60 * 60 * 1000);
+}
+
+function sha256Hex(input: string) {
+  return crypto.createHash("sha256").update(input).digest("hex");
 }
 
 export async function registerUser(data: {
@@ -349,8 +358,36 @@ export async function forgotPassword(email: string) {
     return { message: "If an account exists, a reset email has been sent" };
   }
 
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  console.log(`Password reset token for ${normalized}: ${resetToken}`);
+  // Revoke previous active reset tokens
+  await prisma.authToken.updateMany({
+    where: { userId: user.id, type: "password_reset", revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = sha256Hex(rawToken);
+
+  await prisma.authToken.create({
+    data: {
+      token: tokenHash,
+      type: "password_reset",
+      userId: user.id,
+      expiresAt: getPasswordResetExpiry(),
+    },
+  });
+
+  const frontendBase = process.env.FRONTEND_URL || "http://localhost:3000";
+  const resetUrl = `${frontendBase.replace(/\/$/, "")}/auth/reset-password?token=${encodeURIComponent(rawToken)}`;
+
+  await sendMail({
+    to: user.email,
+    subject: "Reset your True Beauty password",
+    html: buildResetPasswordHtml({ name: user.name, resetUrl }),
+  });
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[password reset] ${user.email} → ${resetUrl}`);
+  }
 
   return { message: "If an account exists, a reset email has been sent" };
 }
@@ -364,5 +401,76 @@ export async function resetPassword(token: string, newPassword: string) {
     throw new Error("Password must be at least 8 characters");
   }
 
+  const tokenHash = sha256Hex(token);
+  const stored = await prisma.authToken.findUnique({
+    where: { token: tokenHash },
+  });
+
+  if (!stored || stored.type !== "password_reset") {
+    throw new Error("Invalid or expired reset link");
+  }
+  if (stored.revokedAt) {
+    throw new Error("Reset link has already been used");
+  }
+  if (stored.expiresAt < new Date()) {
+    throw new Error("Reset link has expired");
+  }
+  if (!stored.userId) {
+    throw new Error("Invalid reset link");
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: stored.userId },
+      data: { password: hashedPassword },
+    }),
+    prisma.authToken.update({
+      where: { id: stored.id },
+      data: { revokedAt: new Date() },
+    }),
+    prisma.authToken.updateMany({
+      where: { userId: stored.userId, type: "refresh", revokedAt: null },
+      data: { revokedAt: new Date() },
+    }),
+  ]);
+
   return { message: "Password has been reset successfully" };
+}
+
+export async function changePassword(userId: string, data: { currentPassword: string; newPassword: string }) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !user.isActive) throw new Error("User not found or inactive");
+  if (!user.password) throw new Error("Password login is not enabled for this account");
+
+  const ok = await comparePassword(data.currentPassword, user.password);
+  if (!ok) throw new Error("Current password is incorrect");
+  if (data.newPassword.length < 8) throw new Error("Password must be at least 8 characters");
+
+  const hashed = await hashPassword(data.newPassword);
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { password: hashed } }),
+    prisma.authToken.updateMany({
+      where: { userId, type: "refresh", revokedAt: null },
+      data: { revokedAt: new Date() },
+    }),
+  ]);
+
+  return { message: "Password changed successfully" };
+}
+
+export async function deleteAccount(userId: string) {
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { isActive: false, deletedAt: now },
+    }),
+    prisma.authToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: now },
+    }),
+  ]);
+  return { message: "Account deleted" };
 }

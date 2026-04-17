@@ -149,3 +149,25 @@ export const resetPassword = asyncHandler(
     return ApiResponse.success(res, result, "Password reset successful");
   }
 );
+
+export const changePassword = asyncHandler(
+  async (req: Request, res: Response) => {
+    const schema = z.object({
+      currentPassword: z.string().min(1, "Current password is required"),
+      newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    });
+    const data = schema.parse(req.body);
+    const userId = (req as any).userId as string;
+    const result = await authService.changePassword(userId, data);
+    return ApiResponse.success(res, result, "Password changed");
+  }
+);
+
+export const deleteAccount = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any).userId as string;
+    const result = await authService.deleteAccount(userId);
+    clearRefreshTokenCookie(res);
+    return ApiResponse.success(res, result, "Account deleted");
+  }
+);

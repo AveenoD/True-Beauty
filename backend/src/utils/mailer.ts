@@ -107,3 +107,57 @@ export function buildVerifyEmailHtml(params: { name: string; verifyUrl: string }
 </html>`;
 }
 
+export function buildResetPasswordHtml(params: { name: string; resetUrl: string }) {
+  const safeName = params.name?.trim() || "there";
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f6f7fb;font-family:Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #f0e4ea;box-shadow:0 6px 24px rgba(17,24,39,.06);">
+            <tr>
+              <td style="padding:22px 24px;background:linear-gradient(90deg,#ff3c8c,#ff0066);color:#fff;">
+                <div style="font-size:18px;font-weight:800;letter-spacing:.2px;">True Beauty</div>
+                <div style="font-size:12px;opacity:.92;margin-top:4px;">Reset your password</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;color:#111827;">
+                <p style="margin:0 0 10px 0;font-size:16px;font-weight:700;">Hi ${safeName},</p>
+                <p style="margin:0 0 18px 0;font-size:14px;line-height:1.7;color:#374151;">
+                  We received a request to reset your password. If you made this request, use the button below.
+                </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px 0;">
+                  <tr>
+                    <td align="center">
+                      <a href="${params.resetUrl}" style="display:inline-block;background:#ff0066;color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:800;font-size:14px;">
+                        Reset password
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <div style="background:#f9fafb;border:1px solid #eef2f7;border-radius:12px;padding:12px 14px;margin:0 0 14px 0;">
+                  <p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
+                    This link expires in <strong>1 hour</strong>. If you didn’t request a password reset, you can ignore this email.
+                  </p>
+                </div>
+                <p style="margin:0;font-size:12px;color:#6b7280;word-break:break-all;line-height:1.6;">
+                  Having trouble with the button? Copy and paste this URL into your browser:<br/>
+                  <a href="${params.resetUrl}" style="color:#2563eb;text-decoration:none;">${params.resetUrl}</a>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:14px 24px;background:#fafafa;color:#9ca3af;font-size:12px;line-height:1.5;">
+                © ${new Date().getFullYear()} True Beauty • Please do not reply to this email
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+

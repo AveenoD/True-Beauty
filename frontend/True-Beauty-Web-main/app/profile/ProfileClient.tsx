@@ -7,6 +7,8 @@ import Footer from "../../components/Footer";
 import Link from "next/link";
 import {
   Check,
+  Eye,
+  EyeOff,
   Save,
   Plus,
   Edit,
@@ -122,6 +124,21 @@ export default function ProfileClient() {
     router.push("/");
   };
 
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const [changePasswordError, setChangePasswordError] = useState("");
+  const [changePasswordForm, setChangePasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
+  const [showPw, setShowPw] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const validatePersonal = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
@@ -132,6 +149,54 @@ export default function ProfileClient() {
       newErrors.email = "Please enter a valid email address";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const submitChangePassword = async () => {
+    setChangePasswordError("");
+    if (!changePasswordForm.currentPassword || !changePasswordForm.newPassword) {
+      setChangePasswordError("Please fill all password fields");
+      return;
+    }
+    if (changePasswordForm.newPassword !== changePasswordForm.confirmNewPassword) {
+      setChangePasswordError("New passwords do not match");
+      return;
+    }
+    setChangePasswordLoading(true);
+    try {
+      await api.post("/users/change-password", {
+        currentPassword: changePasswordForm.currentPassword,
+        newPassword: changePasswordForm.newPassword,
+      });
+      setShowChangePassword(false);
+      setChangePasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      });
+      alert("Password changed. Please log in again.");
+      await handleLogout();
+    } catch (err) {
+      const ax = err as AxiosError<{ message?: string }>;
+      setChangePasswordError(
+        ax.response?.data?.message ||
+          (err instanceof Error ? err.message : "Could not change password")
+      );
+    } finally {
+      setChangePasswordLoading(false);
+    }
+  };
+
+  const submitDeleteAccount = async () => {
+    if (!confirm("Are you sure? This will delete your account.")) return;
+    setDeleteLoading(true);
+    try {
+      await api.delete("/users/delete-account");
+      await handleLogout();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not delete account");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const handleSavePersonal = async () => {
@@ -529,6 +594,30 @@ export default function ProfileClient() {
                             Log out
                           </button>
                         </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-2">Password</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setChangePasswordError("");
+                              setShowChangePassword(true);
+                            }}
+                            className="text-sm text-rose-600 hover:text-rose-700 font-medium"
+                          >
+                            Change password
+                          </button>
+                        </div>
+                        <div className="p-4 bg-red-50 rounded-lg border border-red-100">
+                          <p className="text-sm text-red-700 mb-2 font-medium">Danger zone</p>
+                          <button
+                            type="button"
+                            onClick={submitDeleteAccount}
+                            disabled={deleteLoading}
+                            className="text-sm text-red-700 hover:text-red-800 font-medium disabled:opacity-60"
+                          >
+                            {deleteLoading ? "Deleting..." : "Delete account"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-rose-100/80 p-4 sm:p-6 md:p-8">
@@ -695,6 +784,126 @@ export default function ProfileClient() {
         </div>
       </main>
       <Footer />
+
+      {showChangePassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-rose-100/80 shadow-lg">
+            <h3 className="text-xl font-playfair font-bold text-gray-800 mb-2">
+              Change password
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              For security, you will be logged out after changing your password.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPw.current ? "text" : "password"}
+                    value={changePasswordForm.currentPassword}
+                    onChange={(e) =>
+                      setChangePasswordForm((p) => ({
+                        ...p,
+                        currentPassword: e.target.value,
+                      }))
+                    }
+                    className="w-full pr-12 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((s) => ({ ...s, current: !s.current }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label={showPw.current ? "Hide password" : "Show password"}
+                  >
+                    {showPw.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPw.next ? "text" : "password"}
+                    value={changePasswordForm.newPassword}
+                    onChange={(e) =>
+                      setChangePasswordForm((p) => ({
+                        ...p,
+                        newPassword: e.target.value,
+                      }))
+                    }
+                    className="w-full pr-12 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((s) => ({ ...s, next: !s.next }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label={showPw.next ? "Hide password" : "Show password"}
+                  >
+                    {showPw.next ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm new password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPw.confirm ? "text" : "password"}
+                    value={changePasswordForm.confirmNewPassword}
+                    onChange={(e) =>
+                      setChangePasswordForm((p) => ({
+                        ...p,
+                        confirmNewPassword: e.target.value,
+                      }))
+                    }
+                    className="w-full pr-12 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((s) => ({ ...s, confirm: !s.confirm }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label={showPw.confirm ? "Hide password" : "Show password"}
+                  >
+                    {showPw.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {changePasswordError && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {changePasswordError}
+              </div>
+            )}
+
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowChangePassword(false)}
+                className="flex-1 px-4 py-3 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitChangePassword}
+                disabled={changePasswordLoading}
+                className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-[#FF3C8C] to-[#FF0066] text-white font-medium disabled:opacity-70"
+              >
+                {changePasswordLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

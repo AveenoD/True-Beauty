@@ -18,6 +18,8 @@ router.post("/reset-password", authController.resetPassword);
 router.use(authenticateUser);
 
 router.post("/logout", authController.logout);
+router.post("/change-password", authController.changePassword);
+router.delete("/delete-account", authController.deleteAccount);
 router.get("/profile", userController.getProfile);
 router.put("/profile", userController.updateProfile);
 router.get("/addresses", userController.getAddresses);
