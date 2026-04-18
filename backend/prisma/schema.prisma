@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ============================================================
@@ -195,14 +194,16 @@ enum TokenType {
 // ============================================================
 
 model AuthToken {
-  id          String    @id @default(uuid())
-  token       String    @unique
-  type        TokenType
-  userId      String?
-  adminId     String?
-  expiresAt   DateTime
-  revokedAt   DateTime?
-  createdAt   DateTime  @default(now())
+  id        String    @id @default(uuid())
+  token     String    @unique
+  type      TokenType
+  userId    String?
+  adminId   String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  admin     Admin?    @relation(fields: [adminId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id])
 
   @@index([token])
   @@index([userId])
@@ -215,25 +216,29 @@ model AuthToken {
 // ============================================================
 
 model Admin {
-  id              String    @id @default(uuid())
-  name            String
-  email           String    @unique
-  password        String
-  role            AdminRole @default(admin)
-  profileImage    String?
-  isActive        Boolean   @default(true)
-  lastLoginAt     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  password     String
+  slug         String?
+  role         AdminRole @default(admin)
+  profileImage String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  authTokens      AuthToken[]
-  theme           AdminTheme?
-  kycDocuments    AdminKycDocument[]
-  withdrawalsProcessed WithdrawalRequest[] @relation("ProcessedBy")
-  subscription    AdminSubscription?
-  onboardingProgress AdminOnboardingProgress?
-  notifications   Notification[]
+  authTokens           AuthToken[]
+  theme                AdminTheme?
+  kycDocuments         AdminKycDocument[]
+  withdrawalsProcessed WithdrawalRequest[]      @relation("ProcessedBy")
+  subscription         AdminSubscription?
+  onboardingProgress   AdminOnboardingProgress?
+  notifications        Notification[]
+  categories           Category[]
+  products             Product[]
+  coupons              Coupon[]
 
   @@map("admin")
 }
@@ -253,45 +258,45 @@ model SuperAdmin {
 // ============================================================
 
 model User {
-  id                String    @id @default(uuid())
-  adminId           String?
-  name              String
-  email             String    @unique
-  password          String?
-  phone             String?
-  profileImage      String?
-  isActive          Boolean   @default(true)
-  referralCode      String?   @unique
-  referralBy        String?
-  role              String    @default("customer")
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  deletedAt         DateTime?
+  id           String    @id @default(uuid())
+  adminId      String?
+  name         String
+  email        String    @unique
+  password     String?
+  phone        String?
+  profileImage String?
+  isActive     Boolean   @default(true)
+  referralCode String?   @unique
+  referralBy   String?
+  role         String    @default("customer")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
   // Relations
-  authTokens        AuthToken[]
-  addresses         Address[]
-  orders            Order[]
-  cartItems         CartItem[]
-  wishlistItems     WishlistItem[]
-  reviews           ReviewRating[]
-  serviceBookings   ServiceBooking[]
-  notifications     UserNotification[]
-  returns           ReturnRequest[]
-  exchanges         ExchangeRequest[]
-  affiliateProfile  AffiliateProfile?
+  authTokens       AuthToken[]
+  addresses        Address[]
+  orders           Order[]
+  cartItems        CartItem[]
+  wishlistItems    WishlistItem[]
+  reviews          ReviewRating[]
+  serviceBookings  ServiceBooking[]
+  notifications    UserNotification[]
+  returns          ReturnRequest[]
+  exchanges        ExchangeRequest[]
+  affiliateProfile AffiliateProfile?
 
   @@map("user")
 }
 
 model UserKyc {
-  id          String       @id @default(uuid())
-  userId      String       @unique
-  aadharUrl   String?
-  panUrl      String?
-  status      UserKycStatus @default(not_submitted)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id        String        @id @default(uuid())
+  userId    String        @unique
+  aadharUrl String?
+  panUrl    String?
+  status    UserKycStatus @default(not_submitted)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@map("user_kyc")
 }
@@ -301,23 +306,25 @@ model UserKyc {
 // ============================================================
 
 model Address {
-  id              String   @id @default(uuid())
-  userId          String
-  name            String
-  phone           String
-  addressLine1    String
-  addressLine2    String?
-  city            String
-  state           String
-  pincode         String
-  country         String   @default("India")
-  addressType     String   @default("home")
-  isDefault       Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String   @id @default(uuid())
+  userId       String
+  name         String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  pincode      String
+  country      String   @default("India")
+  addressType  String   @default("home")
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders Order[] @relation("OrderShippingAddress")
+  billingOrders  Order[] @relation("OrderBillingAddress")
 
   @@map("address")
 }
@@ -327,62 +334,62 @@ model Address {
 // ============================================================
 
 model AffiliateProfile {
-  id                    String   @id @default(uuid())
-  userId                String   @unique
-  referralCode          String   @unique
-  referralLink          String?
-  commissionRate        Float    @default(10)
-  walletBalance         Float    @default(0)
-  totalEarnings         Float    @default(0)
-  totalWithdrawals      Float    @default(0)
-  isActive              Boolean  @default(true)
-  bankName              String?
-  accountNumber         String?
-  ifscCode              String?
-  upiId                 String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  referralCode     String   @unique
+  referralLink     String?
+  commissionRate   Float    @default(10)
+  walletBalance    Float    @default(0)
+  totalEarnings    Float    @default(0)
+  totalWithdrawals Float    @default(0)
+  isActive         Boolean  @default(true)
+  bankName         String?
+  accountNumber    String?
+  ifscCode         String?
+  upiId            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
-  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  referrals             AffiliateReferralTracking[]
-  earnings              AffiliateEarning[]
-  withdrawals           WithdrawalRequest[]
+  user        User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referrals   AffiliateReferralTracking[]
+  earnings    AffiliateEarning[]
+  withdrawals WithdrawalRequest[]
 
   @@map("affiliate_profile")
 }
 
 model AffiliateReferralTracking {
-  id              String   @id @default(uuid())
-  affiliateId     String
-  referredUserId  String
-  referralCode    String
-  referralLink    String?
-  referralSource  String?
-  convertedAt     DateTime?
+  id                String    @id @default(uuid())
+  affiliateId       String
+  referredUserId    String
+  referralCode      String
+  referralLink      String?
+  referralSource    String?
+  convertedAt       DateTime?
   conversionOrderId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   // Relations
-  affiliate       AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  affiliate AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
 
   @@unique([affiliateId, referredUserId])
   @@map("affiliate_referral_tracking")
 }
 
 model AffiliateEarning {
-  id            String         @id @default(uuid())
-  affiliateId   String
-  orderId       String?
-  amount        Float
-  type          CommissionType
-  description   String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id          String         @id @default(uuid())
+  affiliateId String
+  orderId     String?
+  amount      Float
+  type        CommissionType
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   // Relations
-  affiliate     AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  affiliate AffiliateProfile @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
 
   @@map("affiliate_earning")
 }
@@ -392,44 +399,67 @@ model AffiliateEarning {
 // ============================================================
 
 model WithdrawalRequest {
-  id              String            @id @default(uuid())
-  affiliateId     String
-  amount          Float
-  method          WithdrawalMethod
-  upiId           String?
-  bankName        String?
-  accountNumber   String?
-  ifscCode        String?
-  status          WithdrawalStatus  @default(pending)
-  minimumAmount   Int?
-  note            String?
-  requestedAt     DateTime          @default(now())
-  processedAt     DateTime?
-  paidAt          DateTime?
-  processedBy     String?
+  id            String           @id @default(uuid())
+  affiliateId   String
+  amount        Float
+  method        WithdrawalMethod
+  upiId         String?
+  bankName      String?
+  accountNumber String?
+  ifscCode      String?
+  status        WithdrawalStatus @default(pending)
+  minimumAmount Int?
+  note          String?
+  requestedAt   DateTime         @default(now())
+  processedAt   DateTime?
+  paidAt        DateTime?
+  processedBy   String?
 
   // Relations
-  affiliate       AffiliateProfile   @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  affiliate        AffiliateProfile  @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
   processedByAdmin Admin?            @relation("ProcessedBy", fields: [processedBy], references: [id])
-  auditLogs       WithdrawalAudit[]
+  auditLogs        WithdrawalAudit[]
 
   @@map("withdrawal_request")
 }
 
 model WithdrawalAudit {
-  id              String            @id @default(uuid())
-  withdrawalId    String
-  action          String
-  previousStatus  String?
-  newStatus       String?
-  note            String?
-  adminId         String?
-  createdAt       DateTime          @default(now())
+  id             String   @id @default(uuid())
+  withdrawalId   String
+  action         String
+  previousStatus String?
+  newStatus      String?
+  note           String?
+  adminId        String?
+  createdAt      DateTime @default(now())
 
   // Relations
-  withdrawal      WithdrawalRequest @relation(fields: [withdrawalId], references: [id], onDelete: Cascade)
+  withdrawal WithdrawalRequest @relation(fields: [withdrawalId], references: [id], onDelete: Cascade)
 
   @@map("withdrawal_audit")
+}
+
+// ============================================================
+// CATEGORY
+// ============================================================
+
+model Category {
+  id        String   @id @default(uuid())
+  adminId   String
+  name      String
+  slug      String
+  image     String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  admin    Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@unique([adminId, slug])
+  @@map("category")
 }
 
 // ============================================================
@@ -437,71 +467,76 @@ model WithdrawalAudit {
 // ============================================================
 
 model Product {
-  id                String    @id @default(uuid())
-  adminId           String?
-  name              String
-  category          String
-  price             Float
-  discountPrice     Float?
-  commissionRate    Float?
-  stock             Int       @default(0)
-  stockStatus       String    @default("in_stock")
-  status            String    @default("active")
-  image             String?
-  images            String[]
-  description       String?
-  deletedAt         DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  isAffiliateProduct Boolean  @default(false)
-  sellerId          String?
-  sku               String?
-  stockThreshold    Int?
-  stockLocation     String?
-  supplier          String?
-  inventoryNotes    String?
+  id                 String    @id @default(uuid())
+  adminId            String?
+  name               String
+  categoryId         String?
+  categoryName       String?
+  price              Float
+  discountPrice      Float?
+  commissionRate     Float?
+  stock              Int       @default(0)
+  stockStatus        String    @default("in_stock")
+  status             String    @default("active")
+  image              String?
+  images             String[]
+  description        String?
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  isAffiliateProduct Boolean   @default(false)
+  sellerId           String?
+  sku                String?
+  stockThreshold     Int?
+  stockLocation      String?
+  supplier           String?
+  inventoryNotes     String?
 
   // Relations
-  inventory         Inventory[]
-  orderItems        OrderItem[]
-  couponApplicable  CouponApplicableProduct[]
-  reviews           ReviewRating[]
-  wishlistItems     WishlistItem[]
+  admin            Admin?                    @relation(fields: [adminId], references: [id])
+  category         Category?                 @relation(fields: [categoryId], references: [id])
+  inventory        Inventory[]
+  orderItems       OrderItem[]
+  couponApplicable CouponApplicableProduct[]
+  reviews          ReviewRating[]
+  wishlistItems    WishlistItem[]
+  cartItems        CartItem[]
 
+  @@index([adminId])
   @@map("product")
 }
 
 model Inventory {
-  id            String    @id @default(uuid())
-  productId     String
-  quantity      Int       @default(0)
-  reservedQty   Int       @default(0)
-  availableQty  Int       @default(0)
-  location      String?
-  lastUpdated   DateTime  @default(now())
-  updatedBy     String?
+  id           String   @id @default(uuid())
+  productId    String
+  quantity     Int      @default(0)
+  reservedQty  Int      @default(0)
+  availableQty Int      @default(0)
+  location     String?
+  lastUpdated  DateTime @default(now())
+  updatedBy    String?
 
   // Relations
-  product       Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-  logs          InventoryLog[]
+  product Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  logs    InventoryLog[]
 
   @@map("inventory")
 }
 
 model InventoryLog {
-  id            String    @id @default(uuid())
-  inventoryId   String
-  changeType    String
-  changeAmount  Int
-  previousQty   Int
-  newQty        Int
-  reason        String?
-  referenceId   String?
+  id           String   @id @default(uuid())
+  inventoryId  String
+  changeType   String
+  changeAmount Int
+  previousQty  Int
+  newQty       Int
+  reason       String?
+  referenceId  String?
   adminId      String?
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
 
   // Relations
-  inventory     Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
 
   @@map("inventory_logs")
 }
@@ -511,46 +546,51 @@ model InventoryLog {
 // ============================================================
 
 model Coupon {
-  id                      String              @id @default(uuid())
-  code                    String              @unique
-  discountType            CouponDiscountType
-  discountValue           Float
-  minimumOrderAmount      Float?
-  usageLimitTotal         Int?
-  usageLimitPerUser       Int?
-  maxDiscountCap          Float?
-  applicableRole          CouponApplicableRole @default(all)
-  startDate               DateTime?
-  endDate                 DateTime?
-  isActive                Boolean             @default(true)
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
+  id                 String               @id @default(uuid())
+  adminId            String
+  code               String               @unique
+  description        String?
+  discountType       CouponDiscountType
+  discountValue      Float
+  minimumOrderAmount Float?
+  usageLimitTotal    Int?
+  usageLimitPerUser  Int?
+  maxDiscountCap     Float?
+  applicableRole     CouponApplicableRole @default(all)
+  startDate          DateTime?
+  endDate            DateTime?
+  isActive           Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   // Relations
-  applicableProducts      CouponApplicableProduct[]
-  applicableCategories     CouponApplicableCategory[]
+  admin                Admin                      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  applicableProducts   CouponApplicableProduct[]
+  applicableCategories CouponApplicableCategory[]
+  orders               Order[]
 
+  @@unique([adminId, code])
   @@map("coupon")
 }
 
 model CouponApplicableProduct {
-  id        String  @id @default(uuid())
+  id        String @id @default(uuid())
   couponId  String
   productId String
 
-  coupon    Coupon  @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  coupon  Coupon  @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([couponId, productId])
   @@map("coupon_applicable_product")
 }
 
 model CouponApplicableCategory {
-  id        String  @id @default(uuid())
-  couponId  String
-  category  String
+  id       String @id @default(uuid())
+  couponId String
+  category String
 
-  coupon    Coupon  @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
 
   @@unique([couponId, category])
   @@map("coupon_applicable_category")
@@ -561,59 +601,59 @@ model CouponApplicableCategory {
 // ============================================================
 
 model Order {
-  id                String        @id @default(uuid())
+  id                String         @id @default(uuid())
   userId            String
-  orderNumber       String        @unique
-  orderStatus       OrderStatus   @default(pending)
-  paymentStatus     PaymentStatus @default(pending)
+  orderNumber       String         @unique
+  orderStatus       OrderStatus    @default(pending)
+  paymentStatus     PaymentStatus  @default(pending)
   paymentMethod     PaymentMethod?
-  refundStatus      RefundStatus  @default(none)
+  refundStatus      RefundStatus   @default(none)
   trackingNumber    String?
   trackingUrl       String?
   notes             String?
-  productsCount     Int           @default(0)
+  productsCount     Int            @default(0)
   subTotal          Float
-  discount          Float         @default(0)
-  tax               Float         @default(0)
-  shipping          Float         @default(0)
+  discount          Float          @default(0)
+  tax               Float          @default(0)
+  shipping          Float          @default(0)
   totalAmount       Float
   shippingAddressId String?
   billingAddressId  String?
   couponId          String?
   affiliateId       String?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   // Relations
-  user              User          @relation(fields: [userId], references: [id])
-  shippingAddress   Address?      @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddress    Address?      @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
-  coupon            Coupon?       @relation(fields: [couponId], references: [id])
-  items             OrderItem[]
-  payment           Payment?
+  user            User        @relation(fields: [userId], references: [id])
+  shippingAddress Address?    @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress  Address?    @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
+  coupon          Coupon?     @relation(fields: [couponId], references: [id])
+  items           OrderItem[]
+  payment         Payment?
 
   @@map("order")
 }
 
 model OrderItem {
-  id              String   @id @default(uuid())
-  orderId         String
+  id             String   @id @default(uuid())
+  orderId        String
   productId      String
   productName    String
-  productImage    String?
-  quantity        Int
-  price           Float
-  discount        Float    @default(0)
-  tax             Float    @default(0)
-  total           Float
-  returnStatus    String?
-  exchangeStatus  String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  productImage   String?
+  quantity       Int
+  price          Float
+  discount       Float    @default(0)
+  tax            Float    @default(0)
+  total          Float
+  returnStatus   String?
+  exchangeStatus String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
-  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product         Product  @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("order_item")
 }
@@ -623,22 +663,22 @@ model OrderItem {
 // ============================================================
 
 model Payment {
-  id              String            @id @default(uuid())
-  orderId         String            @unique
+  id              String        @id @default(uuid())
+  orderId         String        @unique
   amount          Float
-  currency        String            @default("INR")
-  status          PaymentStatus     @default(pending)
+  currency        String        @default("INR")
+  status          PaymentStatus @default(pending)
   method          String?
   transactionId   String?
   gatewayResponse String?
   refundAmount    Float?
   refundReason    String?
   refundedAt      DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relations
-  order           Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("payment")
 }
@@ -648,17 +688,17 @@ model Payment {
 // ============================================================
 
 model CartItem {
-  id          String   @id @default(uuid())
-  userId      String
-  productId   String
-  quantity    Int      @default(1)
-  price       Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@map("cart_item")
@@ -671,8 +711,8 @@ model WishlistItem {
   addedAt   DateTime @default(now())
 
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@map("wishlist_item")
@@ -683,35 +723,35 @@ model WishlistItem {
 // ============================================================
 
 model ReturnRequest {
-  id              String        @id @default(uuid())
+  id              String       @id @default(uuid())
   orderId         String
   userId          String
   reason          String
   productId       String?
-  quantity        Int           @default(1)
-  status          ReturnStatus  @default(requested)
+  quantity        Int          @default(1)
+  status          ReturnStatus @default(requested)
   images          String[]
   adminNote       String?
   refundAmount    Float?
   pickupAddressId String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   // Relations
-  user            User          @relation(fields: [userId], references: [id])
-  timeline        ReturnTimeline[]
-  refund          RefundDetails?
+  user     User             @relation(fields: [userId], references: [id])
+  timeline ReturnTimeline[]
+  refund   RefundDetails?
 
   @@map("return_request")
 }
 
 model ReturnTimeline {
-  id            String   @id @default(uuid())
-  returnId      String
-  status        String
-  note          String?
-  updatedBy     String?
-  createdAt     DateTime @default(now())
+  id        String   @id @default(uuid())
+  returnId  String
+  status    String
+  note      String?
+  updatedBy String?
+  createdAt DateTime @default(now())
 
   // Relations
   returnRequest ReturnRequest @relation(fields: [returnId], references: [id], onDelete: Cascade)
@@ -720,77 +760,77 @@ model ReturnTimeline {
 }
 
 model RefundDetails {
-  id                  String           @id @default(uuid())
-  returnId            String           @unique
-  method              String           // bank_transfer | upi | original_source
-  accountHolderName   String?
-  bankName            String?
-  accountNumber       String?
-  ifscCode            String?
-  upiId               String?
-  amount              Float?
-  status              String?
-  initiatedAt         DateTime?
-  completedAt         DateTime?
-  failureReason       String?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  id                String    @id @default(uuid())
+  returnId          String    @unique
+  method            String // bank_transfer | upi | original_source
+  accountHolderName String?
+  bankName          String?
+  accountNumber     String?
+  ifscCode          String?
+  upiId             String?
+  amount            Float?
+  status            String?
+  initiatedAt       DateTime?
+  completedAt       DateTime?
+  failureReason     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   // Relations
-  returnRequest       ReturnRequest    @relation(fields: [returnId], references: [id], onDelete: Cascade)
-  auditLogs           RefundAuditLog[]
+  returnRequest ReturnRequest    @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  auditLogs     RefundAuditLog[]
 
   @@map("refund_details")
 }
 
 model RefundAuditLog {
-  id          String        @id @default(uuid())
-  refundId    String
-  action      String
+  id             String   @id @default(uuid())
+  refundId       String
+  action         String
   previousStatus String?
-  newStatus   String?
-  note        String?
-  adminId     String?
-  createdAt   DateTime      @default(now())
+  newStatus      String?
+  note           String?
+  adminId        String?
+  createdAt      DateTime @default(now())
 
   // Relations
-  refund      RefundDetails @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  refund RefundDetails @relation(fields: [refundId], references: [id], onDelete: Cascade)
 
   @@map("refund_audit_log")
 }
 
 model ExchangeRequest {
-  id              String          @id @default(uuid())
-  orderId         String
-  userId          String
-  productId       String?
-  reason          String
+  id                String         @id @default(uuid())
+  orderId           String
+  userId            String
+  productId         String?
+  reason            String
   exchangeProductId String?
-  quantity        Int             @default(1)
-  status          ExchangeStatus  @default(requested)
-  images          String[]
-  adminNote       String?
+  quantity          Int            @default(1)
+  status            ExchangeStatus @default(requested)
+  images            String[]
+  adminNote         String?
   shippingAddressId String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   // Relations
-  user            User            @relation(fields: [userId], references: [id])
-  timeline        ExchangeTimeline[]
+  user     User               @relation(fields: [userId], references: [id])
+  timeline ExchangeTimeline[]
 
   @@map("exchange_request")
 }
 
 model ExchangeTimeline {
-  id            String          @id @default(uuid())
-  exchangeId    String
-  status        String
-  note          String?
-  updatedBy     String?
-  createdAt     DateTime        @default(now())
+  id         String   @id @default(uuid())
+  exchangeId String
+  status     String
+  note       String?
+  updatedBy  String?
+  createdAt  DateTime @default(now())
 
   // Relations
-  exchange      ExchangeRequest @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  exchange ExchangeRequest @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
 
   @@map("exchange_timeline")
 }
@@ -800,22 +840,22 @@ model ExchangeTimeline {
 // ============================================================
 
 model ReviewRating {
-  id          String       @id @default(uuid())
-  userId      String
-  productId   String
-  orderId     String?
-  rating      Int
-  comment     String?
-  images      String[]
-  status      ReviewStatus @default(pending)
-  adminNote   String?
-  isVerifiedPurchase Boolean @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                 String       @id @default(uuid())
+  userId             String
+  productId          String
+  orderId            String?
+  rating             Int
+  comment            String?
+  images             String[]
+  status             ReviewStatus @default(pending)
+  adminNote          String?
+  isVerifiedPurchase Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
   // Relations
-  user        User         @relation(fields: [userId], references: [id])
-  product     Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId, orderId])
   @@map("review_rating")
@@ -826,53 +866,53 @@ model ReviewRating {
 // ============================================================
 
 model MyService {
-  id                    String    @id @default(uuid())
-  adminId               String?
-  name                  String
-  category              String
-  description           String?
-  duration              String?
-  price                 Float
-  discountedPrice       Float?
-  images                String[]
-  howToUseType          String    @default("text")
-  howToUseText          String?
-  howToUseVideo         String?
-  workingHours          String?
-  workingDays           String?
+  id                      String             @id @default(uuid())
+  adminId                 String?
+  name                    String
+  category                String
+  description             String?
+  duration                String?
+  price                   Float
+  discountedPrice         Float?
+  images                  String[]
+  howToUseType            String             @default("text")
+  howToUseText            String?
+  howToUseVideo           String?
+  workingHours            String?
+  workingDays             String?
   bookingConfirmationMode ServiceBookingMode @default(instant)
-  status                String    @default("active")
-  isFeatured            Boolean   @default(false)
-  totalBookings         Int       @default(0)
-  avgRating             Float?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  status                  String             @default("active")
+  isFeatured              Boolean            @default(false)
+  totalBookings           Int                @default(0)
+  avgRating               Float?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
 
   // Relations
-  bookings              ServiceBooking[]
+  bookings ServiceBooking[]
 
   @@map("my_service")
 }
 
 model ServiceBooking {
-  id            String              @id @default(uuid())
-  userId        String
-  serviceId     String
-  bookingDate   DateTime
-  bookingTime   String
-  status        ServiceBookingStatus @default(pending)
-  customerName  String?
-  customerPhone String?
-  notes         String?
-  totalAmount   Float?
-  couponCode    String?
+  id             String               @id @default(uuid())
+  userId         String
+  serviceId      String
+  bookingDate    DateTime
+  bookingTime    String
+  status         ServiceBookingStatus @default(pending)
+  customerName   String?
+  customerPhone  String?
+  notes          String?
+  totalAmount    Float?
+  couponCode     String?
   discountAmount Float?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   // Relations
-  user          User                @relation(fields: [userId], references: [id])
-  service       MyService           @relation(fields: [serviceId], references: [id])
+  user    User      @relation(fields: [userId], references: [id])
+  service MyService @relation(fields: [serviceId], references: [id])
 
   @@map("service_booking")
 }
@@ -882,7 +922,7 @@ model ServiceBooking {
 // ============================================================
 
 model Notification {
-  id              String                  @id @default(uuid())
+  id              String                 @id @default(uuid())
   adminId         String?
   title           String
   message         String
@@ -890,34 +930,34 @@ model Notification {
   targetRole      NotificationTargetRole
   imageUrl        String?
   targetUserIds   String[]
-  status          NotificationStatus @default(sent)
+  status          NotificationStatus     @default(sent)
   sentAt          DateTime?
   locationState   String?
   locationCity    String?
   locationPincode String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 
   // Relations
-  sentBy          Admin?   @relation(fields: [adminId], references: [id])
+  sentBy Admin? @relation(fields: [adminId], references: [id])
 
   @@map("notification")
 }
 
 model UserNotification {
-  id            String   @id @default(uuid())
-  userId        String
-  title         String
-  message       String
-  imageUrl      String?
-  type          String?
-  referenceId   String?
-  isRead        Boolean  @default(false)
-  readAt        DateTime?
-  createdAt     DateTime @default(now())
+  id          String    @id @default(uuid())
+  userId      String
+  title       String
+  message     String
+  imageUrl    String?
+  type        String?
+  referenceId String?
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
 
   // Relations
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_notification")
 }
@@ -927,7 +967,7 @@ model UserNotification {
 // ============================================================
 
 model SubscriptionPlan {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
   description String?
   price       Float
@@ -936,10 +976,10 @@ model SubscriptionPlan {
   maxProducts Int?
   maxOrders   Int?
   addonAccess String[]
-  isActive    Boolean  @default(true)
+  isActive    Boolean      @default(true)
   sortOrder   Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   // Relations
   subscriptions AdminSubscription[]
@@ -961,21 +1001,21 @@ model PlanAddon {
 }
 
 model AdminSubscription {
-  id              String              @id @default(uuid())
-  adminId         String              @unique
+  id              String             @id @default(uuid())
+  adminId         String             @unique
   planId          String
   startDate       DateTime
   expiryDate      DateTime
-  status          SubscriptionStatus  @default(active)
+  status          SubscriptionStatus @default(active)
   billingCycle    String?
-  autoRenew       Boolean             @default(false)
+  autoRenew       Boolean            @default(false)
   nextBillingDate DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   // Relations
-  admin           Admin               @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  plan            SubscriptionPlan    @relation(fields: [planId], references: [id])
+  admin Admin            @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  plan  SubscriptionPlan @relation(fields: [planId], references: [id])
 
   @@map("admin_subscription")
 }
@@ -996,23 +1036,23 @@ model AdminOnboardingProgress {
   updatedAt           DateTime @updatedAt
 
   // Relations
-  admin               Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@map("admin_onboarding_progress")
 }
 
 model AdminKycDocument {
-  id          String   @id @default(uuid())
-  adminId     String
-  type        String
-  fileUrl     String
-  isVerified  Boolean  @default(false)
-  verifiedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(uuid())
+  adminId    String
+  type       String
+  fileUrl    String
+  isVerified Boolean   @default(false)
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relations
-  admin       Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@map("admin_kyc_document")
 }
@@ -1033,28 +1073,28 @@ model WebTheme {
   updatedAt       DateTime @updatedAt
 
   // Relations
-  adminThemes     AdminTheme[]
+  adminThemes AdminTheme[]
 
   @@map("web_theme")
 }
 
 model AdminTheme {
-  id              String   @id @default(uuid())
-  adminId         String   @unique
-  webThemeId      String?
-  customTitle     String?
+  id                String    @id @default(uuid())
+  adminId           String    @unique
+  webThemeId        String?
+  customTitle       String?
   customDescription String?
-  customCtaText   String?
-  customBannerUrl String?
-  isActive        Boolean  @default(true)
-  purchasedAt     DateTime?
+  customCtaText     String?
+  customBannerUrl   String?
+  isActive          Boolean   @default(true)
+  purchasedAt       DateTime?
   platformPaymentId String?
-  expiresAt       DateTime?
-  createdAt       DateTime @default(now())
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
 
   // Relations
-  admin           Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  webTheme        WebTheme? @relation(fields: [webThemeId], references: [id])
+  admin    Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  webTheme WebTheme? @relation(fields: [webThemeId], references: [id])
 
   @@map("admin_theme")
 }
@@ -1064,13 +1104,13 @@ model AdminTheme {
 // ============================================================
 
 model SocialMediaManage {
-  id        String             @id @default(uuid())
+  id        String              @id @default(uuid())
   adminId   String
   platform  SocialMediaPlatform
   url       String
-  isActive  Boolean            @default(true)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  isActive  Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
 
   @@unique([adminId, platform])
   @@map("social_media_manage")
@@ -1081,18 +1121,18 @@ model SocialMediaManage {
 // ============================================================
 
 model PlatformPayment {
-  id              String               @id @default(uuid())
+  id              String                 @id @default(uuid())
   adminId         String
   amount          Float
-  currency        String               @default("INR")
-  status          PlatformPaymentStatus @default(pending)
+  currency        String                 @default("INR")
+  status          PlatformPaymentStatus  @default(pending)
   gateway         PlatformPaymentGateway
   transactionId   String?
   planId          String?
   gatewayResponse String?
   refundedAt      DateTime?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 
   @@map("platform_payment")
 }
