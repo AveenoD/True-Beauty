@@ -1,15 +1,10 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
+import pg from "pg";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set. Add it to backend/.env");
-}
-
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5433/truebeauty?schema=public";
+const adapter = new PrismaPg(new pg.Pool({ connectionString }));
 const prisma = new PrismaClient({ adapter });
 
 export default prisma;

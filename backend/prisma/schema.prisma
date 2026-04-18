@@ -231,8 +231,8 @@ model Admin {
   name         String
   email        String    @unique
   password     String
+slug         String?
   role         AdminRole @default(admin)
-  profileImage String?
   isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
@@ -246,6 +246,9 @@ model Admin {
   subscription         AdminSubscription?
   onboardingProgress   AdminOnboardingProgress?
   notifications        Notification[]
+categories           Category[]
+  products             Product[]
+  coupons              Coupon[]
 
   @@map("admin")
 }
@@ -267,22 +270,19 @@ model SuperAdmin {
 // ============================================================
 
 model User {
-  id              String    @id @default(uuid())
-  adminId         String?
-  name            String
-  email           String    @unique
-  password        String?
-  phone           String?
-  dateOfBirth     DateTime?
-  gender          String?
-  emailVerifiedAt DateTime?
-  isActive        Boolean   @default(true)
-  referralCode    String?   @unique
-  referralBy      String?
-  role            String    @default("customer")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime?
+id           String    @id @default(uuid())
+  adminId      String?
+  name         String
+  email        String    @unique
+  password     String?
+  phone        String?
+  isActive     Boolean   @default(true)
+  referralCode String?   @unique
+  referralBy   String?
+  role         String    @default("customer")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
   // Relations
   authTokens       AuthToken[]
@@ -451,6 +451,29 @@ model WithdrawalAudit {
 }
 
 // ============================================================
+// CATEGORY
+// ============================================================
+
+model Category {
+  id        String   @id @default(uuid())
+  adminId   String
+  name      String
+  slug      String
+  image     String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  admin    Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@unique([adminId, slug])
+  @@map("category")
+}
+
+// ============================================================
 // PRODUCT & INVENTORY
 // ============================================================
 
@@ -458,7 +481,8 @@ model Product {
   id                 String    @id @default(uuid())
   adminId            String?
   name               String
-  category           String
+categoryId         String?
+  categoryName       String?
   price              Float
   discountPrice      Float?
   commissionRate     Float?
@@ -480,6 +504,8 @@ model Product {
   inventoryNotes     String?
 
   // Relations
+admin            Admin?                    @relation(fields: [adminId], references: [id])
+  category         Category?                 @relation(fields: [categoryId], references: [id])
   inventory        Inventory[]
   orderItems       OrderItem[]
   couponApplicable CouponApplicableProduct[]
@@ -487,6 +513,7 @@ model Product {
   wishlistItems    WishlistItem[]
   cartItems        CartItem[]
 
+  @@index([adminId])
   @@map("product")
 }
 
@@ -531,7 +558,9 @@ model InventoryLog {
 
 model Coupon {
   id                 String               @id @default(uuid())
+  adminId            String
   code               String               @unique
+  description        String?
   discountType       CouponDiscountType
   discountValue      Float
   minimumOrderAmount Float?
@@ -546,10 +575,12 @@ model Coupon {
   updatedAt          DateTime             @updatedAt
 
   // Relations
+  admin                Admin                      @relation(fields: [adminId], references: [id], onDelete: Cascade)
   applicableProducts   CouponApplicableProduct[]
   applicableCategories CouponApplicableCategory[]
   orders               Order[]
 
+  @@unique([adminId, code])
   @@map("coupon")
 }
 
@@ -1020,8 +1051,7 @@ model AdminOnboardingProgress {
   updatedAt              DateTime                @updatedAt
 
   // Relations
-  admin                Admin       @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  verifiedBySuperAdmin SuperAdmin? @relation(fields: [verifiedBySuperAdminId], references: [id], onDelete: SetNull)
+admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@map("admin_onboarding_progress")
 }
