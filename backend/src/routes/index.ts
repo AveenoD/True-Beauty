@@ -4,7 +4,6 @@ import storeRoutes from "./store.routes";
 import plansRoutes from "./plans.routes";
 import swaggerRoutes from "./swagger.routes";
 import superadminRoutes from "./superadmin.routes";
-<<<<<<< HEAD
 import adminRoutes from "./admin.routes";
 import categoryRoutes from "./category.routes";
 import productRoutes from "./product.routes";
@@ -15,8 +14,6 @@ import couponRoutes from "./coupon.routes";
 import couponApplyRoutes from "./coupon.apply.routes";
 import paymentRoutes from "./payment.routes";
 import returnRoutes from "./return.routes";
-=======
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
 
 const router = Router();
 
@@ -29,7 +26,6 @@ router.use("/users", usersRoutes);
 // SuperAdmin routes (platform only)
 router.use("/superadmin", superadminRoutes);
 
-<<<<<<< HEAD
 // Admin routes (tenant admin auth)
 router.use("/admins", adminRoutes);
 
@@ -38,8 +34,6 @@ router.use("/admin/categories", categoryRoutes);
 router.use("/admin/products", productRoutes);
 router.use("/admin/coupons", couponRoutes);
 
-=======
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
 // Store routes (public)
 router.use("/store", storeRoutes);
 

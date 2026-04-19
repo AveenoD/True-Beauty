@@ -1,66 +1,69 @@
-﻿openapi: 3.0.3
+openapi: 3.0.3
 info:
   title: True Beauty API
   version: 1.0.0
-  description: |
-    OpenAPI contract derived from True_Beauty_ERD_final.drawio.xml and the project endpoint inventory.
-    Each operation includes vendor extensions for phase/day priority and ERD table mapping.
+  description: >
+    OpenAPI contract derived from True_Beauty_ERD_final.drawio.xml and the
+    project endpoint inventory.
+
+    Each operation includes vendor extensions for phase/day priority and ERD
+    table mapping.
 servers:
   - url: http://localhost:3000
     description: Local development
 tags:
   - name: Admin
-    description: "Admin endpoints"
+    description: Admin endpoints
   - name: Admin Auth
-    description: "Admin Auth endpoints"
+    description: Admin Auth endpoints
   - name: Admin Onboarding
-    description: "Admin Onboarding endpoints"
+    description: Admin Onboarding endpoints
   - name: Affiliate
-    description: "Affiliate endpoints"
+    description: Affiliate endpoints
   - name: Auth
-    description: "Auth endpoints"
+    description: Auth endpoints
   - name: Bookings
-    description: "Bookings endpoints"
+    description: Bookings endpoints
   - name: Cart
-    description: "Cart endpoints"
+    description: Cart endpoints
   - name: Coupons
-    description: "Coupons endpoints"
+    description: Coupons endpoints
   - name: Exchanges
-    description: "Exchanges endpoints"
+    description: Exchanges endpoints
   - name: Inventory
-    description: "Inventory endpoints"
+    description: Inventory endpoints
   - name: KYC
-    description: "KYC endpoints"
+    description: KYC endpoints
   - name: Notifications
-    description: "Notifications endpoints"
+    description: Notifications endpoints
   - name: Orders
-    description: "Orders endpoints"
+    description: Orders endpoints
   - name: Payments
-    description: "Payments endpoints"
+    description: Payments endpoints
   - name: Plans
-    description: "Plans endpoints"
+    description: Plans endpoints
   - name: Products
-    description: "Products endpoints"
+    description: Products endpoints
   - name: Refunds
-    description: "Refunds endpoints"
+    description: Refunds endpoints
   - name: Returns
-    description: "Returns endpoints"
+    description: Returns endpoints
   - name: Reviews
-    description: "Reviews endpoints"
+    description: Reviews endpoints
   - name: Services
-    description: "Services endpoints"
+    description: Services endpoints
   - name: Social Media
-    description: "Social Media endpoints"
+    description: Social Media endpoints
   - name: Store
-    description: "Store endpoints"
+    description: Store endpoints
   - name: Super Admin
-    description: "Super Admin endpoints"
+    description: Super Admin endpoints
   - name: Themes
-    description: "Themes endpoints"
+    description: Themes endpoints
   - name: User
-    description: "User endpoints"
+    description: User endpoints
   - name: Wishlist
-    description: "Wishlist endpoints"
+    description: Wishlist endpoints
 x-paths-inventory:
   /admin/affiliate/withdrawals:
     get:
@@ -81,12 +84,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/withdrawal_request
+                $ref: null
   /admin/affiliate/withdrawals/{id}/status:
     put:
       tags:
@@ -118,14 +121,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/withdrawal_request
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/auth/login:
     post:
       tags:
@@ -147,14 +150,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Admin
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin
+                $ref: null
   /admin/auth/logout:
     post:
       tags:
@@ -178,14 +181,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Admin
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin
+                $ref: null
   /admin/coupons:
     post:
       tags:
@@ -209,14 +212,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Coupon
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Coupon
+                $ref: null
     get:
       tags:
         - Coupons
@@ -235,12 +238,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Coupon
+                $ref: null
   /admin/coupons/{id}:
     delete:
       tags:
@@ -266,12 +269,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Coupon
+                $ref: null
     put:
       tags:
         - Coupons
@@ -300,22 +303,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Coupon
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Coupon
+                $ref: null
   /admin/exchanges:
     get:
       tags:
         - Exchanges
       summary: List exchange requests (admin)
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: exchange_request
+
         Shared IDs:
           - exchange_request: id, order_id, product_id, user_id, admin_id, replacement_product_id, replacement_tracking_id
       operationId: op_100_get
@@ -327,20 +332,22 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/exchange_request
+                $ref: null
   /admin/exchanges/{id}/status:
     put:
       tags:
         - Exchanges
       summary: Update exchange status
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: exchange_request, exchange_timeline
+
         Shared IDs:
           - exchange_request: id, order_id, product_id, user_id, admin_id, replacement_product_id, replacement_tracking_id
           - exchange_timeline: id, exchange_id, order_item_id
@@ -364,14 +371,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/exchange_request
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/exchanges/{id}/timeline:
     get:
       tags:
@@ -397,12 +404,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/exchange_timeline
+                $ref: null
   /admin/inventory:
     post:
       tags:
@@ -426,14 +433,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Inventory
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Inventory
+                $ref: null
     get:
       tags:
         - Inventory
@@ -452,12 +459,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Inventory
+                $ref: null
   /admin/inventory/{id}:
     put:
       tags:
@@ -487,14 +494,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Inventory
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Inventory
+                $ref: null
   /admin/inventory/{id}/current-stock:
     get:
       tags:
@@ -522,12 +529,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/inventory/{id}/logs:
     get:
       tags:
@@ -553,12 +560,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Inventory_Logs
+                $ref: null
     post:
       tags:
         - Inventory
@@ -587,14 +594,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Inventory_Logs
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Inventory_Logs
+                $ref: null
   /admin/notifications:
     get:
       tags:
@@ -614,12 +621,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/notification
+                $ref: null
     post:
       tags:
         - Notifications
@@ -642,14 +649,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/notification
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/notification
+                $ref: null
   /admin/onboarding/addons:
     put:
       tags:
@@ -673,14 +680,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/admin_onboarding_progress
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/admin_onboarding_progress
+                $ref: null
   /admin/onboarding/business-details:
     put:
       tags:
@@ -706,14 +713,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Admin
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/onboarding/documents:
     post:
       tags:
@@ -737,22 +744,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/admin_kyc_document
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/admin_kyc_document
+                $ref: null
   /admin/onboarding/payment:
     post:
       tags:
         - Admin Onboarding
       summary: Create subscription payment
-      description: |
+      description: >
         Priority: Phase 2 / Day 3
+
         ERD tables: admin_subscription, platform_payment, Admin
+
         Shared IDs:
           - admin_subscription: id, admin_id, plan_id, payment_id
           - platform_payment: id, user_id, subscription_plan_id, theme_id, admin_theme_id, addon_id, transaction_id
@@ -772,14 +781,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/admin_subscription
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/onboarding/progress:
     get:
       tags:
@@ -799,12 +808,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/admin_onboarding_progress
+                $ref: null
   /admin/onboarding/start:
     post:
       tags:
@@ -828,22 +837,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/admin_onboarding_progress
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/admin_onboarding_progress
+                $ref: null
   /admin/orders:
     get:
       tags:
         - Orders
       summary: List orders (admin)
-      description: |
+      description: >
         Priority: Phase 2 / Day 4
+
         ERD tables: Order, order_item
+
         Shared IDs:
           - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
           - order_item: id, order_id, product_id, admin_id
@@ -857,20 +868,22 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/orders/{id}:
     get:
       tags:
         - Orders
       summary: Get order (admin)
-      description: |
+      description: >
         Priority: Phase 2 / Day 4
+
         ERD tables: Order, order_item
+
         Shared IDs:
           - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
           - order_item: id, order_id, product_id, admin_id
@@ -890,20 +903,22 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/orders/{id}/order-total:
     get:
       tags:
         - Orders
       summary: Compute order total
-      description: |
+      description: >
         Priority: Phase 2 / Day 4
+
         ERD tables: Order
+
         Shared IDs:
           - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
       operationId: op_90_get
@@ -921,20 +936,22 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Order
+                $ref: null
   /admin/orders/{id}/status:
     put:
       tags:
         - Orders
       summary: Update order status
-      description: |
+      description: >
         Priority: Phase 2 / Day 4
+
         ERD tables: Order
+
         Shared IDs:
           - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
       operationId: op_86_put
@@ -956,14 +973,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Order
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Order
+                $ref: null
   /admin/products:
     post:
       tags:
@@ -987,14 +1004,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Product
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Product
+                $ref: null
     get:
       tags:
         - Products
@@ -1013,12 +1030,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Product
+                $ref: null
   /admin/products/{id}:
     delete:
       tags:
@@ -1044,12 +1061,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Product
+                $ref: null
     put:
       tags:
         - Products
@@ -1078,14 +1095,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Product
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Product
+                $ref: null
     get:
       tags:
         - Products
@@ -1110,12 +1127,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Product
+                $ref: null
   /admin/profile:
     put:
       tags:
@@ -1139,14 +1156,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Admin
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin
+                $ref: null
     get:
       tags:
         - Admin
@@ -1165,12 +1182,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin
+                $ref: null
   /admin/refunds/{id}/audit:
     get:
       tags:
@@ -1196,20 +1213,22 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/refund_audit_log
+                $ref: null
   /admin/refunds/{id}/process:
     put:
       tags:
         - Refunds
       summary: Process refund
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: refund_details, refund_audit_log
+
         Shared IDs:
           - refund_details: id, return_id, order_id, admin_id, upi_id, transaction_id
           - refund_audit_log: id, refund_id
@@ -1233,22 +1252,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/refund_details
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/refunds/{returnId}:
     get:
       tags:
         - Refunds
       summary: Get refund details by return
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: refund_details
+
         Shared IDs:
           - refund_details: id, return_id, order_id, admin_id, upi_id, transaction_id
       operationId: op_103_get
@@ -1266,20 +1287,22 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/refund_details
+                $ref: null
   /admin/returns:
     get:
       tags:
         - Returns
       summary: List return requests (admin)
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: return_request
+
         Shared IDs:
           - return_request: id, order_id, product_id, user_id, admin_id, order_item_id
       operationId: op_94_get
@@ -1291,20 +1314,22 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/return_request
+                $ref: null
   /admin/returns/{id}/status:
     put:
       tags:
         - Returns
       summary: Update return status
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: return_request, return_timeline
+
         Shared IDs:
           - return_request: id, order_id, product_id, user_id, admin_id, order_item_id
           - return_timeline: id, return_id
@@ -1328,14 +1353,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/return_request
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /admin/returns/{id}/timeline:
     get:
       tags:
@@ -1361,12 +1386,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/return_timeline
+                $ref: null
   /admin/reviews:
     get:
       tags:
@@ -1386,12 +1411,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Review_Rating
+                $ref: null
   /admin/reviews/{id}/status:
     put:
       tags:
@@ -1421,14 +1446,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Review_Rating
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Review_Rating
+                $ref: null
   /admin/service-bookings:
     get:
       tags:
@@ -1448,12 +1473,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/service_booking
+                $ref: null
   /admin/service-bookings/{id}/status:
     put:
       tags:
@@ -1483,14 +1508,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/service_booking
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/service_booking
+                $ref: null
   /admin/services:
     post:
       tags:
@@ -1514,14 +1539,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/My_Service
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/My_Service
+                $ref: null
     get:
       tags:
         - Services
@@ -1540,12 +1565,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/My_Service
+                $ref: null
   /admin/services/{id}:
     delete:
       tags:
@@ -1571,12 +1596,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/My_Service
+                $ref: null
     put:
       tags:
         - Services
@@ -1605,14 +1630,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/My_Service
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/My_Service
+                $ref: null
     get:
       tags:
         - Services
@@ -1637,12 +1662,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/My_Service
+                $ref: null
   /admin/social-media:
     post:
       tags:
@@ -1666,14 +1691,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/social_media_manage
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/social_media_manage
+                $ref: null
     get:
       tags:
         - Social Media
@@ -1692,12 +1717,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/social_media_manage
+                $ref: null
   /admin/social-media/{id}:
     delete:
       tags:
@@ -1723,12 +1748,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/social_media_manage
+                $ref: null
     put:
       tags:
         - Social Media
@@ -1757,14 +1782,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/social_media_manage
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/social_media_manage
+                $ref: null
   /admin/theme:
     put:
       tags:
@@ -1788,14 +1813,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Admin_Theme
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin_Theme
+                $ref: null
     get:
       tags:
         - Themes
@@ -1814,13 +1839,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin_Theme
-  /auth/forgot-password:
+                $ref: null
+  /users/forgot-password:
     post:
       tags:
         - Auth
@@ -1841,15 +1866,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/User
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/User
-  /auth/login:
+                $ref: null
+  /users/login:
     post:
       tags:
         - Auth
@@ -1870,15 +1895,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/User
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/User
-  /auth/logout:
+                $ref: null
+  /users/logout:
     post:
       tags:
         - Auth
@@ -1901,15 +1926,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/User
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/User
-  /auth/refresh-token:
+                $ref: null
+  /users/refresh-token:
     post:
       tags:
         - Auth
@@ -1930,15 +1955,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/User
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/User
-  /auth/register:
+                $ref: null
+  /users/register:
     post:
       tags:
         - Auth
@@ -1959,15 +1984,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/User
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/User
-  /auth/reset-password:
+                $ref: null
+  /users/reset-password:
     post:
       tags:
         - Auth
@@ -1988,22 +2013,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/User
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/User
+                $ref: null
   /payment/initiate:
     post:
       tags:
         - Payments
       summary: Initiate payment
-      description: |
+      description: >
         Priority: Phase 1 / Day 2
+
         ERD tables: Payment
+
         Shared IDs:
           - Payment: id, admin_id, order_id, user_id, service_booking_id, transaction_id
       operationId: op_87_post
@@ -2019,22 +2046,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Payment
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Payment
+                $ref: null
   /payment/webhook:
     post:
       tags:
         - Payments
       summary: Payment webhook
-      description: |
+      description: >
         Priority: Phase 1 / Day 2
+
         ERD tables: Payment, Order
+
         Shared IDs:
           - Payment: id, admin_id, order_id, user_id, service_booking_id, transaction_id
           - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
@@ -2050,14 +2079,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Payment
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
   /plans:
     get:
       tags:
@@ -2075,12 +2104,12 @@ x-paths-inventory:
         - subscription_plan
       x-priority-order: 28
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/subscription_plan
+                $ref: null
   /plans/{id}/addons:
     get:
       tags:
@@ -2104,12 +2133,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/plan_addon
+                $ref: null
   /store/products:
     get:
       tags:
@@ -2127,12 +2156,12 @@ x-paths-inventory:
         - Product
       x-priority-order: 48
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Product
+                $ref: null
   /store/products/{id}:
     get:
       tags:
@@ -2156,12 +2185,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Product
+                $ref: null
   /store/products/{id}/avg-rating:
     get:
       tags:
@@ -2185,12 +2214,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Review_Rating
+                $ref: null
   /store/products/{id}/reviews:
     get:
       tags:
@@ -2214,12 +2243,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Review_Rating
+                $ref: null
   /store/services:
     get:
       tags:
@@ -2237,12 +2266,12 @@ x-paths-inventory:
         - My_Service
       x-priority-order: 61
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/My_Service
+                $ref: null
   /store/services/{id}:
     get:
       tags:
@@ -2266,12 +2295,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/My_Service
+                $ref: null
   /store/theme:
     get:
       tags:
@@ -2295,14 +2324,14 @@ x-paths-inventory:
           required: true
           schema:
             type: string
-          description: 'Store owner admin identifier. ERD has no slug.'
+          description: Store owner admin identifier. ERD has no slug.
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Web_Theme
+                $ref: null
   /super-admin/addons:
     post:
       tags:
@@ -2326,14 +2355,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/plan_addon
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/plan_addon
+                $ref: null
     get:
       tags:
         - Super Admin
@@ -2352,12 +2381,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/plan_addon
+                $ref: null
   /super-admin/addons/{id}:
     delete:
       tags:
@@ -2383,12 +2412,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/plan_addon
+                $ref: null
     put:
       tags:
         - Super Admin
@@ -2417,14 +2446,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/plan_addon
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/plan_addon
+                $ref: null
   /super-admin/admins:
     get:
       tags:
@@ -2444,12 +2473,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin
+                $ref: null
   /super-admin/admins/{id}:
     get:
       tags:
@@ -2475,12 +2504,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin
+                $ref: null
   /super-admin/admins/{id}/kyc:
     get:
       tags:
@@ -2506,12 +2535,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/admin_kyc_document
+                $ref: null
   /super-admin/admins/{id}/kyc/{docId}:
     put:
       tags:
@@ -2546,14 +2575,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/admin_kyc_document
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/admin_kyc_document
+                $ref: null
   /super-admin/admins/{id}/status:
     put:
       tags:
@@ -2583,14 +2612,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Admin
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Admin
+                $ref: null
   /super-admin/auth/login:
     post:
       tags:
@@ -2612,14 +2641,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/super_admin
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/super_admin
+                $ref: null
   /super-admin/auth/logout:
     post:
       tags:
@@ -2643,14 +2672,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/super_admin
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/super_admin
+                $ref: null
   /super-admin/plans:
     post:
       tags:
@@ -2674,14 +2703,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/subscription_plan
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/subscription_plan
+                $ref: null
     get:
       tags:
         - Super Admin
@@ -2700,12 +2729,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/subscription_plan
+                $ref: null
   /super-admin/plans/{id}:
     delete:
       tags:
@@ -2731,12 +2760,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/subscription_plan
+                $ref: null
     put:
       tags:
         - Super Admin
@@ -2765,15 +2794,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/subscription_plan
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/subscription_plan
-  /user/addresses:
+                $ref: null
+  /users/addresses:
     post:
       tags:
         - User
@@ -2796,14 +2825,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Address
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Address
+                $ref: null
     get:
       tags:
         - User
@@ -2822,13 +2851,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Address
-  /user/addresses/{id}:
+                $ref: null
+  /users/addresses/{id}:
     delete:
       tags:
         - User
@@ -2853,12 +2882,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Address
+                $ref: null
     put:
       tags:
         - User
@@ -2887,15 +2916,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Address
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Address
-  /user/affiliate/apply:
+                $ref: null
+  /users/affiliate/apply:
     post:
       tags:
         - Affiliate
@@ -2918,15 +2947,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Affiliate_profile
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Affiliate_profile
-  /user/affiliate/available-balance:
+                $ref: null
+  /users/affiliate/available-balance:
     get:
       tags:
         - Affiliate
@@ -2949,13 +2978,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
-  /user/affiliate/earnings:
+                $ref: null
+  /users/affiliate/earnings:
     get:
       tags:
         - Affiliate
@@ -2974,13 +3003,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Affiliate_earning
-  /user/affiliate/profile:
+                $ref: null
+  /users/affiliate/profile:
     get:
       tags:
         - Affiliate
@@ -2999,20 +3028,22 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Affiliate_profile
-  /user/affiliate/referrals:
+                $ref: null
+  /users/affiliate/referrals:
     get:
       tags:
         - Affiliate
       summary: List affiliate referrals
-      description: |
+      description: >
         Priority: Phase 4 / Day 6
+
         ERD tables: affiliate_referral_tracking
+
         Shared IDs:
           - affiliate_referral_tracking: id, affiliate_id, admin_id, referred_user_id, order_id
       operationId: op_119_get
@@ -3024,13 +3055,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/affiliate_referral_tracking
-  /user/affiliate/withdrawals:
+                $ref: null
+  /users/affiliate/withdrawals:
     get:
       tags:
         - Affiliate
@@ -3049,12 +3080,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/withdrawal_request
+                $ref: null
     post:
       tags:
         - Affiliate
@@ -3077,15 +3108,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/withdrawal_request
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/withdrawal_request
-  /user/cart:
+                $ref: null
+  /users/cart:
     delete:
       tags:
         - Cart
@@ -3104,12 +3135,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/cart_Item
+                $ref: null
     get:
       tags:
         - Cart
@@ -3128,13 +3159,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/cart_Item
-  /user/cart/items:
+                $ref: null
+  /users/cart/items:
     post:
       tags:
         - Cart
@@ -3157,15 +3188,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/cart_Item
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/cart_Item
-  /user/cart/items/{id}:
+                $ref: null
+  /users/cart/items/{id}:
     delete:
       tags:
         - Cart
@@ -3190,12 +3221,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/cart_Item
+                $ref: null
     put:
       tags:
         - Cart
@@ -3224,15 +3255,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/cart_Item
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/cart_Item
-  /user/coupons/validate:
+                $ref: null
+  /users/coupons/validate:
     post:
       tags:
         - Coupons
@@ -3255,22 +3286,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Coupon
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Coupon
-  /user/exchanges:
+                $ref: null
+  /users/exchanges:
     get:
       tags:
         - Exchanges
       summary: List exchange requests (user)
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: exchange_request
+
         Shared IDs:
           - exchange_request: id, order_id, product_id, user_id, admin_id, replacement_product_id, replacement_tracking_id
       operationId: op_98_get
@@ -3282,19 +3315,21 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/exchange_request
+                $ref: null
     post:
       tags:
         - Exchanges
       summary: Create exchange request
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: exchange_request
+
         Shared IDs:
           - exchange_request: id, order_id, product_id, user_id, admin_id, replacement_product_id, replacement_tracking_id
       operationId: op_97_post
@@ -3310,22 +3345,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/exchange_request
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/exchange_request
-  /user/exchanges/{id}:
+                $ref: null
+  /users/exchanges/{id}:
     get:
       tags:
         - Exchanges
       summary: Get exchange request (user)
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: exchange_request
+
         Shared IDs:
           - exchange_request: id, order_id, product_id, user_id, admin_id, replacement_product_id, replacement_tracking_id
       operationId: op_99_get
@@ -3343,13 +3380,13 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/exchange_request
-  /user/kyc/documents:
+                $ref: null
+  /users/kyc/documents:
     post:
       tags:
         - KYC
@@ -3372,15 +3409,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/KYC_Document
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/KYC_Document
-  /user/kyc/status:
+                $ref: null
+  /users/kyc/status:
     get:
       tags:
         - KYC
@@ -3399,13 +3436,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/KYC_Document
-  /user/notifications:
+                $ref: null
+  /users/notifications:
     get:
       tags:
         - Notifications
@@ -3426,13 +3463,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
-  /user/notifications/{id}/read:
+                $ref: null
+  /users/notifications/{id}/read:
     put:
       tags:
         - Notifications
@@ -3461,15 +3498,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/user_notification
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/user_notification
-  /user/notifications/read-all:
+                $ref: null
+  /users/notifications/read-all:
     put:
       tags:
         - Notifications
@@ -3492,22 +3529,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/user_notification
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/user_notification
-  /user/orders:
+                $ref: null
+  /users/orders:
     get:
       tags:
         - Orders
       summary: List user orders
-      description: |
+      description: >
         Priority: Phase 1 / Day 2
+
         ERD tables: Order, order_item
+
         Shared IDs:
           - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
           - order_item: id, order_id, product_id, admin_id
@@ -3521,19 +3560,21 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
+                $ref: null
     post:
       tags:
         - Orders
       summary: Create order
-      description: |
+      description: >
         Priority: Phase 1 / Day 2
+
         ERD tables: Order, order_item
+
         Shared IDs:
           - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
           - order_item: id, order_id, product_id, admin_id
@@ -3551,22 +3592,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Order
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
-  /user/orders/{id}:
+                $ref: null
+  /users/orders/{id}:
     get:
       tags:
         - Orders
       summary: Get user order
-      description: |
+      description: >
         Priority: Phase 1 / Day 2
+
         ERD tables: Order, order_item
+
         Shared IDs:
           - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
           - order_item: id, order_id, product_id, admin_id
@@ -3586,20 +3629,22 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/ApiEnvelope
-  /user/payments/{id}:
+                $ref: null
+  /users/payments/{id}:
     get:
       tags:
         - Payments
       summary: Get payment
-      description: |
+      description: >
         Priority: Phase 1 / Day 2
+
         ERD tables: Payment
+
         Shared IDs:
           - Payment: id, admin_id, order_id, user_id, service_booking_id, transaction_id
       operationId: op_89_get
@@ -3617,13 +3662,13 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Payment
-  /user/profile:
+                $ref: null
+  /users/profile:
     put:
       tags:
         - User
@@ -3646,14 +3691,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/User
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/User
+                $ref: null
     get:
       tags:
         - User
@@ -3672,20 +3717,22 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/User
-  /user/returns:
+                $ref: null
+  /users/returns:
     get:
       tags:
         - Returns
       summary: List return requests (user)
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: return_request
+
         Shared IDs:
           - return_request: id, order_id, product_id, user_id, admin_id, order_item_id
       operationId: op_92_get
@@ -3697,19 +3744,21 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/return_request
+                $ref: null
     post:
       tags:
         - Returns
       summary: Create return request
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: return_request
+
         Shared IDs:
           - return_request: id, order_id, product_id, user_id, admin_id, order_item_id
       operationId: op_91_post
@@ -3725,22 +3774,24 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/return_request
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/return_request
-  /user/returns/{id}:
+                $ref: null
+  /users/returns/{id}:
     get:
       tags:
         - Returns
       summary: Get return request (user)
-      description: |
+      description: >
         Priority: Phase 3 / Day 5
+
         ERD tables: return_request
+
         Shared IDs:
           - return_request: id, order_id, product_id, user_id, admin_id, order_item_id
       operationId: op_93_get
@@ -3758,13 +3809,13 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/return_request
-  /user/reviews:
+                $ref: null
+  /users/reviews:
     post:
       tags:
         - Reviews
@@ -3787,15 +3838,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/Review_Rating
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/Review_Rating
-  /user/service-bookings:
+                $ref: null
+  /users/service-bookings:
     get:
       tags:
         - Bookings
@@ -3814,12 +3865,12 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/service_booking
+                $ref: null
     post:
       tags:
         - Bookings
@@ -3842,15 +3893,15 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/service_booking
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/service_booking
-  /user/service-bookings/{id}:
+                $ref: null
+  /users/service-bookings/{id}:
     get:
       tags:
         - Bookings
@@ -3875,13 +3926,13 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/service_booking
-  /user/wishlist:
+                $ref: null
+  /users/wishlist:
     post:
       tags:
         - Wishlist
@@ -3904,14 +3955,14 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: #/components/schemas/wishList_Items
+              $ref: null
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/wishList_Items
+                $ref: null
     get:
       tags:
         - Wishlist
@@ -3930,13 +3981,13 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/wishList_Items
-  /user/wishlist/{productId}:
+                $ref: null
+  /users/wishlist/{productId}:
     delete:
       tags:
         - Wishlist
@@ -3961,12 +4012,12 @@ x-paths-inventory:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: #/components/schemas/wishList_Items
+                $ref: null
 x-components-inventory:
   securitySchemes:
     bearerAuth:
@@ -4450,7 +4501,8 @@ x-components-inventory:
           description: \Maps to ERD column affiliate_referral_tracking.commission_amount\
         commission_percentage:
           type: string
-          description: \Maps to ERD column affiliate_referral_tracking.commission_percentage\
+          description: \Maps to ERD column
+            affiliate_referral_tracking.commission_percentage\
         status:
           type: string
           description: \Maps to ERD column affiliate_referral_tracking.status\
@@ -6010,20 +6062,15 @@ x-components-inventory:
         processed_by:
           type: string
           description: \Maps to ERD column withdrawal_request.processed_by\
-
-# ============================================================
-# IMPLEMENTED — Phase 0 / Day 1 (13-04-2026)
-# ============================================================
-
 paths:
-  # --- SUPERADMIN ---
   /superadmin/login:
     post:
       tags:
         - Super Admin
       summary: SuperAdmin login
-      description: |
-        Platform-only authentication. Returns a SuperAdmin JWT for managing tenant Admin accounts.
+      description: >
+        Platform-only authentication. Returns a SuperAdmin JWT for managing
+        tenant Admin accounts.
       operationId: superadmin_login
       x-implemented: true
       requestBody:
@@ -6031,21 +6078,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SuperAdminLoginRequest'
+              $ref: "#/components/schemas/SuperAdminLoginRequest"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuperAdminLoginResponse'
-        '422':
+                $ref: "#/components/schemas/SuperAdminLoginResponse"
+        "422":
           description: Validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
+                $ref: "#/components/schemas/ValidationErrorResponse"
   /superadmin/admins:
     get:
       tags:
@@ -6056,7 +6102,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -6070,8 +6116,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/TenantAdminResponseData'
-
+                      $ref: "#/components/schemas/TenantAdminResponseData"
   /superadmin/admins/{id}:
     get:
       tags:
@@ -6089,27 +6134,29 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TenantAdminDetailResponse'
-        '404':
+                $ref: "#/components/schemas/TenantAdminDetailResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-
+                $ref: "#/components/schemas/ApiResponse"
   /superadmin/admins/{id}/verify:
     put:
       tags:
         - Super Admin
       summary: Set tenant Admin onboarding verification
-      description: |
-        Updates `AdminOnboardingProgress.verificationStatus` after the tenant has purchased a plan and submitted business/KYC details.
-        Does not create Admin accounts (tenants register and onboard separately).
+      description: >
+        Updates `AdminOnboardingProgress.verificationStatus` after the tenant
+        has purchased a plan and submitted business/KYC details.
+
+        Does not create Admin accounts (tenants register and onboard
+        separately).
       operationId: superadmin_verify_admin_onboarding
       x-implemented: true
       security:
@@ -6126,21 +6173,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TenantAdminVerifyRequest'
+              $ref: "#/components/schemas/TenantAdminVerifyRequest"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TenantAdminDetailResponse'
-        '404':
+                $ref: "#/components/schemas/TenantAdminDetailResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-
+                $ref: "#/components/schemas/ApiResponse"
   /superadmin/admins/{id}/disable:
     put:
       tags:
@@ -6158,13 +6204,12 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TenantAdminResponse'
-
+                $ref: "#/components/schemas/TenantAdminResponse"
   /superadmin/admins/{id}/enable:
     put:
       tags:
@@ -6182,23 +6227,25 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TenantAdminResponse'
-
-  # --- AUTH ---
-  /auth/register:
+                $ref: "#/components/schemas/TenantAdminResponse"
+  /users/register:
     post:
       tags:
         - Auth
       summary: Register new user account
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: User, AuthToken
-        Implementation: Creates user, generates access+refresh JWT tokens, stores refresh token in DB.
+
+        Implementation: Creates user, generates access+refresh JWT tokens,
+        stores refresh token in DB.
+
         AuthToken expiry: access=15min, refresh=7days.
       operationId: op_1_post_impl
       x-phase: Phase 0
@@ -6208,7 +6255,7 @@ paths:
         - AuthToken
       x-priority-order: 1
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/auth.controller.ts
       x-service: src/services/auth.service.ts
       x-route-file: src/routes/auth.routes.ts
@@ -6217,46 +6264,45 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterRequest'
+              $ref: "#/components/schemas/RegisterRequest"
             example:
-              name: "John Doe"
-              email: "john@example.com"
-              password: "securepassword123"
+              name: John Doe
+              email: john@example.com
+              password: securepassword123
               phone: "+919876543210"
-              referralCode: "ABC123"
+              referralCode: ABC123
       responses:
-        '201':
+        "201":
           description: Created — user registered successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: "#/components/schemas/AuthResponse"
               example:
                 success: true
-                message: "Registration successful"
+                message: Registration successful
                 data:
                   user:
-                    id: "uuid"
-                    name: "John Doe"
-                    email: "john@example.com"
-                    role: "customer"
-                    referralCode: "X1Y2Z3"
-                  accessToken: "eyJhbG..."
-                  refreshToken: "eyJhbG..."
-        '409':
+                    id: uuid
+                    name: John Doe
+                    email: john@example.com
+                    role: customer
+                    referralCode: X1Y2Z3
+                  accessToken: eyJhbG...
+                  refreshToken: eyJhbG...
+        "409":
           description: Conflict — email already registered
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
+                $ref: "#/components/schemas/ApiResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
-  /auth/login:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+  /users/login:
     post:
       tags:
         - Auth
@@ -6273,7 +6319,7 @@ paths:
         - AuthToken
       x-priority-order: 2
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/auth.controller.ts
       x-service: src/services/auth.service.ts
       x-route-file: src/routes/auth.routes.ts
@@ -6282,39 +6328,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
             example:
-              email: "john@example.com"
-              password: "securepassword123"
+              email: john@example.com
+              password: securepassword123
       responses:
-        '200':
+        "200":
           description: OK — login successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
           description: Unauthorized — invalid credentials
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
+                $ref: "#/components/schemas/ApiResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
-  /auth/logout:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+  /users/logout:
     post:
       tags:
         - Auth
       summary: Logout user
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: AuthToken
-        Implementation: Revokes the provided refresh token (or all tokens if none provided).
+
+        Implementation: Revokes the provided refresh token (or all tokens if
+        none provided).
       operationId: op_3_post_impl
       x-phase: Phase 0
       x-day: Day 1
@@ -6322,7 +6370,7 @@ paths:
         - AuthToken
       x-priority-order: 3
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/auth.controller.ts
       x-service: src/services/auth.service.ts
       x-route-file: src/routes/auth.routes.ts
@@ -6333,24 +6381,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LogoutRequest'
+              $ref: "#/components/schemas/LogoutRequest"
       responses:
-        '200':
+        "200":
           description: OK — logout successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-
-  /auth/refresh-token:
+                $ref: "#/components/schemas/ApiResponse"
+  /users/refresh-token:
     post:
       tags:
         - Auth
       summary: Refresh access token
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: AuthToken, User
-        Implementation: Validates refresh token, revokes old token, issues new access+refresh tokens.
+
+        Implementation: Validates refresh token, revokes old token, issues new
+        access+refresh tokens.
       operationId: op_4_post_impl
       x-phase: Phase 0
       x-day: Day 1
@@ -6359,7 +6409,7 @@ paths:
         - User
       x-priority-order: 4
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/auth.controller.ts
       x-service: src/services/auth.service.ts
       x-route-file: src/routes/auth.routes.ts
@@ -6368,38 +6418,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshTokenRequest'
+              $ref: "#/components/schemas/RefreshTokenRequest"
             example:
-              refreshToken: "eyJhbG..."
+              refreshToken: eyJhbG...
       responses:
-        '200':
+        "200":
           description: OK — tokens refreshed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenRefreshResponse'
-        '401':
+                $ref: "#/components/schemas/TokenRefreshResponse"
+        "401":
           description: Unauthorized — invalid or expired refresh token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
+                $ref: "#/components/schemas/ApiResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
-  /auth/forgot-password:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+  /users/forgot-password:
     post:
       tags:
         - Auth
       summary: Request password reset
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: User
-        Implementation: Sends password reset token (logged to console in dev, email in prod).
+
+        Implementation: Sends password reset token (logged to console in dev,
+        email in prod).
+
         Always returns 200 to prevent email enumeration.
       operationId: op_5_post_impl
       x-phase: Phase 0
@@ -6408,7 +6461,7 @@ paths:
         - User
       x-priority-order: 5
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/auth.controller.ts
       x-service: src/services/auth.service.ts
       x-route-file: src/routes/auth.routes.ts
@@ -6417,27 +6470,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ForgotPasswordRequest'
+              $ref: "#/components/schemas/ForgotPasswordRequest"
             example:
-              email: "john@example.com"
+              email: john@example.com
       responses:
-        '200':
+        "200":
           description: OK — reset email sent if account exists
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: "#/components/schemas/ApiResponse"
               example:
                 success: true
-                message: "If an account exists, a reset email has been sent"
-        '422':
+                message: If an account exists, a reset email has been sent
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
-  /auth/reset-password:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+  /users/reset-password:
     post:
       tags:
         - Auth
@@ -6453,7 +6505,7 @@ paths:
         - User
       x-priority-order: 6
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/auth.controller.ts
       x-service: src/services/auth.service.ts
       x-route-file: src/routes/auth.routes.ts
@@ -6462,34 +6514,35 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResetPasswordRequest'
+              $ref: "#/components/schemas/ResetPasswordRequest"
             example:
-              token: "abc123def456..."
-              newPassword: "newSecurePass123"
+              token: abc123def456...
+              newPassword: newSecurePass123
       responses:
-        '200':
+        "200":
           description: OK — password reset successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
+                $ref: "#/components/schemas/ApiResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
-  # --- USER ---
-  /user/profile:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+  /users/profile:
     get:
       tags:
         - User
       summary: Get current user profile
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: User
-        Implementation: Returns authenticated user's profile (password excluded).
+
+        Implementation: Returns authenticated user's profile (password
+        excluded).
       operationId: op_7_get_impl
       x-phase: Phase 0
       x-day: Day 1
@@ -6497,32 +6550,31 @@ paths:
         - User
       x-priority-order: 7
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/user.controller.ts
       x-service: src/services/user.service.ts
       x-route-file: src/routes/user.routes.ts
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfileResponse'
-        '401':
+                $ref: "#/components/schemas/UserProfileResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '404':
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-
+                $ref: "#/components/schemas/ApiResponse"
     put:
       tags:
         - User
@@ -6538,7 +6590,7 @@ paths:
         - User
       x-priority-order: 8
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/user.controller.ts
       x-service: src/services/user.service.ts
       x-route-file: src/routes/user.routes.ts
@@ -6549,31 +6601,30 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateProfileRequest'
+              $ref: "#/components/schemas/UpdateProfileRequest"
             example:
-              name: "John Updated"
+              name: John Updated
               phone: "+919876543210"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfileResponse'
-        '401':
+                $ref: "#/components/schemas/UserProfileResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
+                $ref: "#/components/schemas/ApiResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
-  /user/addresses:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+  /users/addresses:
     get:
       tags:
         - User
@@ -6589,14 +6640,14 @@ paths:
         - Address
       x-priority-order: 9
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/user.controller.ts
       x-service: src/services/user.service.ts
       x-route-file: src/routes/user.routes.ts
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -6608,26 +6659,28 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Addresses retrieved"
+                    example: Addresses retrieved
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Address'
-        '401':
+                      $ref: "#/components/schemas/Address"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-
+                $ref: "#/components/schemas/ApiResponse"
     post:
       tags:
         - User
       summary: Create user address
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: Address
-        Implementation: Creates a new address. If isDefault=true, unsets other defaults.
+
+        Implementation: Creates a new address. If isDefault=true, unsets other
+        defaults.
       operationId: op_10_post_impl
       x-phase: Phase 0
       x-day: Day 1
@@ -6635,7 +6688,7 @@ paths:
         - Address
       x-priority-order: 10
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/user.controller.ts
       x-service: src/services/user.service.ts
       x-route-file: src/routes/user.routes.ts
@@ -6646,19 +6699,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateAddressRequest'
+              $ref: "#/components/schemas/CreateAddressRequest"
             example:
-              name: "John Doe"
+              name: John Doe
               phone: "+919876543210"
-              addressLine1: "123 Main Street"
-              addressLine2: "Apt 4B"
-              city: "Mumbai"
-              state: "Maharashtra"
+              addressLine1: 123 Main Street
+              addressLine2: Apt 4B
+              city: Mumbai
+              state: Maharashtra
               pincode: "400001"
-              addressType: "home"
+              addressType: home
               isDefault: true
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
@@ -6670,29 +6723,31 @@ paths:
                   message:
                     type: string
                   data:
-                    $ref: '#/components/schemas/Address'
-        '401':
+                    $ref: "#/components/schemas/Address"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
+                $ref: "#/components/schemas/ApiResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
-  /user/addresses/{id}:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+  /users/addresses/{id}:
     put:
       tags:
         - User
       summary: Update user address
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: Address
-        Implementation: Updates address. If isDefault=true, unsets other user defaults.
+
+        Implementation: Updates address. If isDefault=true, unsets other user
+        defaults.
       operationId: op_11_put_impl
       x-phase: Phase 0
       x-day: Day 1
@@ -6700,7 +6755,7 @@ paths:
         - Address
       x-priority-order: 11
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/user.controller.ts
       x-service: src/services/user.service.ts
       x-route-file: src/routes/user.routes.ts
@@ -6718,41 +6773,43 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateAddressRequest'
+              $ref: "#/components/schemas/UpdateAddressRequest"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AddressResponse'
-        '401':
+                $ref: "#/components/schemas/AddressResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '404':
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
+                $ref: "#/components/schemas/ApiResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
+                $ref: "#/components/schemas/ValidationErrorResponse"
     delete:
       tags:
         - User
       summary: Delete user address
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: Address
-        Implementation: Deletes address. Returns 404 if not found or not owned by user.
+
+        Implementation: Deletes address. Returns 404 if not found or not owned
+        by user.
       operationId: op_12_delete_impl
       x-phase: Phase 0
       x-day: Day 1
@@ -6760,7 +6817,7 @@ paths:
         - Address
       x-priority-order: 12
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/user.controller.ts
       x-service: src/services/user.service.ts
       x-route-file: src/routes/user.routes.ts
@@ -6774,35 +6831,37 @@ paths:
             type: string
           description: Address ID
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '401':
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '404':
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-
-  # --- STORE (Public) ---
+                $ref: "#/components/schemas/ApiResponse"
   /store/products:
     get:
       tags:
         - Store
       summary: List products (public)
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: Product
-        Implementation: Returns paginated, publicly visible products (status=active, deletedAt=null).
+
+        Implementation: Returns paginated, publicly visible products
+        (status=active, deletedAt=null).
+
         Supports filtering by category, search, minPrice, maxPrice.
       operationId: op_48_get_impl
       x-phase: Phase 0
@@ -6811,7 +6870,7 @@ paths:
         - Product
       x-priority-order: 48
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/store.controller.ts
       x-service: src/services/store.service.ts
       x-route-file: src/routes/store.routes.ts
@@ -6868,23 +6927,24 @@ paths:
           required: false
           schema:
             type: string
-            enum: [asc, desc]
+            enum:
+              - asc
+              - desc
             default: desc
           description: Sort order
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedProductsResponse'
-        '422':
+                $ref: "#/components/schemas/PaginatedProductsResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
+                $ref: "#/components/schemas/ValidationErrorResponse"
   /store/products/{id}:
     get:
       tags:
@@ -6901,7 +6961,7 @@ paths:
         - Product
       x-priority-order: 49
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/store.controller.ts
       x-service: src/services/store.service.ts
       x-route-file: src/routes/store.routes.ts
@@ -6913,28 +6973,31 @@ paths:
             type: string
           description: Product ID
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductDetailResponse'
-        '404':
+                $ref: "#/components/schemas/ProductDetailResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-
+                $ref: "#/components/schemas/ApiResponse"
   /store/services:
     get:
       tags:
         - Store
       summary: List services (public)
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: My_Service
-        Implementation: Returns paginated, publicly visible services (status=active).
+
+        Implementation: Returns paginated, publicly visible services
+        (status=active).
+
         Supports filtering by category and search.
       operationId: op_61_get_impl
       x-phase: Phase 0
@@ -6943,7 +7006,7 @@ paths:
         - My_Service
       x-priority-order: 61
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/store.controller.ts
       x-service: src/services/store.service.ts
       x-route-file: src/routes/store.routes.ts
@@ -6974,19 +7037,18 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedServicesResponse'
-        '422':
+                $ref: "#/components/schemas/PaginatedServicesResponse"
+        "422":
           description: Unprocessable — validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
+                $ref: "#/components/schemas/ValidationErrorResponse"
   /store/services/{id}:
     get:
       tags:
@@ -7003,7 +7065,7 @@ paths:
         - My_Service
       x-priority-order: 62
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/store.controller.ts
       x-service: src/services/store.service.ts
       x-route-file: src/routes/store.routes.ts
@@ -7015,29 +7077,30 @@ paths:
             type: string
           description: Service ID
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceDetailResponse'
-        '404':
+                $ref: "#/components/schemas/ServiceDetailResponse"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-
-  # --- PLANS (Public) ---
-  /plans:
+                $ref: "#/components/schemas/ApiResponse"
+  /plans/:
     get:
       tags:
         - Plans
       summary: List subscription plans (public)
-      description: |
+      description: >
         Priority: Phase 0 / Day 1
+
         ERD tables: subscription_plan
-        Implementation: Returns all active subscription plans sorted by sortOrder.
+
+        Implementation: Returns all active subscription plans sorted by
+        sortOrder.
       operationId: op_28_get_impl
       x-phase: Phase 0
       x-day: Day 1
@@ -7045,12 +7108,12 @@ paths:
         - subscription_plan
       x-priority-order: 28
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/plans.controller.ts
       x-service: src/services/plans.service.ts
       x-route-file: src/routes/plans.routes.ts
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -7062,12 +7125,11 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Plans retrieved"
+                    example: Plans retrieved
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/SubscriptionPlan'
-
+                      $ref: "#/components/schemas/SubscriptionPlan"
   /plans/{id}/addons:
     get:
       tags:
@@ -7085,7 +7147,7 @@ paths:
         - subscription_plan
       x-priority-order: 29
       x-implemented: true
-      x-implemented-date: "13-04-2026"
+      x-implemented-date: 13-04-2026
       x-controller: src/controllers/plans.controller.ts
       x-service: src/services/plans.service.ts
       x-route-file: src/routes/plans.routes.ts
@@ -7098,7 +7160,7 @@ paths:
             format: uuid
           description: Plan ID
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -7110,28 +7172,422 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Addons retrieved"
+                    example: Addons retrieved
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/PlanAddon'
-        '404':
+                      $ref: "#/components/schemas/PlanAddon"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
-        '422':
+                $ref: "#/components/schemas/ApiResponse"
+        "422":
           description: Unprocessable — invalid plan ID format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-
-# ============================================================
-# IMPLEMENTED SCHEMAS — Phase 0 / Day 1 (13-04-2026)
-# ============================================================
-
+                $ref: "#/components/schemas/ValidationErrorResponse"
+  /users/verify-email:
+    get:
+      tags:
+        - Auth
+      summary: Verify user email
+      operationId: op_user_verify_email
+      responses:
+        "200":
+          description: OK
+  /users/resend-verification:
+    post:
+      tags:
+        - Auth
+      summary: Resend verification email
+      operationId: op_user_resend_verification
+      responses:
+        "200":
+          description: OK
+  /users/change-password:
+    post:
+      tags:
+        - Auth
+      summary: Change user password
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /users/delete-account:
+    delete:
+      tags:
+        - Auth
+      summary: Delete user account
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /admins/register:
+    post:
+      tags:
+        - Admin Auth
+      summary: Register new admin
+      responses:
+        "201":
+          description: Created
+  /admins/login:
+    post:
+      tags:
+        - Admin Auth
+      summary: Admin login
+      responses:
+        "200":
+          description: OK
+  /admins/refresh-token:
+    post:
+      tags:
+        - Admin Auth
+      summary: Refresh admin token
+      responses:
+        "200":
+          description: OK
+  /admins/logout:
+    post:
+      tags:
+        - Admin Auth
+      summary: Admin logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /admins/profile:
+    get:
+      tags:
+        - Admin Auth
+      summary: Get admin profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /admin/categories/:
+    get:
+      tags:
+        - Products
+      summary: List categories
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+        - Products
+      summary: Create category
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+  /admin/categories/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get category
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    put:
+      tags:
+        - Products
+      summary: Update category
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+        - Products
+      summary: Delete category
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /admin/products/:
+    get:
+      tags:
+        - Products
+      summary: List products
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+        - Products
+      summary: Create product
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+  /admin/products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    put:
+      tags:
+        - Products
+      summary: Update product
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+        - Products
+      summary: Delete product
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /admin/products/inventory/adjust:
+    post:
+      tags:
+        - Inventory
+      summary: Adjust inventory
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /admin/coupons/:
+    get:
+      tags:
+        - Coupons
+      summary: List coupons
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+        - Coupons
+      summary: Create coupon
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+  /admin/coupons/{id}:
+    put:
+      tags:
+        - Coupons
+      summary: Update coupon
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+        - Coupons
+      summary: Delete coupon
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /cart/:
+    get:
+      tags:
+        - Cart
+      summary: Get cart
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+        - Cart
+      summary: Clear cart
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Add item to cart
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+  /cart/items/{id}:
+    put:
+      tags:
+        - Cart
+      summary: Update cart item
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+        - Cart
+      summary: Remove cart item
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /wishlist/:
+    get:
+      tags:
+        - Wishlist
+      summary: Get wishlist
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+        - Wishlist
+      summary: Add to wishlist
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+  /wishlist/{id}:
+    delete:
+      tags:
+        - Wishlist
+      summary: Remove from wishlist
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /orders/:
+    post:
+      tags:
+        - Orders
+      summary: Create order
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+    get:
+      tags:
+        - Orders
+      summary: List orders
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /orders/{id}:
+    get:
+      tags:
+        - Orders
+      summary: Get order
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /orders/{id}/cancel:
+    put:
+      tags:
+        - Orders
+      summary: Cancel order
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /coupon/apply:
+    post:
+      tags:
+        - Coupons
+      summary: Apply coupon
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /payments/initiate:
+    post:
+      tags:
+        - Payments
+      summary: Initiate payment
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /payments/verify:
+    post:
+      tags:
+        - Payments
+      summary: Verify payment
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /returns/:
+    post:
+      tags:
+        - Returns
+      summary: Create return request
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+    get:
+      tags:
+        - Returns
+      summary: List returns
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+  /returns/{id}:
+    get:
+      tags:
+        - Returns
+      summary: Get return
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
 components:
   schemas:
     ApiResponse:
@@ -7143,11 +7599,10 @@ components:
           example: true
         message:
           type: string
-          example: "Success"
+          example: Success
         data:
           type: object
           nullable: true
-
     ValidationErrorResponse:
       type: object
       x-implemented: true
@@ -7157,20 +7612,20 @@ components:
           example: false
         message:
           type: string
-          example: "Validation failed"
+          example: Validation failed
         errors:
           type: object
           additionalProperties:
             type: string
           example:
-            email: "Invalid email address"
-            password: "Password must be at least 8 characters"
-
-    # Auth Request/Response Schemas
+            email: Invalid email address
+            password: Password must be at least 8 characters
     SuperAdminLoginRequest:
       type: object
       x-implemented: true
-      required: [email, password]
+      required:
+        - email
+        - password
       properties:
         email:
           type: string
@@ -7178,7 +7633,6 @@ components:
         password:
           type: string
           format: password
-
     SuperAdminLoginResponse:
       type: object
       x-implemented: true
@@ -7188,7 +7642,7 @@ components:
           example: true
         message:
           type: string
-          example: "Login successful"
+          example: Login successful
         data:
           type: object
           properties:
@@ -7207,21 +7661,24 @@ components:
                   type: string
             accessToken:
               type: string
-
     TenantAdminVerifyRequest:
       type: object
       x-implemented: true
-      required: [status]
+      required:
+        - status
       properties:
         status:
           type: string
-          enum: [pending_review, approved, rejected]
-          description: Tenant onboarding verification state (after plan purchase and business/KYC submission).
+          enum:
+            - pending_review
+            - approved
+            - rejected
+          description: Tenant onboarding verification state (after plan purchase and
+            business/KYC submission).
         note:
           type: string
           description: Optional note (e.g. rejection reason).
           maxLength: 2000
-
     TenantAdminOnboardingSummary:
       type: object
       x-implemented: true
@@ -7229,7 +7686,11 @@ components:
       properties:
         verificationStatus:
           type: string
-          enum: [draft, pending_review, approved, rejected]
+          enum:
+            - draft
+            - pending_review
+            - approved
+            - rejected
         verificationNote:
           type: string
           nullable: true
@@ -7247,7 +7708,6 @@ components:
           type: boolean
         stepCompleted:
           type: integer
-
     TenantAdminResponseData:
       type: object
       x-implemented: true
@@ -7269,8 +7729,7 @@ components:
         updatedAt:
           type: string
         onboardingProgress:
-          $ref: '#/components/schemas/TenantAdminOnboardingSummary'
-
+          $ref: "#/components/schemas/TenantAdminOnboardingSummary"
     TenantAdminDetailData:
       type: object
       x-implemented: true
@@ -7358,7 +7817,11 @@ components:
               type: boolean
             verificationStatus:
               type: string
-              enum: [draft, pending_review, approved, rejected]
+              enum:
+                - draft
+                - pending_review
+                - approved
+                - rejected
             verificationNote:
               type: string
               nullable: true
@@ -7373,7 +7836,6 @@ components:
               type: string
             updatedAt:
               type: string
-
     TenantAdminResponse:
       type: object
       x-implemented: true
@@ -7383,10 +7845,9 @@ components:
           example: true
         message:
           type: string
-          example: "Success"
+          example: Success
         data:
-          $ref: '#/components/schemas/TenantAdminResponseData'
-
+          $ref: "#/components/schemas/TenantAdminResponseData"
     TenantAdminDetailResponse:
       type: object
       x-implemented: true
@@ -7396,10 +7857,9 @@ components:
           example: true
         message:
           type: string
-          example: "Success"
+          example: Success
         data:
-          $ref: '#/components/schemas/TenantAdminDetailData'
-
+          $ref: "#/components/schemas/TenantAdminDetailData"
     RegisterRequest:
       type: object
       x-implemented: true
@@ -7412,17 +7872,17 @@ components:
           type: string
           minLength: 2
           description: Full name of the user
-          example: "John Doe"
+          example: John Doe
         email:
           type: string
           format: email
           description: Unique email address
-          example: "john@example.com"
+          example: john@example.com
         password:
           type: string
           minLength: 8
           description: Password (min 8 characters)
-          example: "securepassword123"
+          example: securepassword123
         phone:
           type: string
           description: Optional phone number
@@ -7430,8 +7890,7 @@ components:
         referralCode:
           type: string
           description: Optional referral code to credit referrer
-          example: "ABC123"
-
+          example: ABC123
     LoginRequest:
       type: object
       x-implemented: true
@@ -7442,20 +7901,19 @@ components:
         email:
           type: string
           format: email
-          example: "john@example.com"
+          example: john@example.com
         password:
           type: string
-          example: "securepassword123"
-
+          example: securepassword123
     LogoutRequest:
       type: object
       x-implemented: true
       properties:
         refreshToken:
           type: string
-          description: Specific refresh token to revoke. If omitted, all user tokens are revoked.
-          example: "eyJhbG..."
-
+          description: Specific refresh token to revoke. If omitted, all user tokens are
+            revoked.
+          example: eyJhbG...
     RefreshTokenRequest:
       type: object
       x-implemented: true
@@ -7465,8 +7923,7 @@ components:
         refreshToken:
           type: string
           description: Valid refresh token
-          example: "eyJhbG..."
-
+          example: eyJhbG...
     ForgotPasswordRequest:
       type: object
       x-implemented: true
@@ -7476,8 +7933,7 @@ components:
         email:
           type: string
           format: email
-          example: "john@example.com"
-
+          example: john@example.com
     ResetPasswordRequest:
       type: object
       x-implemented: true
@@ -7488,13 +7944,12 @@ components:
         token:
           type: string
           description: Password reset token from email
-          example: "abc123def456..."
+          example: abc123def456...
         newPassword:
           type: string
           minLength: 8
           description: New password (min 8 characters)
-          example: "newSecurePass123"
-
+          example: newSecurePass123
     AuthResponse:
       type: object
       x-implemented: true
@@ -7504,21 +7959,20 @@ components:
           example: true
         message:
           type: string
-          example: "Login successful"
+          example: Login successful
         data:
           type: object
           properties:
             user:
-              $ref: '#/components/schemas/UserPublic'
+              $ref: "#/components/schemas/UserPublic"
             accessToken:
               type: string
               description: JWT access token (15 min expiry)
-              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
             refreshToken:
               type: string
               description: JWT refresh token (7 day expiry)
-              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     TokenRefreshResponse:
       type: object
       x-implemented: true
@@ -7528,7 +7982,7 @@ components:
           example: true
         message:
           type: string
-          example: "Token refreshed"
+          example: Token refreshed
         data:
           type: object
           properties:
@@ -7536,7 +7990,6 @@ components:
               type: string
             refreshToken:
               type: string
-
     UserPublic:
       type: object
       x-implemented: true
@@ -7544,14 +7997,14 @@ components:
         id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
-          example: "John Doe"
+          example: John Doe
         email:
           type: string
           format: email
-          example: "john@example.com"
+          example: john@example.com
         phone:
           type: string
           nullable: true
@@ -7563,11 +8016,14 @@ components:
         referralCode:
           type: string
           nullable: true
-          example: "X1Y2Z3"
+          example: X1Y2Z3
         role:
           type: string
-          enum: [customer, affiliate, admin]
-          example: "customer"
+          enum:
+            - customer
+            - affiliate
+            - admin
+          example: customer
         isActive:
           type: boolean
           example: true
@@ -7577,7 +8033,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
     UserProfileResponse:
       type: object
       x-implemented: true
@@ -7587,10 +8042,9 @@ components:
           example: true
         message:
           type: string
-          example: "User profile retrieved"
+          example: User profile retrieved
         data:
-          $ref: '#/components/schemas/UserPublic'
-
+          $ref: "#/components/schemas/UserPublic"
     UpdateProfileRequest:
       type: object
       x-implemented: true
@@ -7598,12 +8052,10 @@ components:
         name:
           type: string
           minLength: 2
-          example: "John Updated"
+          example: John Updated
         phone:
           type: string
           example: "+919876543210"
-
-    # Address Schemas
     CreateAddressRequest:
       type: object
       x-implemented: true
@@ -7618,7 +8070,7 @@ components:
         name:
           type: string
           minLength: 2
-          example: "John Doe"
+          example: John Doe
         phone:
           type: string
           minLength: 10
@@ -7626,37 +8078,39 @@ components:
         addressLine1:
           type: string
           minLength: 5
-          example: "123 Main Street"
+          example: 123 Main Street
         addressLine2:
           type: string
           nullable: true
-          example: "Apt 4B"
+          example: Apt 4B
         city:
           type: string
           minLength: 2
-          example: "Mumbai"
+          example: Mumbai
         state:
           type: string
           minLength: 2
-          example: "Maharashtra"
+          example: Maharashtra
         pincode:
           type: string
           minLength: 4
           example: "400001"
         country:
           type: string
-          default: "India"
-          example: "India"
+          default: India
+          example: India
         addressType:
           type: string
-          enum: [home, work, other]
-          default: "home"
-          example: "home"
+          enum:
+            - home
+            - work
+            - other
+          default: home
+          example: home
         isDefault:
           type: boolean
           default: false
           example: true
-
     UpdateAddressRequest:
       type: object
       x-implemented: true
@@ -7686,10 +8140,12 @@ components:
           type: string
         addressType:
           type: string
-          enum: [home, work, other]
+          enum:
+            - home
+            - work
+            - other
         isDefault:
           type: boolean
-
     Address:
       type: object
       x-implemented: true
@@ -7717,10 +8173,10 @@ components:
           type: string
         country:
           type: string
-          example: "India"
+          example: India
         addressType:
           type: string
-          example: "home"
+          example: home
         isDefault:
           type: boolean
           example: true
@@ -7730,7 +8186,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
     AddressResponse:
       type: object
       x-implemented: true
@@ -7740,9 +8195,7 @@ components:
         message:
           type: string
         data:
-          $ref: '#/components/schemas/Address'
-
-    # Product/Store Schemas
+          $ref: "#/components/schemas/Address"
     ProductSummary:
       type: object
       x-implemented: true
@@ -7789,12 +8242,11 @@ components:
         updatedAt:
           type: string
           format: date-time
-
     ProductDetail:
       type: object
       x-implemented: true
       allOf:
-        - $ref: '#/components/schemas/ProductSummary'
+        - $ref: "#/components/schemas/ProductSummary"
         - type: object
           properties:
             status:
@@ -7814,7 +8266,6 @@ components:
             inventoryNotes:
               type: string
               nullable: true
-
     PaginatedProductsResponse:
       type: object
       x-implemented: true
@@ -7824,11 +8275,11 @@ components:
           example: true
         message:
           type: string
-          example: "Products retrieved"
+          example: Products retrieved
         data:
           type: array
           items:
-            $ref: '#/components/schemas/ProductSummary'
+            $ref: "#/components/schemas/ProductSummary"
         pagination:
           type: object
           properties:
@@ -7844,7 +8295,6 @@ components:
             totalPages:
               type: integer
               example: 8
-
     ProductDetailResponse:
       type: object
       x-implemented: true
@@ -7854,9 +8304,7 @@ components:
         message:
           type: string
         data:
-          $ref: '#/components/schemas/ProductDetail'
-
-    # Service Schemas
+          $ref: "#/components/schemas/ProductDetail"
     ServiceSummary:
       type: object
       x-implemented: true
@@ -7886,7 +8334,9 @@ components:
             type: string
         howToUseType:
           type: string
-          enum: [text, video]
+          enum:
+            - text
+            - video
         howToUseText:
           type: string
           nullable: true
@@ -7901,7 +8351,9 @@ components:
           nullable: true
         bookingConfirmationMode:
           type: string
-          enum: [instant, after_24h]
+          enum:
+            - instant
+            - after_24h
         status:
           type: string
         isFeatured:
@@ -7917,7 +8369,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
     PaginatedServicesResponse:
       type: object
       x-implemented: true
@@ -7927,11 +8378,11 @@ components:
           example: true
         message:
           type: string
-          example: "Services retrieved"
+          example: Services retrieved
         data:
           type: array
           items:
-            $ref: '#/components/schemas/ServiceSummary'
+            $ref: "#/components/schemas/ServiceSummary"
         pagination:
           type: object
           properties:
@@ -7943,7 +8394,6 @@ components:
               type: integer
             totalPages:
               type: integer
-
     ServiceDetailResponse:
       type: object
       x-implemented: true
@@ -7953,9 +8403,7 @@ components:
         message:
           type: string
         data:
-          $ref: '#/components/schemas/ServiceSummary'
-
-    # Plan Schemas
+          $ref: "#/components/schemas/ServiceSummary"
     SubscriptionPlan:
       type: object
       x-implemented: true
@@ -7965,7 +8413,7 @@ components:
           format: uuid
         name:
           type: string
-          example: "Professional"
+          example: Professional
         description:
           type: string
           nullable: true
@@ -7975,7 +8423,10 @@ components:
           example: 2999
         duration:
           type: string
-          enum: [monthly, quarterly, yearly]
+          enum:
+            - monthly
+            - quarterly
+            - yearly
         features:
           type: array
           items:
@@ -8000,7 +8451,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
     PlanAddon:
       type: object
       x-implemented: true
@@ -8028,8 +8478,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
-    # Pagination Schema
     Pagination:
       type: object
       x-implemented: true
