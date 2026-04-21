@@ -44,6 +44,8 @@ tags:
     description: Plans endpoints
   - name: Products
     description: Products endpoints
+  - name: Categories
+    description: Categories endpoints
   - name: Refunds
     description: Refunds endpoints
   - name: Returns
@@ -135,10 +137,11 @@ x-paths-inventory:
         - Admin Auth
       summary: Admin login
       description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: Admin
-        Shared IDs:
-          - Admin: id, user_id, current_subscription_id, selected_theme_id
+        Authenticate an admin and receive JWT tokens.
+
+        **Test credentials:**
+        - Email: admin@truebeauty.com
+        - Password: Admin@1234
       operationId: op_36_post
       x-phase: Phase 2
       x-day: Day 3
@@ -150,24 +153,53 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: null
+              $ref: '#/components/schemas/AdminLoginRequest'
+            example:
+              email: admin@truebeauty.com
+              password: Admin@1234
       responses:
         "200":
-          description: OK
+          description: Login successful
           content:
             application/json:
               schema:
-                $ref: null
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminLoginResponse'
+              example:
+                success: true
+                message: Login successful
+                data:
+                  admin:
+                    id: "f77414bc-1e6c-4634-be33-347c321b17d7"
+                    name: "True Beauty Admin"
+                    email: "admin@truebeauty.com"
+                    role: "admin"
+                    slug: "true-beauty-admin"
+                    isActive: true
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: false
+                message: "Invalid email or password"
   /admin/auth/logout:
     post:
       tags:
         - Admin Auth
       summary: Admin logout
       description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: Admin
-        Shared IDs:
-          - Admin: id, user_id, current_subscription_id, selected_theme_id
+        Invalidate admin session and refresh token.
+        If refreshToken is provided, only that token is invalidated.
+        If refreshToken is not provided, all refresh tokens for the admin are invalidated.
       operationId: op_37_post
       x-phase: Phase 2
       x-day: Day 3
@@ -177,18 +209,127 @@ x-paths-inventory:
       security:
         - bearerAuth: []
       requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLogoutRequest'
+            example:
+              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                message: "Logged out successfully"
+                data: null
+  /admin/auth/register:
+    post:
+      tags:
+        - Admin Auth
+      summary: Admin registration
+      description: |
+        Register a new admin account.
+        Returns JWT tokens for immediate authentication.
+      operationId: op_admin_register
+      x-phase: Phase 2
+      x-day: Day 3
+      x-erd-tables:
+        - Admin
+      x-priority-order: 35
+      requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: null
+              $ref: '#/components/schemas/AdminRegisterRequest'
+            example:
+              name: "Store Admin"
+              email: "admin@mystore.com"
+              password: "SecurePass@123"
+              slug: "mystore"
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Registration successful
           content:
             application/json:
               schema:
-                $ref: null
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminRegisterResponse'
+              example:
+                success: true
+                message: "Admin registered successfully"
+                data:
+                  admin:
+                    id: "123e4567-e89b-12d3-a456-426614174000"
+                    name: "Store Admin"
+                    email: "admin@mystore.com"
+                    role: "admin"
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "400":
+          description: Validation error or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+  /admin/auth/refresh-token:
+    post:
+      tags:
+        - Admin Auth
+      summary: Refresh admin access token
+      description: |
+        Exchange a valid refresh token for new access and refresh tokens.
+        The old refresh token will be invalidated (rotation).
+      operationId: op_admin_refresh
+      x-phase: Phase 2
+      x-day: Day 3
+      x-erd-tables:
+        - Admin
+      x-priority-order: 38
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRefreshTokenRequest'
+            example:
+              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        "200":
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminRefreshTokenResponse'
+              example:
+                success: true
+                message: "Token refreshed"
+                data:
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "401":
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: false
+                message: "Invalid refresh token"
   /admin/coupons:
     post:
       tags:
@@ -942,207 +1083,14 @@ x-paths-inventory:
             application/json:
               schema:
                 $ref: null
-  /admin/orders/{id}/status:
-    put:
-      tags:
-        - Orders
-      summary: Update order status
-      description: >
-        Priority: Phase 2 / Day 4
-
-        ERD tables: Order
-
-        Shared IDs:
-          - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
-      operationId: op_86_put
-      x-phase: Phase 2
-      x-day: Day 4
-      x-erd-tables:
-        - Order
-      x-priority-order: 86
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: null
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: null
-  /admin/products:
-    post:
-      tags:
-        - Products
-      summary: Create product
-      description: |
-        Priority: Phase 2 / Day 4
-        ERD tables: Product
-        Shared IDs:
-          - Product: id, admin_id
-      operationId: op_44_post
-      x-phase: Phase 2
-      x-day: Day 4
-      x-erd-tables:
-        - Product
-      x-priority-order: 44
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: null
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: null
-    get:
-      tags:
-        - Products
-      summary: List products (admin)
-      description: |
-        Priority: Phase 2 / Day 4
-        ERD tables: Product
-        Shared IDs:
-          - Product: id, admin_id
-      operationId: op_43_get
-      x-phase: Phase 2
-      x-day: Day 4
-      x-erd-tables:
-        - Product
-      x-priority-order: 43
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: null
-  /admin/products/{id}:
-    delete:
-      tags:
-        - Products
-      summary: Delete product
-      description: |
-        Priority: Phase 2 / Day 4
-        ERD tables: Product
-        Shared IDs:
-          - Product: id, admin_id
-      operationId: op_47_delete
-      x-phase: Phase 2
-      x-day: Day 4
-      x-erd-tables:
-        - Product
-      x-priority-order: 47
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: null
-    put:
-      tags:
-        - Products
-      summary: Update product
-      description: |
-        Priority: Phase 2 / Day 4
-        ERD tables: Product
-        Shared IDs:
-          - Product: id, admin_id
-      operationId: op_46_put
-      x-phase: Phase 2
-      x-day: Day 4
-      x-erd-tables:
-        - Product
-      x-priority-order: 46
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: null
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: null
-    get:
-      tags:
-        - Products
-      summary: Get product (admin)
-      description: |
-        Priority: Phase 2 / Day 4
-        ERD tables: Product
-        Shared IDs:
-          - Product: id, admin_id
-      operationId: op_45_get
-      x-phase: Phase 2
-      x-day: Day 4
-      x-erd-tables:
-        - Product
-      x-priority-order: 45
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: null
   /admin/profile:
     put:
       tags:
         - Admin
       summary: Update admin profile
       description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: Admin
-        Shared IDs:
-          - Admin: id, user_id, current_subscription_id, selected_theme_id
+        Update the authenticated admin's profile information.
+        Requires Bearer token authentication.
       operationId: op_39_put
       x-phase: Phase 2
       x-day: Day 3
@@ -1156,23 +1104,39 @@ x-paths-inventory:
         content:
           application/json:
             schema:
-              $ref: null
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Admin full name
+                  example: Updated Admin Name
+                phone:
+                  type: string
+                  description: Phone number
+                  example: "+1234567890"
+                companyName:
+                  type: string
+                  description: Company/store name
+                  example: "My Beauty Store"
       responses:
         "200":
-          description: OK
+          description: Profile updated successfully
           content:
             application/json:
               schema:
-                $ref: null
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminProfile'
     get:
       tags:
         - Admin
       summary: Get admin profile
       description: |
-        Priority: Phase 2 / Day 3
-        ERD tables: Admin
-        Shared IDs:
-          - Admin: id, user_id, current_subscription_id, selected_theme_id
+        Get the authenticated admin's profile information.
+        Requires Bearer token authentication.
       operationId: op_38_get
       x-phase: Phase 2
       x-day: Day 3
@@ -1183,11 +1147,34 @@ x-paths-inventory:
         - bearerAuth: []
       responses:
         "200":
-          description: OK
+          description: Profile retrieved successfully
           content:
             application/json:
               schema:
-                $ref: null
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminProfile'
+              example:
+                success: true
+                message: "Success"
+                data:
+                  id: "f77414bc-1e6c-4634-be33-347c321b17d7"
+                  name: "True Beauty Admin"
+                  email: "admin@truebeauty.com"
+                  slug: "true-beauty-admin"
+                  role: "admin"
+                  isActive: true
+                  createdAt: "2024-01-01T00:00:00.000Z"
+                  updatedAt: "2024-01-15T00:00:00.000Z"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
   /admin/refunds/{id}/audit:
     get:
       tags:
@@ -7227,192 +7214,770 @@ paths:
       responses:
         "200":
           description: OK
-  /admins/register:
-    post:
-      tags:
-        - Admin Auth
-      summary: Register new admin
-      responses:
-        "201":
-          description: Created
   /admins/login:
     post:
       tags:
         - Admin Auth
       summary: Admin login
+      description: |
+        Authenticate an admin and receive JWT tokens.
+
+        **Test credentials:**
+        - Email: admin@truebeauty.com
+        - Password: Admin@1234
+      operationId: op_admins_login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+            example:
+              email: admin@truebeauty.com
+              password: Admin@1234
       responses:
         "200":
-          description: OK
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminLoginResponse'
+              example:
+                success: true
+                message: "Login successful"
+                data:
+                  admin:
+                    id: "f77414bc-1e6c-4634-be33-347c321b17d7"
+                    name: "True Beauty Admin"
+                    email: "admin@truebeauty.com"
+                    role: "admin"
+                    slug: "true-beauty-admin"
+                    isActive: true
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: false
+                message: "Invalid email or password"
+  /admins/register:
+    post:
+      tags:
+        - Admin Auth
+      summary: Admin registration
+      description: |
+        Register a new admin account.
+        Returns JWT tokens for immediate authentication.
+      operationId: op_admins_register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRegisterRequest'
+            example:
+              name: "Store Admin"
+              email: "admin@mystore.com"
+              password: "SecurePass@123"
+              slug: "mystore"
+      responses:
+        "201":
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminRegisterResponse'
   /admins/refresh-token:
     post:
       tags:
         - Admin Auth
       summary: Refresh admin token
+      description: |
+        Exchange a valid refresh token for new access and refresh tokens.
+      operationId: op_admins_refresh
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRefreshTokenRequest'
       responses:
         "200":
-          description: OK
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminRefreshTokenResponse'
+        "401":
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
   /admins/logout:
     post:
       tags:
         - Admin Auth
       summary: Admin logout
+      description: |
+        Invalidate admin session and refresh token.
+      operationId: op_admins_logout
       security:
         - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLogoutRequest'
       responses:
         "200":
-          description: OK
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                message: "Logged out successfully"
+                data: null
   /admins/profile:
     get:
       tags:
         - Admin Auth
       summary: Get admin profile
+      description: |
+        Get the authenticated admin's profile information.
+      operationId: op_admins_profile
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: OK
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminProfile'
   /admin/categories/:
     get:
       tags:
-        - Products
+        - Categories
       summary: List categories
+      description: |
+        Get all categories for the authenticated admin.
+        Requires Bearer token authentication.
+      operationId: op_categories_list
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: OK
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CategoryListResponse'
+              example:
+                success: true
+                message: "Success"
+                data:
+                  categories:
+                    - id: "825d3409-1ae1-470f-ab16-69b9acb1aa0a"
+                      name: "Skincare"
+                      slug: "skincare"
+                      isActive: true
+                      sortOrder: 1
+                  total: 5
     post:
       tags:
-        - Products
+        - Categories
       summary: Create category
+      description: |
+        Create a new category under the authenticated admin's store.
+        Requires Bearer token authentication.
+      operationId: op_categories_create
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+            example:
+              name: "Skincare"
+              slug: "skincare"
+              image: "https://example.com/images/skincare.jpg"
+              sortOrder: 1
       responses:
         "201":
-          description: Created
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CategoryResponse'
   /admin/categories/{id}:
     get:
       tags:
-        - Products
+        - Categories
       summary: Get category
+      description: |
+        Get a single category by ID.
+        Requires Bearer token authentication.
+      operationId: op_categories_get
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Category ID
       responses:
         "200":
-          description: OK
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CategoryResponse'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
     put:
       tags:
-        - Products
+        - Categories
       summary: Update category
+      description: |
+        Update an existing category.
+        Requires Bearer token authentication.
+      operationId: op_categories_update
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Category ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateRequest'
+            example:
+              name: "Skincare & Beauty"
+              isActive: true
+              sortOrder: 2
       responses:
         "200":
-          description: OK
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CategoryResponse'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
     delete:
       tags:
-        - Products
+        - Categories
       summary: Delete category
+      description: |
+        Delete a category.
+        Requires Bearer token authentication.
+      operationId: op_categories_delete
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Category ID
       responses:
         "200":
-          description: OK
-  /admin/products/:
+          description: Category deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                message: "Category deleted"
+                data: null
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /admin/products:
     get:
       tags:
         - Products
       summary: List products
+      description: |
+        Get all products for the authenticated admin with pagination and filtering.
+        Requires Bearer token authentication.
+      operationId: op_products_list
       security:
         - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, draft]
       responses:
         "200":
-          description: OK
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductListResponse'
     post:
       tags:
         - Products
       summary: Create product
+      description: |
+        Create a new product under the authenticated admin's store.
+        Requires Bearer token authentication.
+      operationId: op_44_post
+      x-phase: Phase 2
+      x-day: Day 4
+      x-erd-tables:
+        - Product
+      x-priority-order: 44
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+            example:
+              name: "Glow Serum"
+              categoryId: "825d3409-1ae1-470f-ab16-69b9acb1aa0a"
+              price: 29.99
+              discountPrice: 24.99
+              stock: 100
+              description: "Brightening serum with Vitamin C"
+              image: "https://example.com/images/glow-serum.jpg"
+              sku: "SERUM-GLOW-001"
+              status: "active"
       responses:
         "201":
-          description: Created
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductResponse'
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
   /admin/products/{id}:
     get:
       tags:
         - Products
-      summary: Get product
+      summary: Get product by ID
+      description: |
+        Get a single product by ID.
+        Requires Bearer token authentication.
+      operationId: op_products_get
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Product ID
       responses:
         "200":
-          description: OK
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductResponse'
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
     put:
       tags:
         - Products
       summary: Update product
+      description: |
+        Update an existing product.
+        Requires Bearer token authentication.
+      operationId: op_46_put
+      x-phase: Phase 2
+      x-day: Day 4
+      x-erd-tables:
+        - Product
+      x-priority-order: 46
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Product ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdateRequest'
+            example:
+              name: "Glow Serum Plus"
+              price: 34.99
+              discountPrice: 29.99
+              stock: 150
+              status: "active"
       responses:
         "200":
-          description: OK
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductResponse'
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
     delete:
       tags:
         - Products
       summary: Delete product
+      description: |
+        Soft delete a product (marks as deleted).
+        Requires Bearer token authentication.
+      operationId: op_47_delete
+      x-phase: Phase 2
+      x-day: Day 4
+      x-erd-tables:
+        - Product
+      x-priority-order: 47
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Product ID
       responses:
         "200":
-          description: OK
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                message: "Product deleted"
+                data: null
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
   /admin/products/inventory/adjust:
     post:
       tags:
-        - Inventory
+        - Products
       summary: Adjust inventory
+      description: |
+        Adjust product stock inventory.
+        Requires Bearer token authentication.
+      operationId: op_inventory_adjust
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryAdjustRequest'
+            example:
+              productId: "123e4567-e89b-12d3-a456-426614174000"
+              changeAmount: 10
+              reason: "Restock from supplier"
       responses:
         "200":
-          description: OK
+          description: Inventory adjusted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryAdjustResponse'
   /admin/coupons/:
     get:
       tags:
         - Coupons
       summary: List coupons
+      description: |
+        Get all coupons for the authenticated admin.
+        Requires Bearer token authentication.
+      operationId: op_coupons_list
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: OK
+          description: Coupons retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          coupons:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Coupon'
+                          total:
+                            type: integer
     post:
       tags:
         - Coupons
       summary: Create coupon
+      description: |
+        Create a new coupon under the authenticated admin's store.
+        Requires Bearer token authentication.
+      operationId: op_coupons_create
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponRequest'
+            example:
+              code: "SAVE20"
+              type: "percentage"
+              value: 20
+              minOrderAmount: 50
+              maxDiscountAmount: 100
+              usageLimit: 100
+              perUserLimit: 1
+              expiresAt: "2024-12-31T23:59:59.000Z"
+              isActive: true
       responses:
         "201":
-          description: Created
+          description: Coupon created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Coupon'
+        "400":
+          description: Validation error or code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
   /admin/coupons/{id}:
     put:
       tags:
         - Coupons
       summary: Update coupon
+      description: |
+        Update an existing coupon.
+        Requires Bearer token authentication.
+      operationId: op_coupons_update
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Coupon ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponRequest'
+            example:
+              code: "SAVE25"
+              type: "percentage"
+              value: 25
+              isActive: true
       responses:
         "200":
-          description: OK
+          description: Coupon updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Coupon'
+        "404":
+          description: Coupon not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
     delete:
       tags:
         - Coupons
       summary: Delete coupon
+      description: |
+        Delete a coupon.
+        Requires Bearer token authentication.
+      operationId: op_coupons_delete
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Coupon ID
       responses:
         "200":
-          description: OK
+          description: Coupon deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                message: "Coupon deleted"
+                data: null
+        "404":
+          description: Coupon not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
   /cart/:
     get:
       tags:
@@ -8494,3 +9059,561 @@ components:
         totalPages:
           type: integer
           example: 5
+    # ============================================================
+    # ADMIN AUTH SCHEMAS
+    # ============================================================
+    AdminLoginRequest:
+      type: object
+      x-implemented: true
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Admin email address
+          example: admin@truebeauty.com
+        password:
+          type: string
+          format: password
+          description: Admin password
+          example: Admin@1234
+    AdminLoginResponse:
+      type: object
+      x-implemented: true
+      properties:
+        admin:
+          $ref: '#/components/schemas/AdminProfile'
+        accessToken:
+          type: string
+          description: JWT access token for admin authentication
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: JWT refresh token for token renewal
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    AdminRegisterRequest:
+      type: object
+      x-implemented: true
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          description: Admin full name
+          example: Store Admin
+        email:
+          type: string
+          format: email
+          description: Admin email address
+          example: admin@mystore.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: Admin password (min 8 characters)
+          example: SecurePass@123
+        slug:
+          type: string
+          description: Unique store slug for subdomain
+          example: mystore
+    AdminRegisterResponse:
+      type: object
+      x-implemented: true
+      properties:
+        admin:
+          $ref: '#/components/schemas/AdminProfile'
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+    AdminProfile:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Admin unique identifier
+          example: f77414bc-1e6c-4634-be33-347c321b17d7
+        name:
+          type: string
+          description: Admin full name
+          example: True Beauty Admin
+        email:
+          type: string
+          format: email
+          description: Admin email
+          example: admin@truebeauty.com
+        slug:
+          type: string
+          description: Store slug for subdomain
+          example: true-beauty-admin
+        role:
+          type: string
+          enum: [admin, superadmin]
+          description: Admin role
+          example: admin
+        isActive:
+          type: boolean
+          description: Whether admin is active
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    AdminRefreshTokenRequest:
+      type: object
+      x-implemented: true
+      properties:
+        refreshToken:
+          type: string
+          description: JWT refresh token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    AdminRefreshTokenResponse:
+      type: object
+      x-implemented: true
+      properties:
+        accessToken:
+          type: string
+          description: New JWT access token
+        refreshToken:
+          type: string
+          description: New JWT refresh token
+    AdminLogoutRequest:
+      type: object
+      x-implemented: true
+      properties:
+        refreshToken:
+          type: string
+          description: JWT refresh token to invalidate (optional - invalidates all if not provided)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    # ============================================================
+    # CATEGORY SCHEMAS
+    # ============================================================
+    CategoryRequest:
+      type: object
+      x-implemented: true
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Category name
+          example: Skincare
+        slug:
+          type: string
+          description: URL-friendly slug (auto-generated if not provided)
+          example: skincare
+    CategoryResponse:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Category unique identifier
+          example: 825d3409-1ae1-470f-ab16-69b9acb1aa0a
+        name:
+          type: string
+          description: Category name
+          example: Skincare
+        slug:
+          type: string
+          description: URL-friendly slug
+          example: skincare
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: Category image URL
+        isActive:
+          type: boolean
+          description: Whether category is active
+          example: true
+        sortOrder:
+          type: integer
+          description: Display order
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CategoryListResponse:
+      type: object
+      x-implemented: true
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryResponse'
+        total:
+          type: integer
+          example: 10
+    CategoryUpdateRequest:
+      type: object
+      x-implemented: true
+      properties:
+        name:
+          type: string
+          description: Category name
+          example: Skincare & Beauty
+        slug:
+          type: string
+          description: URL-friendly slug
+          example: skincare-beauty
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: Category image URL
+        isActive:
+          type: boolean
+          description: Whether category is active
+          example: true
+        sortOrder:
+          type: integer
+          description: Display order
+          example: 2
+    # ============================================================
+    # PRODUCT SCHEMAS
+    # ============================================================
+    ProductRequest:
+      type: object
+      x-implemented: true
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+          description: Product name
+          example: Glow Serum
+        categoryId:
+          type: string
+          format: uuid
+          description: Category ID (optional)
+          example: 825d3409-1ae1-470f-ab16-69b9acb1aa0a
+        categoryName:
+          type: string
+          description: Category name (optional, used if categoryId not provided)
+          example: Skincare
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: Product price
+          example: 29.99
+        discountPrice:
+          type: number
+          format: float
+          minimum: 0
+          description: Discounted price (optional)
+          example: 24.99
+        stock:
+          type: integer
+          minimum: 0
+          description: Stock quantity
+          example: 100
+        description:
+          type: string
+          description: Product description
+          example: Brightening serum with Vitamin C
+        image:
+          type: string
+          format: uri
+          description: Primary product image URL
+          example: https://example.com/images/glow-serum.jpg
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Additional product image URLs
+          example: ["https://example.com/images/glow-serum-1.jpg"]
+        sku:
+          type: string
+          description: Stock keeping unit
+          example: SERUM-GLOW-001
+        status:
+          type: string
+          enum: [active, inactive, draft]
+          description: Product status
+          example: active
+    ProductResponse:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Product unique identifier
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          description: Product name
+          example: Glow Serum
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Category ID
+        categoryName:
+          type: string
+          nullable: true
+          description: Category name
+        price:
+          type: number
+          format: float
+          description: Product price
+          example: 29.99
+        discountPrice:
+          type: number
+          format: float
+          nullable: true
+          description: Discounted price
+        stock:
+          type: integer
+          description: Stock quantity
+          example: 100
+        stockStatus:
+          type: string
+          enum: [in_stock, low_stock, out_of_stock]
+          description: Stock status
+          example: in_stock
+        status:
+          type: string
+          enum: [active, inactive, draft]
+          description: Product status
+          example: active
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: Primary image URL
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Additional image URLs
+        description:
+          type: string
+          nullable: true
+          description: Product description
+        sku:
+          type: string
+          nullable: true
+          description: SKU
+        commissionRate:
+          type: number
+          format: float
+          nullable: true
+          description: Affiliate commission rate
+        isAffiliateProduct:
+          type: boolean
+          description: Whether available for affiliate
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProductListResponse:
+      type: object
+      x-implemented: true
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    ProductListQuery:
+      type: object
+      x-implemented: true
+      properties:
+        page:
+          type: integer
+          description: Page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+        categoryId:
+          type: string
+          format: uuid
+          description: Filter by category
+        search:
+          type: string
+          description: Search in name and description
+          example: serum
+        status:
+          type: string
+          enum: [active, inactive, draft]
+          description: Filter by status
+    ProductUpdateRequest:
+      type: object
+      x-implemented: true
+      properties:
+        name:
+          type: string
+          description: Product name
+          example: Glow Serum Plus
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Category ID
+        categoryName:
+          type: string
+          nullable: true
+          description: Category name
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: Product price
+        discountPrice:
+          type: number
+          format: float
+          minimum: 0
+          nullable: true
+          description: Discounted price
+        stock:
+          type: integer
+          minimum: 0
+          description: Stock quantity
+        description:
+          type: string
+          nullable: true
+          description: Product description
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: Primary image URL
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: Additional image URLs
+        sku:
+          type: string
+          nullable: true
+          description: SKU
+        status:
+          type: string
+          enum: [active, inactive, draft]
+          description: Product status
+    InventoryAdjustRequest:
+      type: object
+      x-implemented: true
+      required:
+        - productId
+        - changeAmount
+        - reason
+      properties:
+        productId:
+          type: string
+          format: uuid
+          description: Product ID
+          example: 123e4567-e89b-12d3-a456-426614174000
+        changeAmount:
+          type: integer
+          description: Amount to adjust (positive to add, negative to remove)
+          example: 10
+        reason:
+          type: string
+          description: Reason for adjustment
+          example: Stock received from supplier
+        referenceId:
+          type: string
+          description: Optional reference (e.g., order ID, PO number)
+          example: PO-2024-001
+    InventoryAdjustResponse:
+      type: object
+      x-implemented: true
+      properties:
+        product:
+          $ref: '#/components/schemas/ProductResponse'
+        previousStock:
+          type: integer
+          description: Stock before adjustment
+          example: 90
+        newStock:
+          type: integer
+          description: Stock after adjustment
+          example: 100
+        adjustment:
+          type: integer
+          description: Amount adjusted
+          example: 10
+    # ============================================================
+    # COUPON SCHEMAS
+    # ============================================================
+    CouponRequest:
+      type: object
+      x-implemented: true
+      required:
+        - code
+        - type
+        - value
+      properties:
+        code:
+          type: string
+          description: Unique coupon code
+          example: SAVE20
+        type:
+          type: string
+          enum: [percentage, fixed]
+          description: Discount type
+          example: percentage
+        value:
+          type: number
+          description: Discount value (percentage 0-100 or fixed amount)
+          example: 20
+        minOrderAmount:
+          type: number
+          format: float
+          description: Minimum order amount to apply coupon
+          example: 50
+        maxDiscountAmount:
+          type: number
+          format: float
+          description: Maximum discount amount (for percentage type)
+          example: 100
+        usageLimit:
+          type: integer
+          description: Maximum number of times coupon can be used
+          example: 100
+        perUserLimit:
+          type: integer
+          description: Maximum uses per user
+          example: 1
+        startsAt:
+          type: string
+          format: date-time
+          description: Coupon validity start
+        expiresAt:
+          type: string
+          format: date-time
+          description: Coupon expiry date
+        isActive:
+          type: boolean
+          description: Whether coupon is active
+          example: true

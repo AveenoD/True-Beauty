@@ -1,0 +1,295 @@
+  /admin/orders/{id}/status:
+    put:
+      tags:
+        - Orders
+      summary: Update order status
+      description: >
+        Priority: Phase 2 / Day 4
+
+        ERD tables: Order
+
+        Shared IDs:
+          - Order: id, user_id, address_id, coupon_id, affiliate_id, processed_by_admin_id
+      operationId: op_86_put
+      x-phase: Phase 2
+      x-day: Day 4
+      x-erd-tables:
+        - Order
+      x-priority-order: 86
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: null
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: null
+  /admin/products:
+    get:
+      tags:
+        - Products
+      summary: List products
+      description: |
+        Get all products for the authenticated admin with pagination and filtering.
+        Requires Bearer token authentication.
+      operationId: op_products_list
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, draft]
+      responses:
+        "200":
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductListResponse'
+    post:
+      tags:
+        - Products
+      summary: Create product
+      description: |
+        Create a new product under the authenticated admin's store.
+        Requires Bearer token authentication.
+      operationId: op_44_post
+      x-phase: Phase 2
+      x-day: Day 4
+      x-erd-tables:
+        - Product
+      x-priority-order: 44
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+            example:
+              name: "Glow Serum"
+              categoryId: "825d3409-1ae1-470f-ab16-69b9acb1aa0a"
+              price: 29.99
+              discountPrice: 24.99
+              stock: 100
+              description: "Brightening serum with Vitamin C"
+              image: "https://example.com/images/glow-serum.jpg"
+              sku: "SERUM-GLOW-001"
+              status: "active"
+      responses:
+        "201":
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductResponse'
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+  /admin/products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product by ID
+      description: |
+        Get a single product by ID.
+        Requires Bearer token authentication.
+      operationId: op_products_get
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Product ID
+      responses:
+        "200":
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductResponse'
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      tags:
+        - Products
+      summary: Delete product
+      description: |
+        Soft delete a product (marks as deleted).
+        Requires Bearer token authentication.
+      operationId: op_47_delete
+      x-phase: Phase 2
+      x-day: Day 4
+      x-erd-tables:
+        - Product
+      x-priority-order: 47
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Product ID
+      responses:
+        "200":
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                message: "Product deleted"
+                data: null
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    put:
+      tags:
+        - Products
+      summary: Update product
+      description: |
+        Update an existing product.
+        Requires Bearer token authentication.
+      operationId: op_46_put
+      x-phase: Phase 2
+      x-day: Day 4
+      x-erd-tables:
+        - Product
+      x-priority-order: 46
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Product ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdateRequest'
+            example:
+              name: "Glow Serum Plus"
+              price: 34.99
+              discountPrice: 29.99
+              stock: 150
+              status: "active"
+      responses:
+        "200":
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductResponse'
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /admin/products/inventory/adjust:
+    post:
+      tags:
+        - Products
+      summary: Adjust inventory
+      description: |
+        Adjust product stock inventory.
+        Requires Bearer token authentication.
+      operationId: op_inventory_adjust
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryAdjustRequest'
+            example:
+              productId: "123e4567-e89b-12d3-a456-426614174000"
+              adjustment: 10
+              reason: "Restock"
+      responses:
+        "200":
+          description: Inventory adjusted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryAdjustResponse'
+  /admin/profile:
+    put:

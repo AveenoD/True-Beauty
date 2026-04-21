@@ -72,7 +72,6 @@ export async function registerUser(data: {
       email,
       password: hashedPassword,
       phone,
-      referralCode: null,
       referralBy: referredByUserId ?? undefined,
       emailVerifiedAt: null,
     },

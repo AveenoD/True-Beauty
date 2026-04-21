@@ -4,20 +4,25 @@ import crypto from "crypto";
 export async function listCategories(adminId: string) {
   return prisma.category.findMany({
     where: { adminId },
-    orderBy: { sortOrder: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 }
 
-export async function createCategory(adminId: string, data: { name: string; slug?: string; image?: string; sortOrder?: number }) {
-  const slug = data.slug || generateSlug(data.name);
+export async function createCategory(adminId: string, data: { name: string; slug?: string }) {
+  // Generate unique slug for this admin
+  let slug = data.slug || generateSlug(data.name);
+
+  // Check if slug exists for this admin, if so append random suffix
+  const existing = await prisma.category.findFirst({ where: { adminId, slug } });
+  if (existing) {
+    slug = `${slug}-${Date.now().toString(36)}`;
+  }
 
   return prisma.category.create({
     data: {
       adminId,
       name: data.name,
       slug,
-      image: data.image,
-      sortOrder: data.sortOrder || 0,
     },
   });
 }
@@ -28,7 +33,7 @@ export async function getCategory(adminId: string, id: string) {
   });
 }
 
-export async function updateCategory(adminId: string, id: string, data: { name?: string; slug?: string; image?: string; isActive?: boolean; sortOrder?: number }) {
+export async function updateCategory(adminId: string, id: string, data: { name?: string; slug?: string; isActive?: boolean }) {
   return prisma.category.updateMany({
     where: { id, adminId },
     data,

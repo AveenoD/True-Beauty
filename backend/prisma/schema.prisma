@@ -231,13 +231,8 @@ model Admin {
   name         String
   email        String    @unique
   password     String
-<<<<<<< HEAD
-slug         String?
+  slug         String?
   role         AdminRole @default(admin)
-=======
-  role         AdminRole @default(admin)
-  profileImage String?
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
   isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
@@ -251,12 +246,9 @@ slug         String?
   subscription         AdminSubscription?
   onboardingProgress   AdminOnboardingProgress?
   notifications        Notification[]
-<<<<<<< HEAD
-categories           Category[]
+  categories           Category[]
   products             Product[]
   coupons              Coupon[]
-=======
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
 
   @@map("admin")
 }
@@ -278,21 +270,6 @@ model SuperAdmin {
 // ============================================================
 
 model User {
-<<<<<<< HEAD
-id           String    @id @default(uuid())
-  adminId      String?
-  name         String
-  email        String    @unique
-  password     String?
-  phone        String?
-  isActive     Boolean   @default(true)
-  referralCode String?   @unique
-  referralBy   String?
-  role         String    @default("customer")
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
-=======
   id              String    @id @default(uuid())
   adminId         String?
   name            String
@@ -309,7 +286,6 @@ id           String    @id @default(uuid())
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
 
   // Relations
   authTokens       AuthToken[]
@@ -508,12 +484,8 @@ model Product {
   id                 String    @id @default(uuid())
   adminId            String?
   name               String
-<<<<<<< HEAD
-categoryId         String?
+  categoryId         String?
   categoryName       String?
-=======
-  category           String
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
   price              Float
   discountPrice      Float?
   commissionRate     Float?
@@ -535,11 +507,8 @@ categoryId         String?
   inventoryNotes     String?
 
   // Relations
-<<<<<<< HEAD
-admin            Admin?                    @relation(fields: [adminId], references: [id])
+  admin            Admin?                    @relation(fields: [adminId], references: [id])
   category         Category?                 @relation(fields: [categoryId], references: [id])
-=======
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
   inventory        Inventory[]
   orderItems       OrderItem[]
   couponApplicable CouponApplicableProduct[]
@@ -592,13 +561,9 @@ model InventoryLog {
 
 model Coupon {
   id                 String               @id @default(uuid())
-<<<<<<< HEAD
   adminId            String
   code               String               @unique
   description        String?
-=======
-  code               String               @unique
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
   discountType       CouponDiscountType
   discountValue      Float
   minimumOrderAmount Float?
@@ -613,10 +578,7 @@ model Coupon {
   updatedAt          DateTime             @updatedAt
 
   // Relations
-<<<<<<< HEAD
   admin                Admin                      @relation(fields: [adminId], references: [id], onDelete: Cascade)
-=======
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
   applicableProducts   CouponApplicableProduct[]
   applicableCategories CouponApplicableCategory[]
   orders               Order[]
@@ -1092,12 +1054,8 @@ model AdminOnboardingProgress {
   updatedAt              DateTime                @updatedAt
 
   // Relations
-<<<<<<< HEAD
-admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
-=======
   admin                Admin       @relation(fields: [adminId], references: [id], onDelete: Cascade)
   verifiedBySuperAdmin SuperAdmin? @relation(fields: [verifiedBySuperAdminId], references: [id], onDelete: SetNull)
->>>>>>> 9c38cc5 (Add SuperAdmin authentication and tenant Admin management features)
 
   @@map("admin_onboarding_progress")
 }

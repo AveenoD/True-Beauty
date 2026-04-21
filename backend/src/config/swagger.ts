@@ -7,16 +7,9 @@ import { parse as parseYaml } from "yaml";
  * files into `paths`, which caused Swagger UI to show "No operations defined".
  */
 function resolveOpenApiPath(): string {
-  const candidates = [
-    path.join(process.cwd(), "src", "docs", "openapi.yml"),
-    path.join(__dirname, "..", "docs", "openapi.yml"),
-  ];
-  for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
-  }
-  throw new Error(
-    `openapi.yml not found. Tried: ${candidates.join(", ")}`
-  );
+  const p = path.join(process.cwd(), "src", "docs", "openapi.yml");
+  if (fs.existsSync(p)) return p;
+  throw new Error(`openapi.yml not found at: ${p}`);
 }
 
 const raw = fs.readFileSync(resolveOpenApiPath(), "utf8");

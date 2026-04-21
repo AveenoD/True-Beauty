@@ -15,10 +15,10 @@ export const list = async (req: AuthenticatedRequest, res: Response) => {
 
 export const create = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { name, slug, image, sortOrder } = req.body;
+    const { name, slug } = req.body;
     if (!name) return ApiResponse.badRequest(res, "Name is required");
 
-    const category = await categoryService.createCategory(req.adminId!, { name, slug, image, sortOrder });
+    const category = await categoryService.createCategory(req.adminId!, { name, slug });
     return ApiResponse.success(res, category, "Category created", 201);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create category";
@@ -39,8 +39,8 @@ export const getOne = async (req: AuthenticatedRequest, res: Response) => {
 
 export const update = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { name, slug, image, isActive, sortOrder } = req.body;
-    const category = await categoryService.updateCategory(req.adminId!, req.params.id, { name, slug, image, isActive, sortOrder });
+    const { name, slug, isActive } = req.body;
+    const category = await categoryService.updateCategory(req.adminId!, req.params.id, { name, slug, isActive });
     if (!category) return ApiResponse.notFound(res, "Category not found");
     return ApiResponse.success(res, category, "Category updated");
   } catch (error) {

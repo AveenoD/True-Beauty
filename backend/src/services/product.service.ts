@@ -22,8 +22,21 @@ export async function listProducts(adminId: string, query: { page?: number; limi
 export async function createProduct(adminId: string, data: {
   name: string; categoryId?: string; categoryName?: string; price: number;
   discountPrice?: number; stock?: number; description?: string; image?: string;
-  images?: string[]; sku?: string; status?: string;
+  images?: string[]; sku?: string; status?: string; isAffiliateProduct?: boolean;
 }) {
+  // Validate categoryId if provided
+  if (data.categoryId) {
+    const category = await prisma.category.findFirst({
+      where: { id: data.categoryId, adminId, isActive: true },
+    });
+    if (!category) {
+      throw new Error("Category not found or inactive. Please provide a valid categoryId.");
+    }
+  }
+
+  // Auto-generate SKU from product name if not provided
+  const finalSku = data.sku || generateSku(data.name);
+
   return prisma.product.create({
     data: {
       adminId,
@@ -36,7 +49,7 @@ export async function createProduct(adminId: string, data: {
       description: data.description,
       image: data.image,
       images: data.images || [],
-      sku: data.sku,
+      sku: finalSku,
       status: data.status || "active",
       stockStatus: (data.stock || 0) > 0 ? "in_stock" : "out_of_stock",
     },
@@ -72,7 +85,19 @@ export async function adjustInventory(adminId: string, data: { productId: string
   const product = await prisma.product.findFirst({ where: { id: data.productId, adminId, deletedAt: null } });
   if (!product) throw new Error("Product not found");
 
-  const previousQty = product.stock;
+  // Get or create Inventory record for this product
+  let inventory = await prisma.inventory.findFirst({ where: { productId: data.productId } });
+  if (!inventory) {
+    inventory = await prisma.inventory.create({
+      data: {
+        productId: data.productId,
+        quantity: product.stock,
+        availableQty: product.stock,
+      },
+    });
+  }
+
+  const previousQty = inventory.quantity;
   const newQty = previousQty + data.changeAmount;
 
   const updated = await prisma.product.update({
@@ -83,9 +108,21 @@ export async function adjustInventory(adminId: string, data: { productId: string
     },
   });
 
+  // Update inventory record
+  await prisma.inventory.update({
+    where: { id: inventory.id },
+    data: {
+      quantity: Math.max(0, newQty),
+      availableQty: Math.max(0, newQty),
+      lastUpdated: new Date(),
+      updatedBy: adminId,
+    },
+  });
+
+  // Create inventory log with correct inventoryId (from Inventory, not Product)
   await prisma.inventoryLog.create({
     data: {
-      inventoryId: data.productId,
+      inventoryId: inventory.id,  // Use Inventory.id, not productId
       changeType: data.changeAmount > 0 ? "add" : "remove",
       changeAmount: data.changeAmount,
       previousQty,
@@ -97,4 +134,15 @@ export async function adjustInventory(adminId: string, data: { productId: string
   });
 
   return updated;
+}
+
+function generateSku(productName: string): string {
+  // Extract key words from product name (first letter of each word)
+  const words = productName.trim().split(/\s+/);
+  const prefix = words.map(w => w[0].toUpperCase()).join("").substring(0, 4);
+
+  // Generate random suffix
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+
+  return `TB-${prefix}-${random}`;
 }
