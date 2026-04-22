@@ -67,11 +67,14 @@ export const remove = async (req: AuthenticatedRequest, res: Response) => {
 
 export const adjustInventory = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { productId, changeAmount, reason, referenceId } = req.body;
-    if (!productId || changeAmount === undefined || !reason) {
-      return ApiResponse.badRequest(res, "productId, changeAmount, and reason are required");
+    const { productId, operation, quantity, reason, note, referenceId } = req.body;
+    if (!productId || !operation || quantity === undefined || !reason) {
+      return ApiResponse.badRequest(res, "productId, operation, quantity, and reason are required");
     }
-    const product = await productService.adjustInventory(req.adminId!, { productId, changeAmount, reason, referenceId });
+    if (!["add", "reduce", "set"].includes(operation)) {
+      return ApiResponse.badRequest(res, "operation must be 'add', 'reduce', or 'set'");
+    }
+    const product = await productService.adjustInventory(req.adminId!, { productId, operation, quantity, reason, note, referenceId });
     return ApiResponse.success(res, product, "Inventory adjusted");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to adjust inventory";

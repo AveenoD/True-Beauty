@@ -14,6 +14,7 @@ import couponRoutes from "./coupon.routes";
 import couponApplyRoutes from "./coupon.apply.routes";
 import paymentRoutes from "./payment.routes";
 import returnRoutes from "./return.routes";
+import uploadRoutes from "./upload.routes";
 
 const router = Router();
 
@@ -55,5 +56,8 @@ router.use("/payments", paymentRoutes);
 
 // Returns (user authenticated)
 router.use("/returns", returnRoutes);
+
+// Upload routes (admin authenticated)
+router.use("/upload", uploadRoutes);
 
 export default router;

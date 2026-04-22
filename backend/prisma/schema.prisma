@@ -232,6 +232,7 @@ model Admin {
   email        String    @unique
   password     String
   slug         String?
+  profilePhoto String?
   role         AdminRole @default(admin)
   isActive     Boolean   @default(true)
   lastLoginAt  DateTime?

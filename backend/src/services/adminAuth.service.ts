@@ -207,6 +207,65 @@ export async function refreshAdminToken(refreshToken: string) {
   }
 }
 
+export async function changePassword(adminId: string, data: {
+  currentPassword: string;
+  newPassword: string;
+}) {
+  const admin = await prisma.admin.findUnique({
+    where: { id: adminId },
+  });
+
+  if (!admin) {
+    throw new Error("Admin not found");
+  }
+
+  const isValid = await comparePassword(data.currentPassword, admin.password);
+  if (!isValid) {
+    throw new Error("Current password is incorrect");
+  }
+
+  if (data.newPassword.length < 8) {
+    throw new Error("New password must be at least 8 characters");
+  }
+
+  const hashedPassword = await hashPassword(data.newPassword);
+
+  await prisma.admin.update({
+    where: { id: adminId },
+    data: { password: hashedPassword },
+  });
+
+  return { message: "Password changed successfully" };
+}
+
+export async function updateProfile(adminId: string, data: {
+  name?: string;
+  profilePhoto?: string;
+}) {
+  const updateData: any = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.profilePhoto !== undefined) updateData.profilePhoto = data.profilePhoto;
+
+  const admin = await prisma.admin.update({
+    where: { id: adminId },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      slug: true,
+      role: true,
+      isActive: true,
+      profilePhoto: true,
+      lastLoginAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return admin;
+}
+
 function generateSlug(name: string): string {
   const base = name
     .toLowerCase()

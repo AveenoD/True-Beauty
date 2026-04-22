@@ -1,6 +1,40 @@
 import prisma from "../config/database";
 import { PaginatedResult } from "../types";
 
+async function checkPlanProductLimit(adminId: string): Promise<void> {
+  const subscription = await prisma.adminSubscription.findUnique({
+    where: { adminId },
+    select: {
+      status: true,
+      expiryDate: true,
+      plan: {
+        select: { maxProducts: true },
+      },
+    },
+  });
+
+  if (!subscription || subscription.status !== "active") {
+    throw new Error("No active subscription. Please subscribe to a plan to add products.");
+  }
+
+  if (subscription.expiryDate && subscription.expiryDate < new Date()) {
+    throw new Error("Subscription expired. Please renew your plan.");
+  }
+
+  const maxProducts = subscription.plan?.maxProducts;
+  if (maxProducts === null || maxProducts === undefined) {
+    return; // Unlimited
+  }
+
+  const currentCount = await prisma.product.count({
+    where: { adminId, deletedAt: null },
+  });
+
+  if (currentCount >= maxProducts) {
+    throw new Error(`Product limit reached. Your ${subscription.plan?.maxProducts}-product plan allows a maximum of ${maxProducts} products. Please upgrade your plan.`);
+  }
+}
+
 export async function listProducts(adminId: string, query: { page?: number; limit?: number; categoryId?: string; search?: string; status?: string }) {
   const page = query.page || 1;
   const limit = Math.min(query.limit || 20, 100);
@@ -24,6 +58,9 @@ export async function createProduct(adminId: string, data: {
   discountPrice?: number; stock?: number; description?: string; image?: string;
   images?: string[]; sku?: string; status?: string; isAffiliateProduct?: boolean;
 }) {
+  // Check plan product limit before creating
+  await checkPlanProductLimit(adminId);
+
   // Validate categoryId if provided
   if (data.categoryId) {
     const category = await prisma.category.findFirst({
@@ -81,7 +118,14 @@ export async function deleteProduct(adminId: string, id: string) {
   });
 }
 
-export async function adjustInventory(adminId: string, data: { productId: string; changeAmount: number; reason: string; referenceId?: string }) {
+export async function adjustInventory(adminId: string, data: {
+  productId: string;
+  operation: "add" | "reduce" | "set";
+  quantity: number;
+  reason: string;
+  note?: string;
+  referenceId?: string;
+}) {
   const product = await prisma.product.findFirst({ where: { id: data.productId, adminId, deletedAt: null } });
   if (!product) throw new Error("Product not found");
 
@@ -98,12 +142,20 @@ export async function adjustInventory(adminId: string, data: { productId: string
   }
 
   const previousQty = inventory.quantity;
-  const newQty = previousQty + data.changeAmount;
+  let newQty: number;
+
+  if (data.operation === "add") {
+    newQty = previousQty + data.quantity;
+  } else if (data.operation === "reduce") {
+    newQty = Math.max(0, previousQty - data.quantity);
+  } else {
+    newQty = data.quantity;
+  }
 
   const updated = await prisma.product.update({
     where: { id: data.productId },
     data: {
-      stock: Math.max(0, newQty),
+      stock: newQty,
       stockStatus: newQty > 0 ? "in_stock" : "out_of_stock",
     },
   });
@@ -112,22 +164,27 @@ export async function adjustInventory(adminId: string, data: { productId: string
   await prisma.inventory.update({
     where: { id: inventory.id },
     data: {
-      quantity: Math.max(0, newQty),
-      availableQty: Math.max(0, newQty),
+      quantity: newQty,
+      availableQty: newQty,
       lastUpdated: new Date(),
       updatedBy: adminId,
     },
   });
 
+  // Determine actual change amount for the log
+  const actualChange = newQty - previousQty;
+
   // Create inventory log with correct inventoryId (from Inventory, not Product)
   await prisma.inventoryLog.create({
     data: {
-      inventoryId: inventory.id,  // Use Inventory.id, not productId
-      changeType: data.changeAmount > 0 ? "add" : "remove",
-      changeAmount: data.changeAmount,
+      inventoryId: inventory.id,
+      changeType: data.operation === "set"
+        ? (actualChange > 0 ? "add" : "remove")
+        : data.operation,
+      changeAmount: data.quantity,
       previousQty,
       newQty: updated.stock,
-      reason: data.reason,
+      reason: data.reason + (data.note ? ` | ${data.note}` : ""),
       referenceId: data.referenceId,
       adminId,
     },

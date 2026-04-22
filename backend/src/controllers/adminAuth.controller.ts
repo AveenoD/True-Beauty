@@ -77,3 +77,28 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
     return ApiResponse.error(res, message);
   }
 };
+
+export const changePassword = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return ApiResponse.badRequest(res, "Current password and new password are required");
+    }
+    const result = await adminAuthService.changePassword(req.adminId!, { currentPassword, newPassword });
+    return ApiResponse.success(res, result, "Password changed successfully");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to change password";
+    return ApiResponse.badRequest(res, message);
+  }
+};
+
+export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { name, profilePhoto } = req.body;
+    const result = await adminAuthService.updateProfile(req.adminId!, { name, profilePhoto });
+    return ApiResponse.success(res, result, "Profile updated");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update profile";
+    return ApiResponse.error(res, message);
+  }
+};

@@ -10,7 +10,9 @@ router.post("/login", adminAuthController.login);
 router.post("/refresh-token", adminAuthController.refreshToken);
 router.post("/logout", adminAuthController.logout);
 
-// Protected profile route
+// Protected profile routes
 router.get("/profile", authenticateAdmin, adminAuthController.getProfile);
+router.put("/profile", authenticateAdmin, adminAuthController.updateProfile);
+router.put("/profile/password", authenticateAdmin, adminAuthController.changePassword);
 
 export default router;

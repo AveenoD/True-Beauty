@@ -7182,9 +7182,19 @@ paths:
         - Auth
       summary: Verify user email
       operationId: op_user_verify_email
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+          description: Email verification token sent to user's email
+          example: "abc123def456..."
       responses:
         "200":
-          description: OK
+          description: Email verified successfully
+        "400":
+          description: Invalid or expired token
   /users/resend-verification:
     post:
       tags:
@@ -7382,6 +7392,181 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/AdminProfile'
+    put:
+      tags:
+        - Admin Auth
+      summary: Update admin profile
+      description: |
+        Update the authenticated admin's profile (name, profilePhoto URL).
+        Requires Bearer token authentication.
+      operationId: op_admins_profile_update
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminProfileUpdateRequest'
+            example:
+              name: "Updated Store Name"
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /admins/profile/password:
+    put:
+      tags:
+        - Admin Auth
+      summary: Change admin password
+      description: |
+        Change the authenticated admin's password.
+        Requires Bearer token authentication.
+      operationId: op_admins_profile_password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminChangePasswordRequest'
+            example:
+              currentPassword: "oldPassword123"
+              newPassword: "newSecurePassword456"
+      responses:
+        "200":
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /upload/admin/profile-photo:
+    post:
+      tags:
+        - Admin Auth
+      summary: Upload admin profile photo
+      description: |
+        Upload a profile photo for the authenticated admin.
+        Image is uploaded to Cloudinary. Supported formats: JPEG, PNG, WebP, GIF, AVIF.
+        Max file size: 10MB.
+        Requires Bearer token authentication.
+      operationId: op_upload_admin_profile_photo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profilePhoto:
+                  type: string
+                  format: binary
+                  description: Profile photo file (JPEG, PNG, WebP, GIF, AVIF)
+      responses:
+        "201":
+          description: Profile photo uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                            description: Uploaded image URL
+  /upload/admin/products/image:
+    post:
+      tags:
+        - Products
+      summary: Upload product image
+      description: |
+        Upload a product image to Cloudinary.
+        Supported formats: JPEG, PNG, WebP, GIF, AVIF.
+        Max file size: 10MB.
+        Requires Bearer token authentication.
+      operationId: op_upload_product_image
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Product image file (JPEG, PNG, WebP, GIF, AVIF)
+      responses:
+        "201":
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                            description: Uploaded image URL
+  /upload/admin/categories/image:
+    post:
+      tags:
+        - Categories
+      summary: Upload category image
+      description: |
+        Upload a category image to Cloudinary.
+        Supported formats: JPEG, PNG, WebP, GIF, AVIF.
+        Max file size: 10MB.
+        Requires Bearer token authentication.
+      operationId: op_upload_category_image
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Category image file (JPEG, PNG, WebP, GIF, AVIF)
+      responses:
+        "201":
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                            description: Uploaded image URL
   /admin/categories/:
     get:
       tags:
@@ -7812,8 +7997,10 @@ paths:
               $ref: '#/components/schemas/InventoryAdjustRequest'
             example:
               productId: "123e4567-e89b-12d3-a456-426614174000"
-              changeAmount: 10
+              operation: "add"
+              quantity: 10
               reason: "Restock from supplier"
+              note: "Restocked from ABC supplier"
       responses:
         "200":
           description: Inventory adjusted successfully
@@ -9163,6 +9350,17 @@ components:
           type: boolean
           description: Whether admin is active
           example: true
+        profilePhoto:
+          type: string
+          nullable: true
+          format: uri
+          description: Profile photo URL
+          example: https://res.cloudinary.com/xxx/image/upload/v1/admin_profiles/admin_photo.jpg
+        lastLoginAt:
+          type: string
+          nullable: true
+          format: date-time
+          description: Last login timestamp
         createdAt:
           type: string
           format: date-time
@@ -9171,6 +9369,35 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+    AdminProfileUpdateRequest:
+      type: object
+      x-implemented: true
+      properties:
+        name:
+          type: string
+          description: Updated admin/store name
+          example: Updated Store Name
+        profilePhoto:
+          type: string
+          format: uri
+          nullable: true
+          description: Profile photo URL (after upload via /upload/admin/profile-photo)
+          example: https://res.cloudinary.com/xxx/image/upload/v1/admin_profiles/admin_photo.jpg
+    AdminChangePasswordRequest:
+      type: object
+      x-implemented: true
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          description: Admin's current password
+          example: oldPassword123
+        newPassword:
+          type: string
+          description: New password (min 8 characters)
+          example: newSecurePassword456
     AdminRefreshTokenRequest:
       type: object
       x-implemented: true
@@ -9525,7 +9752,8 @@ components:
       x-implemented: true
       required:
         - productId
-        - changeAmount
+        - operation
+        - quantity
         - reason
       properties:
         productId:
@@ -9533,16 +9761,27 @@ components:
           format: uuid
           description: Product ID
           example: 123e4567-e89b-12d3-a456-426614174000
-        changeAmount:
+        operation:
+          type: string
+          enum: [add, reduce, set]
+          description: Type of stock adjustment
+          example: add
+        quantity:
           type: integer
-          description: Amount to adjust (positive to add, negative to remove)
+          description: "Quantity for the operation (for add/reduce: amount to add/reduce; for set: absolute final stock)"
           example: 10
         reason:
           type: string
           description: Reason for adjustment
           example: Stock received from supplier
+        note:
+          type: string
+          nullable: true
+          description: Optional internal note
+          example: Restocked from ABC supplier
         referenceId:
           type: string
+          nullable: true
           description: Optional reference (e.g., order ID, PO number)
           example: PO-2024-001
     InventoryAdjustResponse:
@@ -9561,7 +9800,7 @@ components:
           example: 100
         adjustment:
           type: integer
-          description: Amount adjusted
+          description: Net amount adjusted
           example: 10
     # ============================================================
     # COUPON SCHEMAS

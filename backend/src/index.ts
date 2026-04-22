@@ -10,6 +10,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { requestContext } from "./middleware/requestContext";
 import { httpLogger } from "./middleware/httpLogger";
 import { log } from "./utils/logger";
+import { uploadErrorHandler } from "./middleware/uploadErrorHandler";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -87,6 +88,9 @@ app.use((_req, res) => {
 
 // Global error handler
 app.use(errorHandler);
+
+// Multer upload error handler (must be after errorHandler to catch multer errors)
+app.use(uploadErrorHandler);
 
 // Start server
 app.listen(PORT, () => {
