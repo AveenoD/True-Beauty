@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Bell, User, ChevronDown, Menu } from "lucide-react";
 import { useSidebar } from "@/lib/sidebar-context";
-import { clearToken } from "@/lib/auth";
+import { useAdminAuth } from "@/lib/admin-auth-context";
 import DeletePopup from "@/components/ui/deletePopup";
 
 interface TopBarProps {
@@ -18,11 +18,12 @@ export default function TopBar({ pageTitle = "Dashboard" }: TopBarProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { toggle: toggleSidebar } = useSidebar();
   const router = useRouter();
+  const { admin, logout } = useAdminAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setShowLogoutConfirm(false);
     setShowProfileMenu(false);
-    clearToken();
+    await logout();
     router.push("/login");
   };
 
@@ -114,7 +115,7 @@ export default function TopBar({ pageTitle = "Dashboard" }: TopBarProps) {
                 <User className="w-4 h-4 text-gray-900" />
               </div>
               <span className="hidden md:block text-sm font-medium text-gray-700">
-                Admin
+                {admin?.name || "Admin"}
               </span>
               <ChevronDown className="hidden md:block w-4 h-4 text-gray-500" />
             </button>

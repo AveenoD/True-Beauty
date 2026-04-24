@@ -23,5 +23,6 @@ All notable changes to this repository will be documented in this file.
 - **User profile fields**: `dateOfBirth` and `gender` are now stored on the backend `user` table and returned by `/users/profile` (no localStorage).
 - **Auth flow**: Email verify page redirects to login (not profile) and login redirects to `/profile?edit=1` for better onboarding.
 - **Session stability**: Backend CORS now supports comma-separated `CORS_ORIGIN` allowlist and blocks unexpected origins, fixing “reload → logout” when using non-localhost frontend origins.
+- **Admin auth (admin panel)**: Stabilized hard-refresh behavior by bootstrapping session via `GET /admins/profile` with interceptor-based single-flight refresh, and prevented unauthenticated product requests by fetching `/admin/products` only after `isLoggedIn` is true.
 - **CORS + Swagger**: Requests from the API’s own origin (e.g. `http://localhost:9797` for Swagger UI) are allowed; CORS deny no longer throws (avoids misleading 500 on blocked origins).
 

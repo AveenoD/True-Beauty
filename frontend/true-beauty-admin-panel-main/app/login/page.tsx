@@ -2,29 +2,38 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, LogIn } from "lucide-react";
-import { setToken } from "@/lib/auth";
+import { Lock, Mail, LogIn, Loader2 } from "lucide-react";
+import { useAdminAuth } from "@/lib/admin-auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAdminAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!email.trim() || !password.trim()) {
       setError("Please enter email and password.");
       return;
     }
-    setToken("admin_authenticated");
-    router.replace("/");
+    setLoading(true);
+    try {
+      await login(email, password);
+      router.replace("/");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || "Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fef5f7] p-4">
-      <div className="w-full max-w-md">
+    <div className="fixed inset-0 flex items-center justify-center bg-[#fef5f7]">
+      <div className="w-full max-w-md px-4">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-semibold text-gray-900">True Beauty</h1>
@@ -68,10 +77,11 @@ export default function LoginPage() {
             </div>
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#D96A86] text-white font-medium hover:bg-[#C85A76] transition-colors"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#D96A86] text-white font-medium hover:bg-[#C85A76] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <LogIn className="w-4 h-4" />
-              Sign in
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
         </div>

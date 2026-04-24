@@ -3,9 +3,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
-import { useProducts } from "@/lib/products-context";
-import { PRODUCT_CATEGORIES, type Product, type ProductStatus } from "@/lib/products-data";
+import { Eye, MoreVertical, Pencil, Plus, Trash2, RefreshCw } from "lucide-react";
+import { useProducts, type Product, type ProductStatus } from "@/lib/products-context";
+import { PRODUCT_CATEGORIES } from "@/lib/products-data";
 import type { ProductFormValues } from "@/lib/products-context";
 import { Drawer } from "@/components/ui/Drawer";
 import { ProductForm } from "@/components/ui/ProductForm";
@@ -141,7 +141,7 @@ function ProductActionsMenu({
 }
 
 export default function ProductsPage() {
-  const { products, addProduct, updateProduct, softDeleteProduct } = useProducts();
+  const { products, loading, error, fetchProducts, addProduct, updateProduct, deleteProduct } = useProducts();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -181,13 +181,13 @@ export default function ProductsPage() {
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q)
+          (p.categoryName ?? "").toLowerCase().includes(q) ||
+          (p.description ?? "").toLowerCase().includes(q)
       );
     }
 
     if (categoryFilter) {
-      list = list.filter((p) => p.category === categoryFilter);
+      list = list.filter((p) => p.categoryName === categoryFilter);
     }
 
     if (statusFilter) {
@@ -211,11 +211,11 @@ export default function ProductsPage() {
     setDeleteTarget(product);
   };
 
-  const handleFormSubmit = (values: ProductFormValues) => {
-    if (editingProduct) {
-      updateProduct(editingProduct.id, values);
+  const handleFormSubmit = async (values: ProductFormValues) => {
+    if (editingProduct?.id) {
+      await updateProduct(editingProduct.id, values);
     } else {
-      addProduct(values);
+      await addProduct(values);
     }
     setDrawerOpen(false);
     setEditingProduct(null);
@@ -236,7 +236,7 @@ export default function ProductsPage() {
     {
       header: "Category",
       accessor: (product: Product) => (
-        <span className="text-sm text-gray-700">{product.category}</span>
+        <span className="text-sm text-gray-700">{product.categoryName || "-"}</span>
       ),
     },
     {
@@ -344,6 +344,19 @@ export default function ProductsPage() {
         />
       </div>
 
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+          <span>{error}</span>
+          <button
+            onClick={fetchProducts}
+            className="shrink-0 flex items-center gap-1 text-red-600 hover:text-red-800 font-medium"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      )}
+
       <Filters
         search={search}
         onSearchChange={setSearch}
@@ -357,9 +370,9 @@ export default function ProductsPage() {
         onCategoryChange={setCategoryFilter}
       />
 
-      {filteredProducts.length === 0 ? (
+      {filteredProducts.length === 0 && !loading ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 sm:p-12 text-center">
-          <p className="text-gray-500 mb-4 text-sm sm:text-base">No products match your filters.</p>
+          <p className="text-gray-500 mb-4 text-sm sm:text-base">No products found.</p>
           <button
             type="button"
             onClick={handleAdd}
@@ -368,6 +381,13 @@ export default function ProductsPage() {
             <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Add Product
           </button>
+        </div>
+      ) : filteredProducts.length === 0 && loading ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 sm:p-12 text-center">
+          <div className="flex justify-center mb-3">
+            <RefreshCw className="w-6 h-6 text-gray-400 animate-spin" />
+          </div>
+          <p className="text-gray-500 text-sm sm:text-base">Loading products...</p>
         </div>
       ) : (
         <>
@@ -385,7 +405,7 @@ export default function ProductsPage() {
                     </p>
                     <div className="mt-0.5 flex items-center justify-between gap-2">
                       <p className="text-sm text-gray-600">
-                        {product.category}
+                        {product.categoryName || "-"}
                       </p>
                       <p className="text-sm font-medium text-gray-900">
                         {formatPrice(product.price)}
@@ -455,15 +475,15 @@ export default function ProductsPage() {
         title="Remove product"
         description={
           deleteTarget
-            ? `Remove "${deleteTarget.name}" from the list? This can be restored later.`
+            ? `Remove "${deleteTarget.name}" from the list? This cannot be undone.`
             : ""
         }
         confirmLabel="Remove"
         cancelLabel="Cancel"
         onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (deleteTarget) {
-            softDeleteProduct(deleteTarget.id);
+            await deleteProduct(deleteTarget.id);
           }
           setDeleteTarget(null);
         }}

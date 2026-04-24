@@ -325,15 +325,15 @@ export default function AddCouponsPage() {
   const [statusFilter, setStatusFilter] = useState<"" | CouponStatus>("");
   const [typeFilter, setTypeFilter] = useState<"" | CouponDiscountType>("");
 
-  const productOptions = useMemo(
+  const productOptions: { id: string; name: string; price: number; category: string }[] = useMemo(
     () =>
       products
         .filter((p) => !p.deletedAt)
         .map((p) => ({
-          id: p.id,
+          id: p.id as string,
           name: p.name,
           price: p.discountPrice ?? p.price,
-          category: p.category,
+          category: p.categoryName ?? "",
         })),
     [products]
   );

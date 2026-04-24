@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { PRODUCT_CATEGORIES, type Product } from "@/lib/products-data";
-import type { ProductFormValues } from "@/lib/products-context";
+import { PRODUCT_CATEGORIES } from "@/lib/products-data";
+import type { ProductFormValues, Product } from "@/lib/products-context";
 
 const STATUS_OPTIONS: { value: Product["status"]; label: string }[] = [
   { value: "active", label: "Active" },
@@ -20,17 +20,15 @@ interface ProductFormProps {
 
 const emptyForm: ProductFormValues = {
   name: "",
-  category: "",
+  categoryName: "",
   price: 0,
   discountPrice: 0,
   commissionRate: 0,
   stock: 0,
-  stockStatus: "in_stock",
   status: "active",
   image: "",
   images: [],
   description: "",
-  imageFile: null,
   isAffiliateProduct: false,
 };
 
@@ -45,17 +43,15 @@ export function ProductForm({
     if (initialValues) {
       setValues({
         name: initialValues.name,
-        category: initialValues.category,
+        categoryName: initialValues.categoryName ?? "",
         price: initialValues.price,
         discountPrice: initialValues.discountPrice ?? 0,
         commissionRate: initialValues.commissionRate ?? 0,
         stock: initialValues.stock,
-        stockStatus: initialValues.stockStatus,
         status: initialValues.status,
         image: initialValues.image ?? "",
         images: initialValues.images ?? (initialValues.image ? [initialValues.image] : []),
         description: initialValues.description ?? "",
-        imageFile: null,
         isAffiliateProduct: initialValues.isAffiliateProduct ?? false,
       });
     } else {
@@ -69,7 +65,7 @@ export function ProductForm({
     onSubmit({
       ...values,
       name: values.name.trim(),
-      category: values.category.trim() || "Uncategorized",
+      categoryName: values.categoryName?.trim() || "General",
       price: values.price || 0,
       discountPrice: values.discountPrice || 0,
       stock: values.stock ?? 0,
@@ -106,8 +102,8 @@ export function ProductForm({
         <select
           id="category"
           required
-          value={values.category}
-          onChange={(e) => setValues((v) => ({ ...v, category: e.target.value }))}
+          value={values.categoryName ?? ""}
+          onChange={(e) => setValues((v) => ({ ...v, categoryName: e.target.value }))}
           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#f8c6d0] focus:border-transparent outline-none transition-all bg-white"
         >
           <option value="" disabled>
@@ -217,7 +213,7 @@ export function ProductForm({
             type="number"
             min={0}
             step={0.01}
-            value={values.discountPrice === 0 ? "" : values.discountPrice}
+            value={!values.discountPrice ? "" : values.discountPrice}
             onChange={(e) =>
               setValues((v) => ({
                 ...v,

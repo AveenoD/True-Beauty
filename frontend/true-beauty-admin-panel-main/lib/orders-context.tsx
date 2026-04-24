@@ -71,7 +71,7 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
       ) {
         order.items.forEach((item) => {
           const product = products.find((p) => p.name === item.productName);
-          if (!product) return;
+          if (!product || !product.id) return;
           const prev = product.stock;
           if (item.quantity <= 0) return;
           const newStock = Math.max(0, prev - item.quantity);

@@ -5,109 +5,127 @@ import React, {
   useContext,
   useState,
   useCallback,
-  useMemo,
+  useEffect,
 } from "react";
-import {
-  MOCK_PRODUCTS,
-  DEFAULT_STOCK_THRESHOLD,
-  generateProductId,
-  type Product,
-  type ProductStatus,
-  type ProductStockStatus,
-} from "./products-data";
+import { api, ApiSuccess } from "./api";
+import { useAdminAuth } from "./admin-auth-context";
 
-export type ProductFormValues = Omit<
-  Product,
-  "id" | "deletedAt" | "createdAt" | "updatedAt"
-> & {
-  id?: string;
-  imageFile?: File | null;
-};
+export type ProductStockStatus = "in_stock" | "low_stock" | "out_of_stock";
+export type ProductStatus = "active" | "draft" | "inactive";
 
-export function deriveStockStatus(
-  stock: number,
-  threshold: number = DEFAULT_STOCK_THRESHOLD
-): ProductStockStatus {
+export function deriveStockStatus(stock: number): ProductStockStatus {
   if (stock <= 0) return "out_of_stock";
-  if (stock < threshold) return "low_stock";
   return "in_stock";
 }
 
+export interface Product {
+  id?: string;
+  name: string;
+  categoryId?: string | null;
+  categoryName?: string | null;
+  price: number;
+  discountPrice?: number | null;
+  stock: number;
+  stockStatus: string;
+  status: string;
+  image?: string | null;
+  images?: string[];
+  sku?: string | null;
+  description?: string | null;
+  isAffiliateProduct: boolean;
+  commissionRate?: number | null;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ProductFormValues = Omit<Product, "deletedAt" | "createdAt" | "updatedAt" | "stockStatus"> & {
+  id?: string;
+  stockThreshold?: number | null;
+  stockLocation?: string | null;
+  supplier?: string | null;
+  inventoryNotes?: string | null;
+};
+
 interface ProductsContextValue {
   products: Product[];
-  addProduct: (values: ProductFormValues) => Product;
-  updateProduct: (id: string, values: Partial<ProductFormValues>) => void;
-  softDeleteProduct: (id: string) => void;
+  loading: boolean;
+  error: string | null;
+  fetchProducts: () => Promise<void>;
+  addProduct: (values: ProductFormValues) => Promise<void>;
+  updateProduct: (id: string, values: Partial<ProductFormValues>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
   getProductById: (id: string) => Product | undefined;
 }
 
 const ProductsContext = createContext<ProductsContextValue | null>(null);
 
 export function ProductsProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(() =>
-    MOCK_PRODUCTS.map((p) => ({ ...p }))
-  );
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const visibleProducts = useMemo(
-    () => products.filter((p) => !p.deletedAt),
-    [products]
-  );
-
-  const addProduct = useCallback((values: ProductFormValues): Product => {
-    const now = new Date().toISOString();
-    const threshold = values.stockThreshold ?? DEFAULT_STOCK_THRESHOLD;
-    const stockStatus = values.stockStatus ?? deriveStockStatus(values.stock, threshold);
-    const newProduct: Product = {
-      id: generateProductId(),
-      name: values.name,
-      category: values.category,
-      price: values.price,
-      discountPrice: values.discountPrice,
-      commissionRate: values.commissionRate ?? 0,
-      stock: values.stock,
-      stockStatus,
-      status: values.status,
-      image: values.image ?? null,
-      images: values.images ?? (values.image ? [values.image] : []),
-      description: values.description ?? "",
-      isAffiliateProduct: values.isAffiliateProduct ?? false,
-      sku: values.sku,
-      stockThreshold: values.stockThreshold ?? DEFAULT_STOCK_THRESHOLD,
-      createdAt: now,
-      updatedAt: now,
-    };
-    setProducts((prev) => [...prev, newProduct]);
-    return newProduct;
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await api.get<ApiSuccess<{ data: Product[] }>>("/admin/products?limit=100");
+      setProducts(data.data?.data ?? []);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const updateProduct = useCallback(
-    (id: string, values: Partial<ProductFormValues>) => {
-      setProducts((prev) =>
-        prev.map((p) => {
-          if (p.id !== id) return p;
-          const stock = values.stock ?? p.stock;
-          const threshold = values.stockThreshold ?? p.stockThreshold ?? DEFAULT_STOCK_THRESHOLD;
-          const stockStatus =
-            values.stockStatus ?? deriveStockStatus(stock, threshold);
-          return {
-            ...p,
-            ...values,
-            stock,
-            stockStatus,
-            updatedAt: new Date().toISOString(),
-          };
-        })
-      );
-    },
-    []
-  );
+  const addProduct = useCallback(async (values: ProductFormValues) => {
+    const payload = {
+      name: values.name,
+      categoryName: values.categoryName || values.name?.split(" ")[0] || "General",
+      price: values.price,
+      discountPrice: values.discountPrice ?? undefined,
+      stock: values.stock,
+      description: values.description ?? undefined,
+      image: values.image ?? undefined,
+      images: values.images ?? [],
+      sku: values.sku ?? undefined,
+      status: values.status ?? "active",
+      isAffiliateProduct: values.isAffiliateProduct ?? false,
+      commissionRate: values.isAffiliateProduct ? (values.commissionRate ?? 0) : undefined,
+    };
+    const { data } = await api.post<ApiSuccess<Product>>("/admin/products", payload);
+    const created = data.data;
+    if (created) {
+      setProducts((prev) => [created, ...prev]);
+    }
+  }, []);
 
-  const softDeleteProduct = useCallback((id: string) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, deletedAt: new Date().toISOString() } : p
-      )
-    );
+  const updateProduct = useCallback(async (id: string, values: Partial<ProductFormValues>) => {
+    const payload: Record<string, unknown> = {};
+    if (values.name !== undefined) payload.name = values.name;
+    if (values.categoryName !== undefined) payload.categoryName = values.categoryName;
+    if (values.categoryId !== undefined) payload.categoryId = values.categoryId;
+    if (values.price !== undefined) payload.price = values.price;
+    if (values.discountPrice !== undefined) payload.discountPrice = values.discountPrice;
+    if (values.stock !== undefined) payload.stock = values.stock;
+    if (values.description !== undefined) payload.description = values.description;
+    if (values.image !== undefined) payload.image = values.image;
+    if (values.images !== undefined) payload.images = values.images;
+    if (values.sku !== undefined) payload.sku = values.sku;
+    if (values.status !== undefined) payload.status = values.status;
+    if (values.isAffiliateProduct !== undefined) payload.isAffiliateProduct = values.isAffiliateProduct;
+    if (values.commissionRate !== undefined) payload.commissionRate = values.commissionRate;
+
+    const { data } = await api.put<ApiSuccess<Product>>(`/admin/products/${id}`, payload);
+    const updated = data.data;
+    if (updated) {
+      setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    }
+  }, []);
+
+  const deleteProduct = useCallback(async (id: string) => {
+    await api.delete(`/admin/products/${id}`);
+    setProducts((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
   const getProductById = useCallback(
@@ -115,11 +133,24 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     [products]
   );
 
+  // Wait for AdminAuthProvider to finish auth init before fetching.
+  // This is the correct solution — ProductsProvider explicitly waits for
+  // AdminAuthProvider's isReady signal instead of relying on module variable timing.
+  const { isReady: authReady, isLoggedIn } = useAdminAuth();
+
+  useEffect(() => {
+    if (!authReady || !isLoggedIn) return;
+    fetchProducts();
+  }, [authReady, isLoggedIn, fetchProducts]);
+
   const value: ProductsContextValue = {
-    products: visibleProducts,
+    products,
+    loading,
+    error,
+    fetchProducts,
     addProduct,
     updateProduct,
-    softDeleteProduct,
+    deleteProduct,
     getProductById,
   };
 

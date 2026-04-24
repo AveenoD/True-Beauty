@@ -32,7 +32,21 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const result = await adminAuthService.loginAdmin({ email, password });
-    return ApiResponse.success(res, result, "Login successful");
+
+    // Set refresh token as HTTP-only cookie (secure, JS-inaccessible)
+    // SameSite=Lax allows cookie on same-site navigations (port difference is same-site)
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Remove refreshToken from response body (security - RT only in cookie)
+    const { refreshToken: _, ...responseData } = result;
+
+    return ApiResponse.success(res, responseData, "Login successful");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Login failed";
     return ApiResponse.unauthorized(res, message);
@@ -43,6 +57,12 @@ export const logout = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
     await adminAuthService.logoutAdmin(req.adminId!, refreshToken);
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
     return ApiResponse.success(res, null, "Logged out successfully");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Logout failed";
@@ -58,7 +78,20 @@ export const refreshToken = async (req: Request, res: Response) => {
     }
 
     const result = await adminAuthService.refreshAdminToken(refreshToken);
-    return ApiResponse.success(res, result, "Token refreshed");
+
+    // Set new refresh token as HTTP-only cookie
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Remove refreshToken from response body
+    const { refreshToken: _, ...responseData } = result;
+
+    return ApiResponse.success(res, responseData, "Token refreshed");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Token refresh failed";
     return ApiResponse.unauthorized(res, message);

@@ -12,11 +12,10 @@ import {
   Boxes,
   Trash2,
 } from "lucide-react";
-import { useProducts, deriveStockStatus } from "@/lib/products-context";
+import { useProducts, deriveStockStatus, type Product } from "@/lib/products-context";
 import {
   PRODUCT_CATEGORIES,
   DEFAULT_STOCK_THRESHOLD,
-  type Product,
 } from "@/lib/products-data";
 import {
   STOCK_ADJUST_REASONS,
@@ -134,7 +133,7 @@ function InventoryActionMenu({
 }
 
 export default function InventoryPage() {
-  const { products, updateProduct, softDeleteProduct } = useProducts();
+  const { products, updateProduct, deleteProduct } = useProducts();
   const { entries: stockHistory, recordChange } = useStockHistory();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -159,11 +158,11 @@ export default function InventoryPage() {
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
-          (p.sku && p.sku.toLowerCase().includes(q)) ||
-          p.category.toLowerCase().includes(q)
+          ((p.sku ?? "").toLowerCase().includes(q)) ||
+          ((p.categoryName ?? "").toLowerCase().includes(q))
       );
     }
-    if (categoryFilter) list = list.filter((p) => p.category === categoryFilter);
+    if (categoryFilter) list = list.filter((p) => p.categoryName === categoryFilter);
     return list;
   }, [products, search, categoryFilter]);
 
@@ -183,13 +182,14 @@ export default function InventoryPage() {
   };
 
   const handleDeleteProduct = (product: Product) => {
+    if (!product.id) return;
     if (typeof window !== "undefined") {
       const confirmed = window.confirm(
         `Delete product "${product.name}" from inventory?`
       );
       if (!confirmed) return;
     }
-    softDeleteProduct(product.id);
+    deleteProduct(product.id);
   };
 
   const productHistory = useMemo(() => {
@@ -476,8 +476,8 @@ export default function InventoryPage() {
 
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <Table<Product>
-          data={filteredProducts}
+        <Table
+          data={filteredProducts as Product[]}
           columns={columns}
           searchable={false}
           filterable={false}
@@ -539,7 +539,7 @@ export default function InventoryPage() {
         products={products}
         onSave={(productId, values) => {
           const product = products.find((p) => p.id === productId);
-          if (!product) return;
+          if (!product || !product.id) return;
           const prevStock = product.stock;
           updateProduct(productId, {
             stock: values.stock,

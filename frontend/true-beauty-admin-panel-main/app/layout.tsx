@@ -17,6 +17,8 @@ import { CouponsProvider } from "@/lib/coupons-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { StockHistoryProvider } from "@/lib/stock-history-context";
 import { SubscriptionProvider } from "@/lib/subscription-context";
+import { AdminAuthProvider } from "@/lib/admin-auth-context";
+import { AuthGuard } from "@/components/AuthGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -86,59 +88,48 @@ export default function RootLayout({
             ? "Withdrawal Request Details"
             : (pageTitles[pathname] || "Dashboard");
 
-  if (pathname === "/login") {
-    return (
-      <html lang="en">
-        <head>
-          <title>True Beauty Admin Panel - Login</title>
-        </head>
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          {children}
-        </body>
-      </html>
-    );
-  }
-
   return (
     <html lang="en">
       <head>
         <title>True Beauty Admin Panel</title>
         <meta name="description" content="Admin panel for True Beauty management" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <UsersProvider>
-        <ProductsProvider>
-        <StockHistoryProvider>
-        <ServicesProvider>
-        <OrdersProvider>
-        <AffiliatesProvider>
-        <NotificationsProvider>
-        <CouponsProvider>
-        <ThemeProvider>
-        <SubscriptionProvider>
-        <SidebarProvider>
-        <div className="flex h-screen bg-[#fef5f7]">
-          <SideBar />
-          <div className="flex-1 flex flex-col md:ml-64 overflow-hidden">
-            <TopBar pageTitle={pageTitle} />
-            <main className="flex-1 overflow-y-auto p-6 bg-[#ffffff]">
-              {children}
-            </main>
-          </div>
-        </div>
-        </SidebarProvider>
-        </SubscriptionProvider>
-        </ThemeProvider>
-        </CouponsProvider>
-        </NotificationsProvider>
-        </AffiliatesProvider>
-        </OrdersProvider>
-        </ServicesProvider>
-        </StockHistoryProvider>
-        </ProductsProvider>
-        </UsersProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AdminAuthProvider>
+          <UsersProvider>
+            <ProductsProvider>
+              <StockHistoryProvider>
+                <ServicesProvider>
+                  <OrdersProvider>
+                    <AffiliatesProvider>
+                      <NotificationsProvider>
+                        <CouponsProvider>
+                          <ThemeProvider>
+                            <SubscriptionProvider>
+                              <SidebarProvider>
+                                <AuthGuard>
+                                  <div className="flex h-screen bg-[#fef5f7]">
+                                    {pathname !== "/login" && <SideBar />}
+                                    <div className="flex-1 flex flex-col md:ml-64 overflow-hidden">
+                                      {pathname !== "/login" && <TopBar pageTitle={pageTitle} />}
+                                      <main className="flex-1 overflow-y-auto p-6 bg-[#ffffff]">
+                                        {children}
+                                      </main>
+                                    </div>
+                                  </div>
+                                </AuthGuard>
+                              </SidebarProvider>
+                            </SubscriptionProvider>
+                          </ThemeProvider>
+                        </CouponsProvider>
+                      </NotificationsProvider>
+                    </AffiliatesProvider>
+                  </OrdersProvider>
+                </ServicesProvider>
+              </StockHistoryProvider>
+            </ProductsProvider>
+          </UsersProvider>
+        </AdminAuthProvider>
       </body>
     </html>
   );

@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 const ACCESS_SECRET = process.env.ADMIN_JWT_ACCESS_SECRET || process.env.JWT_ACCESS_SECRET || "access-secret-change-me";
 const REFRESH_SECRET = process.env.ADMIN_JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET || "refresh-secret-change-me";
@@ -13,7 +14,7 @@ export interface AdminTokenPayload {
 
 export function generateAdminAccessToken(adminId: string, role?: string): string {
   return jwt.sign(
-    { sub: adminId, type: "admin_access", role } as AdminTokenPayload,
+    { sub: adminId, type: "admin_access", role, jti: crypto.randomUUID() } as AdminTokenPayload,
     ACCESS_SECRET,
     { expiresIn: ACCESS_EXPIRY } as jwt.SignOptions
   );
@@ -21,7 +22,7 @@ export function generateAdminAccessToken(adminId: string, role?: string): string
 
 export function generateAdminRefreshToken(adminId: string): string {
   return jwt.sign(
-    { sub: adminId, type: "admin_refresh" } as AdminTokenPayload,
+    { sub: adminId, type: "admin_refresh", jti: crypto.randomUUID() } as AdminTokenPayload,
     REFRESH_SECRET,
     { expiresIn: REFRESH_EXPIRY } as jwt.SignOptions
   );

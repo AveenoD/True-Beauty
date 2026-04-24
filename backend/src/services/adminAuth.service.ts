@@ -120,7 +120,7 @@ export async function loginAdmin(data: {
   return {
     admin: adminWithoutPassword,
     accessToken,
-    refreshToken,
+    refreshToken,  // RT included for initial storage, but frontend should rely on HTTP-only cookie
   };
 }
 
