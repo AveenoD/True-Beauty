@@ -2,11 +2,10 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { products, getProductsByCategory } from '../utils/catalog';
+import { useRouter } from 'next/navigation';
 import { getCategoryNameBySlug } from '../utils/categories';
-import type { Product } from '../utils/catalog';
 import Card from './ui/Card';
+import { api, ApiSuccess } from '../lib/api';
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -14,8 +13,11 @@ type ProductGridProps = {
   /** When provided, filter by category (and optional subcategory). When omitted, show all products or use `products` prop. */
   categorySlug?: string;
   subcategorySlug?: string;
-  /** Pre-filtered products (e.g. from category page). When provided, used as-is and categorySlug is ignored. */
-  products?: Product[];
+  /**
+   * Deprecated: ProductGrid is backend-driven now (tenant-scoped).
+   * Kept for compatibility with older pages; ignored.
+   */
+  products?: unknown[];
   /** Optional title above the grid. When categorySlug is set and title not provided, shows "Showing [Category] Products". */
   title?: string;
   /** Optional subtitle. */
@@ -32,6 +34,20 @@ type ProductGridProps = {
 
 const EMPTY_MESSAGE = 'No products available in this category yet.';
 
+type StoreProduct = {
+  id: string;
+  name: string;
+  price: number;
+  discountPrice?: number | null;
+  image?: string | null;
+  images?: string[];
+  description?: string | null;
+  categoryName?: string | null;
+  categoryId?: string | null;
+  stock?: number;
+  stockStatus?: string | null;
+};
+
 export default function ProductGrid({
   categorySlug,
   subcategorySlug,
@@ -44,14 +60,64 @@ export default function ProductGrid({
   columnsLg = 3,
 }: ProductGridProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const categoryFromUrl = categorySlug ?? searchParams.get('category') ?? '';
-  const subcategoryFromUrl = subcategorySlug ?? searchParams.get('subcategory') ?? '';
+  const [categoryFromUrl, setCategoryFromUrl] = useState<string>(categorySlug ?? '');
+  const [subcategoryFromUrl, setSubcategoryFromUrl] = useState<string>(subcategorySlug ?? '');
 
-  const addToCartAndGo = (product: Product) => {
-    const cart: { id: number; name: string; price: number; image: string; quantity: number }[] =
+  // Read query params on client only to avoid hydration mismatches.
+  useEffect(() => {
+    if (categorySlug != null || subcategorySlug != null) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search || '');
+    setCategoryFromUrl(params.get('category') ?? '');
+    setSubcategoryFromUrl(params.get('subcategory') ?? '');
+  }, [categorySlug, subcategorySlug]);
+
+  const [storeProducts, setStoreProducts] = useState<StoreProduct[] | null>(null);
+  const [storeLoading, setStoreLoading] = useState(false);
+  const [storeError, setStoreError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setStoreLoading(true);
+      setStoreError(null);
+      try {
+        const categoryName =
+          categoryFromUrl && categoryFromUrl.toLowerCase() !== 'all'
+            ? getCategoryNameBySlug(categoryFromUrl)
+            : '';
+        const { data } = await api.get<ApiSuccess<StoreProduct[]>>('/store/products', {
+          params: {
+            ...(categoryName ? { category: categoryName } : {}),
+            ...(subcategoryFromUrl ? { subcategory: subcategoryFromUrl } : {}),
+            ...(limit ? { limit: Math.max(1, limit) } : {}),
+          },
+        });
+        if (!cancelled) {
+          setStoreProducts(data.data ?? []);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setStoreProducts([]);
+          setStoreError(
+            err?.response?.data?.message ||
+              err?.message ||
+              'Failed to load products'
+          );
+        }
+      } finally {
+        if (!cancelled) setStoreLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryFromUrl, subcategoryFromUrl, limit]);
+
+  const addToCartAndGo = (product: any) => {
+    const cart: { id: string | number; name: string; price: number; image: string; quantity: number }[] =
       typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('tb_cart') || '[]') : [];
-    const existing = cart.find((p) => p.id === product.id);
+    const existing = cart.find((p) => String(p.id) === String(product.id));
     if (existing) existing.quantity += 1;
     else cart.push({ id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 });
     if (typeof window !== 'undefined') localStorage.setItem('tb_cart', JSON.stringify(cart));
@@ -59,13 +125,9 @@ export default function ProductGrid({
   };
 
   const allProducts = useMemo(() => {
-    let list: Product[];
-    if (productsProp) list = productsProp;
-    else if (categoryFromUrl)
-      list = getProductsByCategory(categoryFromUrl, subcategoryFromUrl || undefined);
-    else list = products;
-    return list;
-  }, [productsProp, categoryFromUrl, subcategoryFromUrl]);
+    // Backend-only (tenant-scoped). No mock fallbacks.
+    return storeProducts ?? [];
+  }, [storeProducts]);
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -95,7 +157,7 @@ export default function ProductGrid({
 
   const title = titleProp ?? (categoryFromUrl ? `Showing ${getCategoryNameBySlug(categoryFromUrl)} Products` : 'Shop Our Collection');
   const showSubtitle = subtitle && !categoryFromUrl;
-  const showEmptyState = allProducts.length === 0;
+  const showEmptyState = allProducts.length === 0 && !storeLoading && !storeError;
 
   /** On mobile show "View All" when more than 4 products; on desktop when more than 6. */
   const showViewAllSection = limit != null && limit > 0 && (isMobile ? allProducts.length > 4 : allProducts.length > 6);
@@ -115,7 +177,26 @@ export default function ProductGrid({
         </div>
       )}
 
-      {showEmptyState ? (
+      {storeError ? (
+        <div className="text-center py-12 md:py-16 px-4 rounded-2xl bg-white/50 border border-rose-100/80">
+          <p className="text-gray-700 text-base md:text-lg mb-2">Couldn&apos;t load products</p>
+          <p className="text-gray-500 text-sm md:text-base mb-4">{storeError}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setStoreProducts(null);
+              setStoreError(null);
+            }}
+            className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#FF3C8C] to-[#FF0066] text-white px-6 py-2.5 text-sm font-medium hover:opacity-95 transition-all duration-200"
+          >
+            Retry
+          </button>
+        </div>
+      ) : storeLoading && storeProducts == null ? (
+        <div className="text-center py-12 md:py-16 px-4 rounded-2xl bg-white/50 border border-rose-100/80">
+          <p className="text-gray-600 text-base md:text-lg">Loading products…</p>
+        </div>
+      ) : showEmptyState ? (
         <div className="text-center py-12 md:py-16 px-4 rounded-2xl bg-white/50 border border-rose-100/80">
           <p className="text-gray-600 text-base md:text-lg mb-4">{EMPTY_MESSAGE}</p>
           {categoryFromUrl && (
@@ -134,7 +215,7 @@ export default function ProductGrid({
               columnsLg === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
             }`}
           >
-            {visibleProducts.map((product) => (
+            {visibleProducts.map((product: any) => (
               <Card
                 key={product.id}
                 variant="product"

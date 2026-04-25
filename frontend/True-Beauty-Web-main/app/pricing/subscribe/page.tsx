@@ -46,6 +46,28 @@ export default function SubscribePage() {
     if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
     if (!formData.businessType) newErrors.businessType = 'Business type is required';
     if (!formData.teamSize) newErrors.teamSize = 'Team size is required';
+
+    // Subdomain slug enforcement (used as tenant identifier)
+    const slugFromWebsite = formData.website
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .replace(/\/.*$/, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 30);
+    const derivedSlug = (slugFromWebsite || formData.companyName)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 30);
+    const isValidSlug = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(derivedSlug);
+    if (!derivedSlug || !isValidSlug) {
+      newErrors.website =
+        'Please enter a website/company name that can form a valid subdomain (letters, numbers, hyphens).';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -60,6 +82,23 @@ export default function SubscribePage() {
     
     // Simulate API call
     setTimeout(() => {
+      // Persist tenant slug for subsequent API calls (X-Tenant-Slug)
+      const slugFromWebsite = formData.website
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, '')
+        .replace(/^www\./, '')
+        .replace(/\/.*$/, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 30);
+      const tenantSlug = (slugFromWebsite || formData.companyName)
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 30);
+      localStorage.setItem('tenantSlug', tenantSlug);
       localStorage.setItem('subscriptionData', JSON.stringify(formData));
       window.location.href = '/pricing/addons';
     }, 1500);
@@ -181,9 +220,12 @@ export default function SubscribePage() {
                         name="website"
                         value={formData.website}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors ${
+                          errors.website ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="https://yourwebsite.com"
                       />
+                      {errors.website && <p className="text-red-500 text-sm mt-1">{errors.website}</p>}
                     </div>
 
                     <div>

@@ -104,7 +104,12 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
       return ApiResponse.unauthorized(res, "Not authenticated");
     }
     const { password: _, ...adminWithoutPassword } = req.admin;
-    return ApiResponse.success(res, adminWithoutPassword);
+    const subscription = await adminAuthService.getAdminSubscription(req.adminId!);
+    return ApiResponse.success(
+      res,
+      { admin: adminWithoutPassword, subscription },
+      "Profile"
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to get profile";
     return ApiResponse.error(res, message);

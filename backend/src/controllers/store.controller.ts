@@ -6,6 +6,11 @@ import * as storeService from "../services/store.service";
 
 export const listProducts = asyncHandler(
   async (req: Request, res: Response) => {
+    const tenantAdminId = (req as any).tenantAdminId as string | undefined;
+    if (!tenantAdminId) {
+      return ApiResponse.badRequest(res, "Tenant context missing");
+    }
+
     const schema = z.object({
       page: z.coerce.number().min(1).optional(),
       limit: z.coerce.number().min(1).max(100).optional(),
@@ -19,7 +24,7 @@ export const listProducts = asyncHandler(
     });
 
     const query = schema.parse(req.query);
-    const result = await storeService.listProducts(query);
+    const result = await storeService.listProducts(tenantAdminId, query);
 
     return ApiResponse.paginated(
       res,
@@ -32,8 +37,13 @@ export const listProducts = asyncHandler(
 
 export const getProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const product = await storeService.getProduct(id);
+    const tenantAdminId = (req as any).tenantAdminId as string | undefined;
+    if (!tenantAdminId) {
+      return ApiResponse.badRequest(res, "Tenant context missing");
+    }
+
+    const id = z.string().min(1).parse(req.params.id);
+    const product = await storeService.getProduct(tenantAdminId, id);
 
     return ApiResponse.success(res, product, "Product retrieved");
   }
@@ -41,6 +51,11 @@ export const getProduct = asyncHandler(
 
 export const listServices = asyncHandler(
   async (req: Request, res: Response) => {
+    const tenantAdminId = (req as any).tenantAdminId as string | undefined;
+    if (!tenantAdminId) {
+      return ApiResponse.badRequest(res, "Tenant context missing");
+    }
+
     const schema = z.object({
       page: z.coerce.number().min(1).optional(),
       limit: z.coerce.number().min(1).max(100).optional(),
@@ -50,7 +65,7 @@ export const listServices = asyncHandler(
     });
 
     const query = schema.parse(req.query);
-    const result = await storeService.listServices(query);
+    const result = await storeService.listServices(tenantAdminId, query);
 
     return ApiResponse.paginated(
       res,
@@ -63,8 +78,13 @@ export const listServices = asyncHandler(
 
 export const getService = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const service = await storeService.getService(id);
+    const tenantAdminId = (req as any).tenantAdminId as string | undefined;
+    if (!tenantAdminId) {
+      return ApiResponse.badRequest(res, "Tenant context missing");
+    }
+
+    const id = z.string().min(1).parse(req.params.id);
+    const service = await storeService.getService(tenantAdminId, id);
 
     return ApiResponse.success(res, service, "Service retrieved");
   }

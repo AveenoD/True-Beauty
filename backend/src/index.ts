@@ -34,6 +34,17 @@ const sameOriginAllowlist = new Set<string>([
   `http://127.0.0.1:${port}`,
 ]);
 
+const devFrontendAllowlist = new Set<string>(
+  process.env.NODE_ENV === "production"
+    ? []
+    : [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+      ]
+);
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -48,6 +59,9 @@ app.use(
 
       // Allow this API's own origin (Swagger UI, etc.)
       if (sameOriginAllowlist.has(origin)) return callback(null, true);
+
+      // Dev: allow local frontends without requiring env config
+      if (devFrontendAllowlist.has(origin)) return callback(null, true);
 
       // Do not pass Error — that becomes a 500; CORS deny is not an application error
       return callback(null, false);

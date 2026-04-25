@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { authenticateUser } from "../middleware/auth";
+import { requireTenant } from "../middleware/tenant";
 import prisma from "../config/database";
 
 const router = Router();
 
 // POST /coupon/apply - User applies coupon to their cart
-router.post("/apply", authenticateUser, async (req, res) => {
+router.post("/apply", requireTenant, authenticateUser, async (req, res) => {
   try {
     const { code, subTotal, adminId } = req.body;
     if (!code || !subTotal) {
@@ -29,9 +30,9 @@ router.post("/apply", authenticateUser, async (req, res) => {
     }
 
     discount = Math.round(discount * 100) / 100;
-    res.json({ success: true, data: { coupon: { id: coupon.id, code: coupon.code, discountType: coupon.discountType, discountValue: coupon.discountValue }, discount } });
+    return res.json({ success: true, data: { coupon: { id: coupon.id, code: coupon.code, discountType: coupon.discountType, discountValue: coupon.discountValue }, discount } });
   } catch (error) {
-    res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Failed" });
+    return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Failed" });
   }
 });
 

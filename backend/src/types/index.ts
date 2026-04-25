@@ -6,6 +6,8 @@ export interface AuthenticatedRequest extends Request {
   admin?: Admin;
   userId?: string;
   adminId?: string;
+  tenantAdminId?: string;
+  tenantSlug?: string;
 }
 
 export interface TokenPayload {

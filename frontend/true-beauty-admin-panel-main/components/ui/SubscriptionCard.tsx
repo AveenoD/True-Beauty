@@ -3,12 +3,22 @@
 import React from "react";
 import Link from "next/link";
 import { Calendar } from "lucide-react";
-import { useSubscription } from "@/lib/subscription-context";
+import { useAdminAuth } from "@/lib/admin-auth-context";
 
 const NEAR_EXPIRY_DAYS = 7;
 
 export function SubscriptionCard() {
-  const { subscription, remainingDays } = useSubscription();
+  const { subscription } = useAdminAuth();
+
+  const remainingDays = React.useMemo(() => {
+    if (!subscription?.expiryDate) return 0;
+    const expiry = new Date(subscription.expiryDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
+    const diff = expiry.getTime() - today.getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }, [subscription?.expiryDate]);
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-IN", {
@@ -17,7 +27,7 @@ export function SubscriptionCard() {
       year: "numeric",
     });
 
-  if (!subscription) {
+  if (!subscription || !subscription.plan) {
     return (
       <Link
         href="/subscription"
@@ -37,7 +47,7 @@ export function SubscriptionCard() {
       ? "border-amber-200 bg-amber-50 text-amber-800"
       : "border-emerald-200 bg-emerald-50 text-emerald-800";
 
-  const renewHref = `/subscription/checkout?mode=renew&planId=${subscription.planId}`;
+  const renewHref = `/subscription/checkout?mode=renew&planId=${subscription.plan.id}`;
 
   return (
     <div className="flex flex-wrap items-center gap-2 min-w-0 justify-end sm:justify-end">
@@ -46,9 +56,12 @@ export function SubscriptionCard() {
       >
         <Calendar className="w-4 h-4 shrink-0" />
         <span className="inline">Your current plan is</span>
-        <span className="font-semibold inline">{subscription.planName}</span>
+        <span className="font-semibold inline">{subscription.plan.name}</span>
         <span className="opacity-90 inline">·</span>
-        <span className="inline">Expires {formatDate(subscription.expiryDate)}</span>
+        <span className="inline">
+          Expires{" "}
+          {subscription.expiryDate ? formatDate(subscription.expiryDate) : "—"}
+        </span>
       </span>
       <Link
         href={renewHref}

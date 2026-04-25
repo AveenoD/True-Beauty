@@ -33,7 +33,7 @@ function sha256Hex(input: string) {
   return crypto.createHash("sha256").update(input).digest("hex");
 }
 
-export async function registerUser(data: {
+export async function registerUser(tenantAdminId: string, data: {
   name: string;
   email: string;
   password: string;
@@ -68,6 +68,7 @@ export async function registerUser(data: {
 
   const user = await prisma.user.create({
     data: {
+      adminId: tenantAdminId,
       name: data.name.trim(),
       email,
       password: hashedPassword,
@@ -207,13 +208,17 @@ export async function verifyEmailWithToken(token: string) {
   return { userId };
 }
 
-export async function loginUser(data: { email: string; password: string }) {
+export async function loginUser(tenantAdminId: string, data: { email: string; password: string }) {
   const email = data.email.trim().toLowerCase();
   const user = await prisma.user.findUnique({
     where: { email },
   });
 
   if (!user) {
+    throw new Error("Invalid email or password");
+  }
+
+  if (!user.adminId || user.adminId !== tenantAdminId) {
     throw new Error("Invalid email or password");
   }
 

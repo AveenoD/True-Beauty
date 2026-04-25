@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { z } from "zod";
 import * as couponService from "../services/coupon.service";
 import { ApiResponse } from "../utils/ApiResponse";
 import { AuthenticatedRequest } from "../types";
@@ -29,7 +30,8 @@ export const create = async (req: AuthenticatedRequest, res: Response) => {
 
 export const update = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const coupon = await couponService.updateCoupon(req.adminId!, req.params.id, req.body);
+    const id = z.string().min(1).parse(req.params.id);
+    const coupon = await couponService.updateCoupon(req.adminId!, id, req.body);
     if (!coupon) return ApiResponse.notFound(res, "Coupon not found");
     return ApiResponse.success(res, coupon, "Coupon updated");
   } catch (error) {
@@ -40,7 +42,8 @@ export const update = async (req: AuthenticatedRequest, res: Response) => {
 
 export const remove = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await couponService.deleteCoupon(req.adminId!, req.params.id);
+    const id = z.string().min(1).parse(req.params.id);
+    await couponService.deleteCoupon(req.adminId!, id);
     return ApiResponse.success(res, null, "Coupon deleted");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to delete coupon";

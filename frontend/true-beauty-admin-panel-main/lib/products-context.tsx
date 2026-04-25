@@ -45,6 +45,9 @@ export type ProductFormValues = Omit<Product, "deletedAt" | "createdAt" | "updat
   stockLocation?: string | null;
   supplier?: string | null;
   inventoryNotes?: string | null;
+  // Client-only fields (not persisted directly). Used for uploads.
+  imageFile?: File | null;
+  imageFiles?: File[];
 };
 
 interface ProductsContextValue {
@@ -79,6 +82,33 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addProduct = useCallback(async (values: ProductFormValues) => {
+    setError(null);
+    const uploadFiles = async (files: File[]) => {
+      const urls: string[] = [];
+      for (const file of files) {
+        const form = new FormData();
+        // Backend expects field name "image" (multer middleware).
+        form.append("image", file);
+        const res = await api.post<ApiSuccess<{ url: string }>>(
+          "/upload/admin/products/image",
+          form,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+        const url = res.data?.data?.url;
+        if (url) urls.push(url);
+      }
+      return urls;
+    };
+
+    const files =
+      (values.imageFiles && values.imageFiles.length > 0
+        ? values.imageFiles
+        : values.imageFile
+          ? [values.imageFile]
+          : []) as File[];
+
+    const uploadedUrls = files.length > 0 ? await uploadFiles(files.slice(0, 5)) : [];
+
     const payload = {
       name: values.name,
       categoryName: values.categoryName || values.name?.split(" ")[0] || "General",
@@ -86,21 +116,30 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       discountPrice: values.discountPrice ?? undefined,
       stock: values.stock,
       description: values.description ?? undefined,
-      image: values.image ?? undefined,
-      images: values.images ?? [],
+      // Prefer uploaded Cloudinary URLs if any files were selected.
+      image: (uploadedUrls[0] ?? values.image) ?? undefined,
+      images: uploadedUrls.length > 0 ? uploadedUrls : (values.images ?? []),
       sku: values.sku ?? undefined,
       status: values.status ?? "active",
       isAffiliateProduct: values.isAffiliateProduct ?? false,
       commissionRate: values.isAffiliateProduct ? (values.commissionRate ?? 0) : undefined,
     };
-    const { data } = await api.post<ApiSuccess<Product>>("/admin/products", payload);
-    const created = data.data;
-    if (created) {
-      setProducts((prev) => [created, ...prev]);
+    try {
+      const { data } = await api.post<ApiSuccess<Product>>("/admin/products", payload);
+      const created = data.data;
+      if (created) {
+        setProducts((prev) => [created, ...prev]);
+      }
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || "Failed to create product";
+      setError(message);
+      throw err;
     }
   }, []);
 
   const updateProduct = useCallback(async (id: string, values: Partial<ProductFormValues>) => {
+    setError(null);
     const payload: Record<string, unknown> = {};
     if (values.name !== undefined) payload.name = values.name;
     if (values.categoryName !== undefined) payload.categoryName = values.categoryName;
@@ -116,16 +155,31 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     if (values.isAffiliateProduct !== undefined) payload.isAffiliateProduct = values.isAffiliateProduct;
     if (values.commissionRate !== undefined) payload.commissionRate = values.commissionRate;
 
-    const { data } = await api.put<ApiSuccess<Product>>(`/admin/products/${id}`, payload);
-    const updated = data.data;
-    if (updated) {
-      setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    try {
+      const { data } = await api.put<ApiSuccess<Product>>(`/admin/products/${id}`, payload);
+      const updated = data.data;
+      if (updated) {
+        setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+      }
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || "Failed to update product";
+      setError(message);
+      throw err;
     }
   }, []);
 
   const deleteProduct = useCallback(async (id: string) => {
-    await api.delete(`/admin/products/${id}`);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setError(null);
+    try {
+      await api.delete(`/admin/products/${id}`);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || "Failed to delete product";
+      setError(message);
+      throw err;
+    }
   }, []);
 
   const getProductById = useCallback(

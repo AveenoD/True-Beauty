@@ -274,6 +274,7 @@ export function ProductForm({
               setValues((v) => ({
                 ...v,
                 imageFile: null,
+                imageFiles: [],
                 image: "",
                 images: [],
               }));
@@ -287,6 +288,7 @@ export function ProductForm({
             setValues((v) => ({
               ...v,
               imageFile: primaryFile,
+              imageFiles: limitedFiles,
               image: imageUrls[0] ?? null,
               images: imageUrls,
             }));

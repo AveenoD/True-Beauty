@@ -3,19 +3,36 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MapPin, Eye, Zap, Heart } from 'lucide-react';
-import type { Product, BeautyService } from '../../utils/catalog';
+import type { Product as DummyProduct, BeautyService } from '../../utils/catalog';
 import {
   DEFAULT_COUPON_CODE,
   getCouponDisplayState,
 } from '../../utils/coupons';
+import { api } from '../../lib/api';
+import { useAuth } from '../../lib/auth-context';
 
 const cardBaseClass =
   'group bg-white/90 backdrop-blur-sm rounded-xl overflow-hidden border border-rose-100/80 flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:shadow-rose-100/40 hover:border-rose-200/80';
 
+type StoreProduct = {
+  id: string;
+  name: string;
+  price: number;
+  discountPrice?: number | null;
+  image?: string | null;
+  stock?: number;
+  stockStatus?: string | null;
+  categoryName?: string | null;
+  categoryId?: string | null;
+  description?: string | null;
+};
+
+type ProductLike = (DummyProduct & { id: number }) | StoreProduct;
+
 type ProductCardProps = {
   variant: 'product';
-  item: Product;
-  onBuyNow: (product: Product) => void;
+  item: ProductLike;
+  onBuyNow: (product: any) => void;
 };
 
 type ServiceCardProps = {
@@ -26,54 +43,99 @@ type ServiceCardProps = {
 
 export type CardProps = ProductCardProps | ServiceCardProps;
 
-const WISHLIST_KEY = 'tb_wishlist';
-
 export function Card(props: CardProps) {
   const productId = props.variant === 'product' ? props.item.id : null;
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistItemId, setWishlistItemId] = useState<string | null>(null);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
   const [couponState, setCouponState] = useState<ReturnType<typeof getCouponDisplayState>>({ show: false });
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     if (productId == null || typeof window === 'undefined') return;
-    try {
-      const list = JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]') as number[];
-      setIsInWishlist(list.includes(productId));
-    } catch {
-      setIsInWishlist(false);
-    }
-  }, [productId]);
+    // Warm-check wishlist state from API (tenant-safe)
+    (async () => {
+      try {
+        if (!isLoggedIn) {
+          setIsInWishlist(false);
+          setWishlistItemId(null);
+          return;
+        }
+        const { data } = await api.get<any>('/wishlist');
+        const items = data?.data ?? [];
+        const match = items.find((it: any) => it?.product?.id === productId);
+        setIsInWishlist(!!match);
+        setWishlistItemId(match?.id ?? null);
+      } catch {
+        // ignore
+      }
+    })();
+  }, [productId, isLoggedIn]);
 
   useEffect(() => {
     if (props.variant !== 'product' || typeof window === 'undefined') return;
-    const product = props.item as Product;
+    // Coupon display logic currently depends on dummy catalog fields like `originalPrice`/`category`.
+    // For API-backed products, we skip coupon badge for now.
+    const product = props.item as any;
+    if (typeof product?.originalPrice !== 'number' || typeof product?.category !== 'string') {
+      setCouponState({ show: false });
+      return;
+    }
     const authToken = localStorage.getItem('authToken');
     const profileData = localStorage.getItem('profile');
     const userData = localStorage.getItem('user');
     const user = authToken && (profileData || userData)
       ? { ...(userData ? JSON.parse(userData) : {}), ...(profileData ? JSON.parse(profileData) : {}) }
       : null;
-    setCouponState(getCouponDisplayState(product, user, { page: 'card' }));
+    setCouponState(getCouponDisplayState(product as DummyProduct, user, { page: 'card' }));
   }, [props.variant, props.item]);
 
-  const toggleWishlist = (e: React.MouseEvent, id: number) => {
+  const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (typeof window === 'undefined') return;
+    if (!productId) return;
+    if (!isLoggedIn) {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
+    if (wishlistBusy) return;
+    setWishlistBusy(true);
     try {
-      const list = (JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]') as number[]).filter(
-        (x) => x !== id
-      );
-      if (!isInWishlist) list.push(id);
-      localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
-      setIsInWishlist(!isInWishlist);
+      if (!isInWishlist) {
+        const { data } = await api.post<any>('/wishlist', { productId });
+        setIsInWishlist(true);
+        setWishlistItemId(data?.data?.id ?? null);
+      } else if (wishlistItemId) {
+        await api.delete(`/wishlist/${wishlistItemId}`);
+        setIsInWishlist(false);
+        setWishlistItemId(null);
+      }
     } catch {
-      // ignore
+      // ignore for now
+    } finally {
+      setWishlistBusy(false);
     }
   };
 
   if (props.variant === 'product') {
     const { item: product, onBuyNow } = props;
+    const rawImage = (product as any).image || '';
+    const safeImage =
+      typeof rawImage === 'string' &&
+      rawImage &&
+      !rawImage.startsWith('blob:') &&
+      !rawImage.startsWith('file:')
+        ? rawImage
+        : '';
     const showCouponBadge = couponState.show && couponState.type === 'has_coupon';
+    const displayPrice =
+      (product as any).discountPrice != null
+        ? (product as any).discountPrice
+        : (product as any).price;
+    const originalPrice =
+      (product as any).discountPrice != null
+        ? (product as any).price
+        : (product as any).originalPrice ?? (product as any).price;
 
     return (
       <article className={cardBaseClass}>
@@ -82,13 +144,13 @@ export function Card(props: CardProps) {
           className="relative block aspect-square sm:aspect-[4/3] overflow-hidden bg-rose-50/60"
         >
           <img
-            src={product.image}
+            src={safeImage}
             alt={product.name}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-300"
           />
           <button
             type="button"
-            onClick={(e) => toggleWishlist(e, product.id)}
+            onClick={(e) => toggleWishlist(e)}
             aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
             className={`absolute top-3 right-3 z-10 p-2 rounded-full bg-white/90 shadow-md border border-rose-100 transition-opacity duration-200 hover:bg-rose-50 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-rose-400 ${
               isInWishlist ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -108,11 +170,11 @@ export function Card(props: CardProps) {
           <div className="mt-2 flex items-start justify-between gap-2">
             <div className="flex items-baseline gap-1.5 sm:gap-2">
               <span className="text-base sm:text-lg font-bold text-gray-900">
-                ₹{product.price.toLocaleString('en-IN')}
+                ₹{Number(displayPrice).toLocaleString('en-IN')}
               </span>
-              {product.originalPrice > product.price && (
+              {Number(originalPrice) > Number(displayPrice) && (
                 <span className="text-xs sm:text-sm text-gray-400 line-through">
-                  ₹{product.originalPrice.toLocaleString('en-IN')}
+                  ₹{Number(originalPrice).toLocaleString('en-IN')}
                 </span>
               )}
             </div>

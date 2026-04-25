@@ -18,6 +18,9 @@ export async function authenticateSuperAdmin(
     }
 
     const token = authHeader.split(" ")[1];
+    if (!token) {
+      return ApiResponse.unauthorized(res, "No token provided");
+    }
     const payload = verifySuperAdminToken(token);
 
     const sa = await prisma.superAdmin.findUnique({ where: { id: payload.sub } });
@@ -26,9 +29,9 @@ export async function authenticateSuperAdmin(
     }
 
     req.superAdminId = sa.id;
-    next();
+    return next();
   } catch (e) {
-    next(e as Error);
+    return next(e as Error);
   }
 }
 

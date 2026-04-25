@@ -16,6 +16,9 @@ export const authenticateUser = async (
     }
 
     const token = authHeader.split(" ")[1];
+    if (!token) {
+      return ApiResponse.unauthorized(res, "No token provided");
+    }
     const payload = verifyAccessToken(token);
 
     if (payload.type !== "access") {
@@ -41,9 +44,9 @@ export const authenticateUser = async (
 
     req.user = user;
     req.userId = user.id;
-    next();
+    return next();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -59,6 +62,9 @@ export const authenticateAdmin = async (
     }
 
     const token = authHeader.split(" ")[1];
+    if (!token) {
+      return ApiResponse.unauthorized(res, "No token provided");
+    }
     const payload = verifyAccessToken(token);
 
     if (payload.type !== "access") {
@@ -84,9 +90,9 @@ export const authenticateAdmin = async (
 
     req.admin = admin;
     req.adminId = admin.id;
-    next();
+    return next();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -102,6 +108,9 @@ export const optionalAuth = async (
     }
 
     const token = authHeader.split(" ")[1];
+    if (!token) {
+      return next();
+    }
     const payload = verifyAccessToken(token);
 
     if (payload.type === "access") {
@@ -121,8 +130,8 @@ export const optionalAuth = async (
       }
     }
 
-    next();
+    return next();
   } catch {
-    next();
+    return next();
   }
 };

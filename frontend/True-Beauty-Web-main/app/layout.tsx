@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import ThemeSelector from "../components/ThemeSelector";
 import { Providers } from "./providers";
+import TenantBootstrap from "../components/TenantBootstrap";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,6 +32,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
+          <TenantBootstrap />
           <div className="theme-container">{children}</div>
         </Providers>
         {/* Initialize theme system */}

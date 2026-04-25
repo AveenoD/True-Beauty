@@ -3,6 +3,7 @@ import { z } from "zod";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/ApiResponse";
 import * as authService from "../services/auth.service";
+import { AuthenticatedRequest } from "../types";
 import {
   clearRefreshTokenCookie,
   getRefreshTokenFromRequest,
@@ -22,6 +23,11 @@ export const verifyEmail = asyncHandler(
 
 export const register = asyncHandler(
   async (req: Request, res: Response) => {
+    const tenantAdminId = (req as AuthenticatedRequest).tenantAdminId;
+    if (!tenantAdminId) {
+      return ApiResponse.badRequest(res, "Tenant context missing");
+    }
+
     const schema = z.object({
       name: z.string().min(2, "Name must be at least 2 characters"),
       email: z.string().email("Invalid email address"),
@@ -37,7 +43,7 @@ export const register = asyncHandler(
     });
 
     const data = schema.parse(req.body);
-    const result = await authService.registerUser(data);
+    const result = await authService.registerUser(tenantAdminId, data);
 
     return ApiResponse.created(
       res,
@@ -65,13 +71,18 @@ export const resendVerification = asyncHandler(
 
 export const login = asyncHandler(
   async (req: Request, res: Response) => {
+    const tenantAdminId = (req as AuthenticatedRequest).tenantAdminId;
+    if (!tenantAdminId) {
+      return ApiResponse.badRequest(res, "Tenant context missing");
+    }
+
     const schema = z.object({
       email: z.string().email("Invalid email address"),
       password: z.string().min(1, "Password is required"),
     });
 
     const data = schema.parse(req.body);
-    const result = await authService.loginUser(data);
+    const result = await authService.loginUser(tenantAdminId, data);
 
     setRefreshTokenCookie(res, result.refreshToken);
 

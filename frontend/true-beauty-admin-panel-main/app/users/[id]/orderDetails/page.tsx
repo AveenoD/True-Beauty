@@ -277,9 +277,9 @@ export default function OrderDetailsPage() {
                 <h3 className="text-xl font-semibold text-gray-900">
                   {selectedItem.productName}
                 </h3>
-                {matchedProduct?.category && (
+                {matchedProduct?.categoryName && (
                   <p className="text-sm text-gray-600">
-                    Category: {matchedProduct.category}
+                    Category: {matchedProduct.categoryName}
                   </p>
                 )}
                 <p className="text-base font-medium text-red-600 flex items-center justify-between gap-2">

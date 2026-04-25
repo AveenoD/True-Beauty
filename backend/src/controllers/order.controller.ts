@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { z } from "zod";
 import * as orderService from "../services/order.service";
 import { ApiResponse } from "../utils/ApiResponse";
 import { AuthenticatedRequest } from "../types";
@@ -34,7 +35,8 @@ export const listOrders = async (req: AuthenticatedRequest, res: Response) => {
 
 export const getOrder = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const order = await orderService.getOrder(req.userId!, req.params.id);
+    const id = z.string().min(1).parse(req.params.id);
+    const order = await orderService.getOrder(req.userId!, id);
     if (!order) return ApiResponse.notFound(res, "Order not found");
     return ApiResponse.success(res, order);
   } catch (error) {
@@ -45,7 +47,8 @@ export const getOrder = async (req: AuthenticatedRequest, res: Response) => {
 
 export const cancelOrder = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const order = await orderService.cancelOrder(req.userId!, req.params.id);
+    const id = z.string().min(1).parse(req.params.id);
+    const order = await orderService.cancelOrder(req.userId!, id);
     return ApiResponse.success(res, order, "Order cancelled");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to cancel order";

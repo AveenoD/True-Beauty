@@ -21,13 +21,18 @@ export async function createOrder(userId: string, data: {
   });
 
   if (cartItems.length === 0) throw new Error("Cart is empty");
+  if (!cartItems[0]?.product) throw new Error("Cart items invalid");
 
   let discount = 0;
   let couponId: string | null = null;
 
   if (data.couponCode) {
     const coupon = await prisma.coupon.findFirst({
-      where: { code: data.couponCode, isActive: true, adminId: cartItems[0].product.adminId },
+      where: {
+        code: data.couponCode,
+        isActive: true,
+        adminId: cartItems[0].product.adminId ?? undefined,
+      },
     });
     if (coupon) {
       couponId = coupon.id;

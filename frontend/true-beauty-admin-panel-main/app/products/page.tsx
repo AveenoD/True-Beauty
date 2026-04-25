@@ -212,13 +212,17 @@ export default function ProductsPage() {
   };
 
   const handleFormSubmit = async (values: ProductFormValues) => {
-    if (editingProduct?.id) {
-      await updateProduct(editingProduct.id, values);
-    } else {
-      await addProduct(values);
+    try {
+      if (editingProduct?.id) {
+        await updateProduct(editingProduct.id, values);
+      } else {
+        await addProduct(values);
+      }
+      setDrawerOpen(false);
+      setEditingProduct(null);
+    } catch {
+      // Error banner is handled by ProductsProvider; keep drawer open so user can retry.
     }
-    setDrawerOpen(false);
-    setEditingProduct(null);
   };
 
   const handleFormCancel = () => {
@@ -482,7 +486,7 @@ export default function ProductsPage() {
         cancelLabel="Cancel"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
-          if (deleteTarget) {
+          if (deleteTarget?.id) {
             await deleteProduct(deleteTarget.id);
           }
           setDeleteTarget(null);

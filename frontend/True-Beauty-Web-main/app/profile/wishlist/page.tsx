@@ -5,8 +5,8 @@ import { Heart, ShoppingBag, Star, ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
-import { products as catalogProducts } from '../../../utils/catalog';
-import type { Product } from '../../../utils/catalog';
+import type { Product as DummyProduct } from '../../../utils/catalog';
+import { api } from '../../../lib/api';
 
 export default function WishlistPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,7 +16,20 @@ export default function WishlistPage() {
   const [isAffiliate, setIsAffiliate] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [wishlist, setWishlist] = useState<
+    {
+      id: string;
+      product: {
+        id: string;
+        name: string;
+        price: number;
+        discountPrice?: number | null;
+        image?: string | null;
+        stock?: number;
+        stockStatus?: string | null;
+      };
+    }[]
+  >([]);
   const [isClient, setIsClient] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -46,9 +59,15 @@ export default function WishlistPage() {
   useEffect(() => {
     const cartCount = getCartCount();
     setCartCount(cartCount);
-    
-    const wishlistData = getWishlist();
-    setWishlist(wishlistData);
+
+    (async () => {
+      try {
+        const { data } = await api.get<any>('/wishlist');
+        setWishlist(data?.data ?? []);
+      } catch {
+        setWishlist([]);
+      }
+    })();
   }, []);
 
   const getCartCount = () => {
@@ -59,55 +78,39 @@ export default function WishlistPage() {
     } catch { return 0; }
   };
 
-  const getWishlist = (): Product[] => {
-    if (typeof window === 'undefined') return [];
+  const removeFromWishlist = async (wishlistItemId: string) => {
     try {
-      const ids = JSON.parse(localStorage.getItem('tb_wishlist') || '[]') as number[];
-      return ids
-        .map((id) => catalogProducts.find((p) => p.id === id))
-        .filter((p): p is Product => p != null);
-    } catch { return []; }
+      await api.delete(`/wishlist/${wishlistItemId}`);
+      setWishlist((prev) => prev.filter((it) => it.id !== wishlistItemId));
+    } catch {
+      // ignore
+    }
   };
 
-  const removeFromWishlist = (productId: number) => {
-    if (typeof window === 'undefined') return;
-    try {
-      const ids = (JSON.parse(localStorage.getItem('tb_wishlist') || '[]') as number[]).filter(
-        (id) => id !== productId
-      );
-      localStorage.setItem('tb_wishlist', JSON.stringify(ids));
-      setWishlist(
-        ids
-          .map((id) => catalogProducts.find((p) => p.id === id))
-          .filter((p): p is Product => p != null)
-      );
-    } catch { }
-  };
-
-  const isProductInCart = (productId: number) => {
+  const isProductInCart = (productId: string) => {
     if (!isClient) return false;
     try {
       const cart = JSON.parse(localStorage.getItem('tb_cart') || '[]');
-      return cart.some((item: { id: number }) => item.id === productId);
+      return cart.some((item: { id: string | number }) => String(item.id) === String(productId));
     } catch {
       return false;
     }
   };
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: { id: string; name: string; price: number; image?: string | null }) => {
     if (typeof window === 'undefined') return;
     try {
-      const cart: { id: number; name: string; price: number; image: string; quantity: number }[] =
+      const cart: { id: string; name: string; price: number; image: string; quantity: number }[] =
         JSON.parse(localStorage.getItem('tb_cart') || '[]');
-      const existing = cart.find((item) => item.id === product.id);
+      const existing = cart.find((item) => String(item.id) === String(product.id));
       if (existing) {
         existing.quantity = (existing.quantity || 1) + 1;
       } else {
         cart.push({
-          id: product.id,
+          id: String(product.id),
           name: product.name,
           price: product.price,
-          image: product.image,
+          image: product.image || '',
           quantity: 1,
         });
       }
@@ -161,19 +164,23 @@ export default function WishlistPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-              {wishlist.map((product) => {
-                const discountPercent = Math.round((1 - product.price / product.originalPrice) * 100);
+              {wishlist.map((item) => {
+                const product = item.product;
+                const displayPrice = product.discountPrice ?? product.price;
+                const discountPercent = product.discountPrice
+                  ? Math.round((1 - displayPrice / product.price) * 100)
+                  : 0;
                 return (
-                  <article key={product.id} className="product-card group bg-white/90 backdrop-blur-sm rounded-xl overflow-hidden border border-rose-100/80 flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:shadow-rose-100/40 hover:border-rose-200/80">
+                  <article key={item.id} className="product-card group bg-white/90 backdrop-blur-sm rounded-xl overflow-hidden border border-rose-100/80 flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:shadow-rose-100/40 hover:border-rose-200/80">
                     <div className="relative h-40 sm:h-44 shrink-0 overflow-hidden bg-rose-50/60">
-                      <img src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out" />
+                      <img src={product.image || ''} alt={product.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out" />
                       {discountPercent > 0 && (
                         <span className="absolute top-2 left-2 bg-rose-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
                           {discountPercent}% OFF
                         </span>
                       )}
                       <button 
-                        onClick={() => removeFromWishlist(product.id)}
+                        onClick={() => removeFromWishlist(item.id)}
                         className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/95 flex items-center justify-center text-rose-500 hover:bg-rose-50 transition-colors duration-300 shadow-sm"
                         aria-label="Remove from wishlist"
                       >
@@ -184,23 +191,23 @@ export default function WishlistPage() {
                       <h3 className="font-playfair font-semibold text-gray-800 text-base leading-tight line-clamp-2">
                         {product.name}
                       </h3>
-                      <p className="text-rose-600 text-xs font-medium mt-0.5 line-clamp-1">{product.highlight}</p>
+                      <p className="text-rose-600 text-xs font-medium mt-0.5 line-clamp-1">Saved item</p>
                       <div className="flex items-center gap-1.5 mt-2">
                         <div className="flex">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <Star 
                               key={star} 
-                              className={`w-3 h-3 ${star <= Math.floor(product.rating) ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-200'}`} 
+                              className={`w-3 h-3 ${star <= 4 ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-200'}`} 
                             />
                           ))}
                         </div>
-                        <span className="text-[11px] text-gray-500">{product.rating}</span>
+                        <span className="text-[11px] text-gray-500">4.0</span>
                       </div>
                       <div className="flex items-baseline gap-2 mt-2">
-                        <span className="text-lg font-bold text-gray-900">₹{product.price.toFixed(2)}</span>
-                        {product.originalPrice > product.price && (
+                        <span className="text-lg font-bold text-gray-900">₹{displayPrice.toFixed(2)}</span>
+                        {product.discountPrice && (
                           <span className="text-xs text-gray-400 line-through font-medium">
-                            ₹{product.originalPrice.toFixed(2)}
+                            ₹{product.price.toFixed(2)}
                           </span>
                         )}
                       </div>

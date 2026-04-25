@@ -8,23 +8,9 @@ import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import ProductGrid from '../../components/ProductGrid';
-import Pagination from '../../components/Pagination';
-import { products } from '../../utils/catalog';
-
-const PER_PAGE = 12;
 
 function ProductsContent() {
-  const searchParams = useSearchParams();
-
-  const rawPage = searchParams.get('page');
-  const parsedPage = rawPage ? parseInt(rawPage, 10) : 1;
-  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-
-  const total = products?.length ?? 0;
-  const totalPages = total > 0 ? Math.max(1, Math.ceil(total / PER_PAGE)) : 1;
-  const currentPage = Math.min(page, totalPages);
-  const start = (currentPage - 1) * PER_PAGE;
-  const paginatedProducts = total > 0 ? products.slice(start, start + PER_PAGE) : [];
+  useSearchParams(); // keep page dynamic; backend pagination comes later
 
   return (
     <div className="min-h-screen gradient-bg">
@@ -50,13 +36,7 @@ function ProductsContent() {
                 </p>
               </div>
 
-              <ProductGrid products={paginatedProducts} hideHeader />
-
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                basePath="/products"
-              />
+              <ProductGrid hideHeader />
             </div>
           </div>
         </section>

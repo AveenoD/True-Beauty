@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { z } from "zod";
 import * as cartService from "../services/cart.service";
 import { ApiResponse } from "../utils/ApiResponse";
 import { AuthenticatedRequest } from "../types";
@@ -29,7 +30,8 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { quantity } = req.body;
     if (quantity === undefined) return ApiResponse.badRequest(res, "quantity required");
-    const item = await cartService.updateCartItem(req.userId!, req.params.id, quantity);
+    const id = z.string().min(1).parse(req.params.id);
+    const item = await cartService.updateCartItem(req.userId!, id, quantity);
     return ApiResponse.success(res, item, "Cart updated");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update cart";
@@ -39,7 +41,8 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response) => {
 
 export const removeItem = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await cartService.removeCartItem(req.userId!, req.params.id);
+    const id = z.string().min(1).parse(req.params.id);
+    await cartService.removeCartItem(req.userId!, id);
     return ApiResponse.success(res, null, "Item removed");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to remove item";

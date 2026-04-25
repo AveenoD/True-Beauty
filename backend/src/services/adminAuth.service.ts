@@ -266,6 +266,69 @@ export async function updateProfile(adminId: string, data: {
   return admin;
 }
 
+export async function getAdminSubscription(adminId: string) {
+  // Enforce demo admin always has an active 1-month Professional subscription.
+  const admin = await prisma.admin.findUnique({
+    where: { id: adminId },
+    select: { email: true },
+  });
+
+  if (admin?.email?.toLowerCase() === "demo@truebeauty.com") {
+    const plan = await prisma.subscriptionPlan.findFirst({
+      where: { name: { equals: "professional", mode: "insensitive" }, isActive: true },
+      select: { id: true },
+    });
+
+    if (plan?.id) {
+      const now = new Date();
+      const oneMonthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      const existing = await prisma.adminSubscription.findUnique({
+        where: { adminId },
+        select: { expiryDate: true, plan: { select: { name: true } }, status: true },
+      });
+
+      const hasProfessional =
+        existing?.plan?.name?.toLowerCase() === "professional" &&
+        existing.status === "active" &&
+        existing.expiryDate >= oneMonthFromNow;
+
+      if (!hasProfessional) {
+        await prisma.adminSubscription.upsert({
+          where: { adminId },
+          create: {
+            adminId,
+            planId: plan.id,
+            startDate: now,
+            expiryDate: oneMonthFromNow,
+            status: "active",
+            autoRenew: false,
+          },
+          update: {
+            planId: plan.id,
+            startDate: now,
+            expiryDate: oneMonthFromNow,
+            status: "active",
+            autoRenew: false,
+          },
+        });
+      }
+    }
+  }
+
+  return prisma.adminSubscription.findUnique({
+    where: { adminId },
+    select: {
+      id: true,
+      status: true,
+      expiryDate: true,
+      plan: {
+        select: { id: true, name: true, maxProducts: true },
+      },
+    },
+  });
+}
+
 function generateSlug(name: string): string {
   const base = name
     .toLowerCase()

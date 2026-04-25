@@ -1,8 +1,13 @@
 import prisma from "../config/database";
 
-export async function getWishlist(userId: string) {
+export async function getWishlist(userId: string, adminId: string) {
   return prisma.wishlistItem.findMany({
-    where: { userId },
+    where: {
+      userId,
+      product: {
+        adminId,
+      },
+    },
     include: {
       product: {
         select: {
@@ -15,8 +20,15 @@ export async function getWishlist(userId: string) {
   });
 }
 
-export async function addToWishlist(userId: string, productId: string) {
-  const product = await prisma.product.findUnique({ where: { id: productId, deletedAt: null } });
+export async function addToWishlist(
+  userId: string,
+  adminId: string,
+  productId: string
+) {
+  const product = await prisma.product.findFirst({
+    where: { id: productId, adminId, deletedAt: null },
+    select: { id: true },
+  });
   if (!product) throw new Error("Product not found");
 
   const existing = await prisma.wishlistItem.findUnique({

@@ -1,8 +1,10 @@
 import { Router } from "express";
 import * as cartController from "../controllers/cart.controller";
 import { authenticateUser } from "../middleware/auth";
+import { requireTenant } from "../middleware/tenant";
 
 const router = Router();
+router.use(requireTenant);
 router.use(authenticateUser);
 
 router.get("/", cartController.getCart);

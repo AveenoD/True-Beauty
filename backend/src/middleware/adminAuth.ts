@@ -16,6 +16,9 @@ export const authenticateAdmin = async (
     }
 
     const token = authHeader.split(" ")[1];
+    if (!token) {
+      return ApiResponse.unauthorized(res, "No token provided");
+    }
     const payload = verifyAdminAccessToken(token);
 
     // Check if token is revoked
@@ -37,11 +40,11 @@ export const authenticateAdmin = async (
 
     req.admin = admin;
     req.adminId = admin.id;
-    next();
+    return next();
   } catch (error) {
     if (error instanceof Error && error.message === "Invalid token type") {
       return ApiResponse.unauthorized(res, "Invalid token type");
     }
-    next(error);
+    return next(error);
   }
 };

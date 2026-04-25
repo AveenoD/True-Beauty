@@ -1,6 +1,8 @@
 import prisma from "../config/database";
 
-export async function listProducts(query: {
+export async function listProducts(
+  adminId: string,
+  query: {
   page?: number;
   limit?: number;
   category?: string;
@@ -16,12 +18,14 @@ export async function listProducts(query: {
   const skip = (page - 1) * limit;
 
   const where: Record<string, unknown> = {
+    adminId,
     deletedAt: null,
     status: "active",
   };
 
   if (query.category) {
-    where.category = query.category;
+    // Product model stores category as `categoryName` (string) + `categoryId` (relation)
+    where.categoryName = query.category;
   }
 
   if (query.search) {
@@ -50,7 +54,8 @@ export async function listProducts(query: {
       select: {
         id: true,
         name: true,
-        category: true,
+        categoryId: true,
+        categoryName: true,
         price: true,
         discountPrice: true,
         stock: true,
@@ -79,17 +84,19 @@ export async function listProducts(query: {
   };
 }
 
-export async function getProduct(id: string) {
+export async function getProduct(adminId: string, id: string) {
   const product = await prisma.product.findFirst({
     where: {
       id,
+      adminId,
       deletedAt: null,
       status: "active",
     },
     select: {
       id: true,
       name: true,
-      category: true,
+      categoryId: true,
+      categoryName: true,
       price: true,
       discountPrice: true,
       stock: true,
@@ -117,7 +124,9 @@ export async function getProduct(id: string) {
   return product;
 }
 
-export async function listServices(query: {
+export async function listServices(
+  adminId: string,
+  query: {
   page?: number;
   limit?: number;
   category?: string;
@@ -129,6 +138,7 @@ export async function listServices(query: {
   const skip = (page - 1) * limit;
 
   const where: Record<string, unknown> = {
+    adminId,
     status: "active",
   };
 
@@ -186,9 +196,9 @@ export async function listServices(query: {
   };
 }
 
-export async function getService(id: string) {
+export async function getService(adminId: string, id: string) {
   const service = await prisma.myService.findFirst({
-    where: { id, status: "active" },
+    where: { id, adminId, status: "active" },
     select: {
       id: true,
       name: true,

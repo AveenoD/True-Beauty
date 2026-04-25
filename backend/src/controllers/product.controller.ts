@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
+import { z } from "zod";
 import * as productService from "../services/product.service";
 import { ApiResponse } from "../utils/ApiResponse";
 import { AuthenticatedRequest } from "../types";
+import { AppError } from "../middleware/errorHandler";
 
 export const list = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -28,6 +30,9 @@ export const create = async (req: AuthenticatedRequest, res: Response) => {
     const product = await productService.createProduct(req.adminId!, { name, categoryId, categoryName, price, discountPrice, stock, description, image, images, sku, status });
     return ApiResponse.success(res, product, "Product created", 201);
   } catch (error) {
+    if (error instanceof AppError) {
+      return ApiResponse.error(res, error.message, error.statusCode, error.errors);
+    }
     const message = error instanceof Error ? error.message : "Failed to create product";
     return ApiResponse.error(res, message);
   }
@@ -35,7 +40,8 @@ export const create = async (req: AuthenticatedRequest, res: Response) => {
 
 export const getOne = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const product = await productService.getProduct(req.adminId!, req.params.id);
+    const id = z.string().min(1).parse(req.params.id);
+    const product = await productService.getProduct(req.adminId!, id);
     if (!product) return ApiResponse.notFound(res, "Product not found");
     return ApiResponse.success(res, product);
   } catch (error) {
@@ -46,7 +52,8 @@ export const getOne = async (req: AuthenticatedRequest, res: Response) => {
 
 export const update = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const product = await productService.updateProduct(req.adminId!, req.params.id, req.body);
+    const id = z.string().min(1).parse(req.params.id);
+    const product = await productService.updateProduct(req.adminId!, id, req.body);
     if (!product) return ApiResponse.notFound(res, "Product not found");
     return ApiResponse.success(res, product, "Product updated");
   } catch (error) {
@@ -57,7 +64,8 @@ export const update = async (req: AuthenticatedRequest, res: Response) => {
 
 export const remove = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await productService.deleteProduct(req.adminId!, req.params.id);
+    const id = z.string().min(1).parse(req.params.id);
+    await productService.deleteProduct(req.adminId!, id);
     return ApiResponse.success(res, null, "Product deleted");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to delete product";

@@ -1,8 +1,10 @@
 import { Router } from "express";
 import * as orderController from "../controllers/order.controller";
 import { authenticateUser } from "../middleware/auth";
+import { requireTenant } from "../middleware/tenant";
 
 const router = Router();
+router.use(requireTenant);
 router.use(authenticateUser);
 
 router.post("/", orderController.createOrder);

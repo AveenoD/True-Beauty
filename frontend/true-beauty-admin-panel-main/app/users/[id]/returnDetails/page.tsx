@@ -188,7 +188,7 @@ export default function ReturnDetailsPage() {
               layout="horizontal"
               productImage={returnItem.productImage}
               productName={returnItem.productName}
-              category={matchedProduct?.category}
+              category={matchedProduct?.categoryName ?? undefined}
               price={returnItem.price}
               quantity={returnItem.quantity}
               totalAmount={returnItem.totalAmount}

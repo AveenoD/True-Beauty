@@ -112,7 +112,7 @@ export const updateAddress = asyncHandler(
       });
     });
 
-    const { id } = req.params;
+    const id = z.string().min(1).parse(req.params.id);
 
     const schema = z.object({
       name: z.string().min(2).optional(),
@@ -143,7 +143,7 @@ export const deleteAddress = asyncHandler(
       });
     });
 
-    const { id } = req.params;
+    const id = z.string().min(1).parse(req.params.id);
     const userId = userIdFromRequest(req);
     await userService.deleteUserAddress(userId, id);
 

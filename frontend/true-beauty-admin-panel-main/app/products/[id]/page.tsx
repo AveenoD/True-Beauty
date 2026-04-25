@@ -149,7 +149,9 @@ export default function ProductDetailPage() {
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Category
                     </p>
-                    <p className="text-gray-900 font-medium mt-0.5">{product.category}</p>
+                    <p className="text-gray-900 font-medium mt-0.5">
+                      {product.categoryName ?? "—"}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

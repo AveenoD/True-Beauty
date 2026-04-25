@@ -12,6 +12,15 @@ export const api = axios.create({
 
 let accessToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
+const TENANT_HEADER = "X-Tenant-Slug";
+
+function getTenantSlug(): string | null {
+  const fromEnv = process.env.NEXT_PUBLIC_TENANT_SLUG?.trim();
+  if (fromEnv) return fromEnv;
+  if (typeof window === "undefined") return null;
+  const fromStorage = localStorage.getItem("tenantSlug")?.trim();
+  return fromStorage || null;
+}
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
@@ -46,6 +55,10 @@ async function refreshAccessToken(): Promise<string | null> {
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  const tenantSlug = getTenantSlug();
+  if (tenantSlug) {
+    config.headers[TENANT_HEADER] = tenantSlug;
   }
   return config;
 });

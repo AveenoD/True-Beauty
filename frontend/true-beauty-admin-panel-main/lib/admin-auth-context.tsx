@@ -53,13 +53,17 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       const at = await refreshAdminAccessToken();
       if (at) {
         setAccessToken(at);
-        const me = await api.get<ApiSuccess<AdminUser>>("/admins/profile");
-        setAdmin(me.data.data);
+        const me = await api.get<
+          ApiSuccess<{ admin: AdminUser; subscription: AdminSubscription }>
+        >("/admins/profile");
+        setAdmin(me.data.data.admin);
+        setSubscription(me.data.data.subscription ?? null);
         return true;
       }
     } catch {
       setAccessToken(null);
       setAdmin(null);
+      setSubscription(null);
     }
     return false;
   }, []);
@@ -75,12 +79,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // First try using any stored access token (interceptor will attach it).
         // If it's expired, the interceptor will attempt a single-flight refresh and retry.
-        const me = await api.get<ApiSuccess<AdminUser>>("/admins/profile");
-        if (!cancelled) setAdmin(me.data.data);
+        const me = await api.get<
+          ApiSuccess<{ admin: AdminUser; subscription: AdminSubscription }>
+        >("/admins/profile");
+        if (!cancelled) {
+          setAdmin(me.data.data.admin);
+          setSubscription(me.data.data.subscription ?? null);
+        }
       } catch {
         if (!cancelled) {
           setAccessToken(null);
           setAdmin(null);
+          setSubscription(null);
         }
       } finally {
         if (!cancelled) setIsReady(true);
@@ -113,6 +123,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     >("/admins/login", { email, password });
     setAccessToken(data.data.accessToken);
     setAdmin(data.data.admin);
+    // Subscription will be fetched on next /admins/profile call
   }, []);
 
   const logout = useCallback(async () => {

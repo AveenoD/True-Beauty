@@ -1,4 +1,5 @@
 import prisma from "../config/database";
+import { CouponApplicableRole, CouponDiscountType } from "@prisma/client";
 
 export async function listCoupons(adminId: string) {
   return prisma.coupon.findMany({
@@ -43,8 +44,18 @@ export async function createCoupon(adminId: string, data: {
 }
 
 export async function updateCoupon(adminId: string, id: string, data: Partial<{
-  code; description; discountType; discountValue; minimumOrderAmount;
-  usageLimitTotal; usageLimitPerUser; maxDiscountCap; applicableRole; isActive; startDate; endDate;
+  code: string;
+  description: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  minimumOrderAmount: number;
+  usageLimitTotal: number;
+  usageLimitPerUser: number;
+  maxDiscountCap: number;
+  applicableRole: CouponApplicableRole;
+  isActive: boolean;
+  startDate: Date;
+  endDate: Date;
 }>) {
   const coupon = await prisma.coupon.findFirst({ where: { id, adminId } });
   if (!coupon) return null;

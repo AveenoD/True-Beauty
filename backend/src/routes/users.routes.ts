@@ -1,11 +1,14 @@
 import { Router } from "express";
 import * as authController from "../controllers/auth.controller";
 import * as userController from "../controllers/user.controller";
+import * as meController from "../controllers/me.controller";
 import { authenticateUser } from "../middleware/auth";
+import { requireTenant } from "../middleware/tenant";
 
 const router = Router();
 
 // --- Public Auth Routes ---
+router.use(requireTenant);
 router.get("/verify-email", authController.verifyEmail);
 router.post("/register", authController.register);
 router.post("/resend-verification", authController.resendVerification);
@@ -17,6 +20,7 @@ router.post("/reset-password", authController.resetPassword);
 // --- Protected Routes (require auth) ---
 router.use(authenticateUser);
 
+router.get("/me", meController.me);
 router.post("/logout", authController.logout);
 router.post("/change-password", authController.changePassword);
 router.delete("/delete-account", authController.deleteAccount);

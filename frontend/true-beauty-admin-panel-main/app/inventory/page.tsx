@@ -12,7 +12,7 @@ import {
   Boxes,
   Trash2,
 } from "lucide-react";
-import { useProducts, deriveStockStatus, type Product } from "@/lib/products-context";
+import { useProducts, deriveStockStatus, type Product as BaseProduct } from "@/lib/products-context";
 import {
   PRODUCT_CATEGORIES,
   DEFAULT_STOCK_THRESHOLD,
@@ -28,6 +28,13 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Filters, type FilterOption } from "@/components/ui/filters";
 import { KpiCard } from "@/components/ui/kpiCard";
 import Table from "@/components/Table";
+
+type InventoryProduct = BaseProduct & {
+  stockThreshold?: number | null;
+  stockLocation?: string | null;
+  supplier?: string | null;
+  inventoryNotes?: string | null;
+};
 
 const CATEGORY_OPTIONS: FilterOption[] = [
   { value: "", label: "All categories" },
@@ -48,11 +55,11 @@ function InventoryActionMenu({
   onViewHistory,
   onDelete,
 }: {
-  product: Product;
-  onViewDetails: (p: Product) => void;
-  onUpdateStock: (p: Product) => void;
-  onViewHistory: (p: Product) => void;
-  onDelete: (p: Product) => void;
+  product: InventoryProduct;
+  onViewDetails: (p: InventoryProduct) => void;
+  onUpdateStock: (p: InventoryProduct) => void;
+  onViewHistory: (p: InventoryProduct) => void;
+  onDelete: (p: InventoryProduct) => void;
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -133,7 +140,8 @@ function InventoryActionMenu({
 }
 
 export default function InventoryPage() {
-  const { products, updateProduct, deleteProduct } = useProducts();
+  const { products: baseProducts, updateProduct, deleteProduct } = useProducts();
+  const products = baseProducts as InventoryProduct[];
   const { entries: stockHistory, recordChange } = useStockHistory();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -141,7 +149,7 @@ export default function InventoryPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
   const [addInventoryDrawerOpen, setAddInventoryDrawerOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<InventoryProduct | null>(null);
 
   const kpis = useMemo(() => {
     const total = products.length;
@@ -166,22 +174,22 @@ export default function InventoryPage() {
     return list;
   }, [products, search, categoryFilter]);
 
-  const openDetailsDrawer = (product: Product) => {
+  const openDetailsDrawer = (product: InventoryProduct) => {
     setSelectedProduct(product);
     setDetailsDrawerOpen(true);
   };
 
-  const openUpdateDrawer = (product: Product) => {
+  const openUpdateDrawer = (product: InventoryProduct) => {
     setSelectedProduct(product);
     setDrawerOpen(true);
   };
 
-  const openHistoryDrawer = (product: Product) => {
+  const openHistoryDrawer = (product: InventoryProduct) => {
     setSelectedProduct(product);
     setHistoryDrawerOpen(true);
   };
 
-  const handleDeleteProduct = (product: Product) => {
+  const handleDeleteProduct = (product: InventoryProduct) => {
     if (!product.id) return;
     if (typeof window !== "undefined") {
       const confirmed = window.confirm(
@@ -203,13 +211,13 @@ export default function InventoryPage() {
     () => [
       {
         header: "Product",
-        accessor: (row: Product) => (
+        accessor: (row: InventoryProduct) => (
           <div className="font-medium text-gray-900">{row.name}</div>
         ),
       },
       {
         header: "Stock Keeping Unit",
-        accessor: (row: Product) => (
+        accessor: (row: InventoryProduct) => (
           <span className="text-sm text-gray-600 font-mono">
             {row.sku ?? "—"}
           </span>
@@ -217,19 +225,21 @@ export default function InventoryPage() {
       },
       {
         header: "Category",
-        accessor: (row: Product) => (
-          <span className="text-sm text-gray-700">{row.category}</span>
+        accessor: (row: InventoryProduct) => (
+          <span className="text-sm text-gray-700">
+            {row.categoryName ?? "—"}
+          </span>
         ),
       },
       {
         header: "Current Stock",
-        accessor: (row: Product) => (
+        accessor: (row: InventoryProduct) => (
           <span className="font-medium text-gray-900">{row.stock}</span>
         ),
       },
       {
         header: "Stock Status",
-        accessor: (row: Product) => {
+        accessor: (row: InventoryProduct) => {
           const label =
             row.stockStatus === "in_stock"
               ? "In stock"
@@ -253,7 +263,7 @@ export default function InventoryPage() {
       },
       {
         header: "Minimum Stock Limit",
-        accessor: (row: Product) => (
+        accessor: (row: InventoryProduct) => (
           <span className="text-sm text-gray-600">
             {row.stockThreshold ?? DEFAULT_STOCK_THRESHOLD}
           </span>
@@ -261,14 +271,14 @@ export default function InventoryPage() {
       },
       {
         header: "Last Updated",
-        accessor: (row: Product) => (
+        accessor: (row: InventoryProduct) => (
           <span className="text-sm text-gray-500">{formatDate(row.updatedAt)}</span>
         ),
       },
       {
         header: "Action",
         cellClassName: "text-center",
-        accessor: (row: Product) => (
+        accessor: (row: InventoryProduct) => (
           <div className="inline-flex justify-center w-full">
             <InventoryActionMenu
               product={row}
@@ -366,7 +376,7 @@ export default function InventoryPage() {
                   Category
                 </p>
                 <p className="mt-1 text-sm font-medium text-gray-900">
-                  {selectedProduct.category}
+                  {selectedProduct.categoryName ?? "—"}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-100 bg-white px-4 py-3">
@@ -476,8 +486,8 @@ export default function InventoryPage() {
 
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <Table
-          data={filteredProducts as Product[]}
+        <Table<InventoryProduct>
+          data={filteredProducts}
           columns={columns}
           searchable={false}
           filterable={false}
@@ -496,7 +506,8 @@ export default function InventoryPage() {
         }}
         product={selectedProduct}
         onSave={(operation, quantity, reason, note) => {
-          if (!selectedProduct) return;
+          if (!selectedProduct?.id) return;
+          const productId = selectedProduct.id;
           const prev = selectedProduct.stock;
 
           let target = prev;
@@ -510,7 +521,7 @@ export default function InventoryPage() {
 
           const newStock = Math.max(0, target);
 
-          updateProduct(selectedProduct.id, { stock: newStock });
+          updateProduct(productId, { stock: newStock });
           const type: StockAdjustType =
             operation === "set"
               ? newStock >= prev
@@ -518,7 +529,7 @@ export default function InventoryPage() {
                 : "reduce"
               : (operation as StockAdjustType);
           recordChange({
-            productId: selectedProduct.id,
+            productId,
             productName: selectedProduct.name,
             previousStock: prev,
             newStock,
@@ -652,7 +663,7 @@ function UpdateStockDrawer({
 }: {
   open: boolean;
   onClose: () => void;
-  product: Product | null;
+  product: InventoryProduct | null;
   onSave: (
     operation: "add" | "reduce" | "set",
     quantity: number,
@@ -890,7 +901,7 @@ function AddInventoryDrawer({
 }: {
   open: boolean;
   onClose: () => void;
-  products: Product[];
+  products: InventoryProduct[];
   onSave: (productId: string, values: {
     stock: number;
     stockThreshold: number;
@@ -940,7 +951,7 @@ function AddInventoryDrawer({
     e.preventDefault();
     const stockNum = Math.max(0, Math.floor(Number(initialStock)) || 0);
     const thresholdNum = Math.max(0, Math.floor(Number(minLimit)) || DEFAULT_STOCK_THRESHOLD);
-    if (!selectedProduct) return;
+    if (!selectedProduct?.id) return;
     onSave(selectedProduct.id, {
       stock: stockNum,
       stockThreshold: thresholdNum,
@@ -956,7 +967,9 @@ function AddInventoryDrawer({
 
   const stockNum = Math.max(0, Math.floor(Number(initialStock)) || 0);
   const thresholdNum = Math.max(0, Math.floor(Number(minLimit)) || DEFAULT_STOCK_THRESHOLD);
-  const computedStatus = deriveStockStatus(stockNum, thresholdNum);
+  // Current stock status is derived from stock only in products-context.
+  // Threshold-based "low_stock" can be added later when backend supports it.
+  const computedStatus = deriveStockStatus(stockNum);
   const statusLabel =
     computedStatus === "in_stock"
       ? "In Stock"
@@ -1006,7 +1019,7 @@ function AddInventoryDrawer({
               <div>
                 <label className="block text-sm font-medium text-gray-500 mb-1">Category</label>
                 <p className="text-sm text-gray-900 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100">
-                  {selectedProduct.category}
+                  {selectedProduct.categoryName ?? "—"}
                 </p>
               </div>
             </div>
