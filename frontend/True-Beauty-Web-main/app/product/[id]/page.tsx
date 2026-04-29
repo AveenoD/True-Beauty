@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
 import Link from 'next/link';
-import { getProductById } from '../../../utils/catalog';
+import { api } from '../../../lib/api';
 import {
   DEFAULT_COUPON_CODE,
   DEFAULT_COUPON_MIN_CART_TOTAL,
@@ -129,7 +129,62 @@ export default function ProductPage() {
   const [sharedSocialPosts, setSharedSocialPosts] = useState<SharedSocialPost[]>([]);
   const [socialPostUrl, setSocialPostUrl] = useState('');
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
-  const product = getProductById(params.id as string);
+  const [storeProduct, setStoreProduct] = useState<any | null>(null);
+  const [storeLoading, setStoreLoading] = useState(false);
+
+  const productIdParam = String((params as any)?.id ?? '');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!productIdParam) return;
+      setStoreLoading(true);
+      try {
+        const { data } = await api.get<any>(`/store/products/${encodeURIComponent(productIdParam)}`);
+        if (!cancelled) setStoreProduct(data?.data ?? null);
+      } catch {
+        if (!cancelled) setStoreProduct(null);
+      } finally {
+        if (!cancelled) setStoreLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [productIdParam]);
+
+  const rawImage = storeProduct?.image || storeProduct?.images?.[0] || '';
+  const safeImage =
+    typeof rawImage === 'string' &&
+    rawImage &&
+    !rawImage.startsWith('blob:') &&
+    !rawImage.startsWith('file:')
+      ? rawImage
+      : '';
+
+  // Map API product -> legacy UI shape expected by coupon/video/review widgets
+  const product: Product | null = storeProduct
+    ? ({
+        id: 0,
+        name: String(storeProduct.name ?? ''),
+        highlight: String(storeProduct.description ?? ''),
+        image: safeImage || '/images/products/dayCream.png',
+        price:
+          storeProduct.discountPrice != null
+            ? Number(storeProduct.discountPrice)
+            : Number(storeProduct.price ?? 0),
+        originalPrice:
+          storeProduct.discountPrice != null
+            ? Number(storeProduct.price ?? storeProduct.discountPrice)
+            : Number(storeProduct.price ?? 0),
+        rating: 4.8,
+        reviewCount: 0,
+        bullets: undefined,
+        category: 'skincare',
+        subcategory: 'all',
+      } as Product)
+    : null;
+
   const isVerifiedBuyer = isClient && product ? (() => {
     const cart = JSON.parse(localStorage.getItem('tb_cart') || '[]');
     return cart.some((p: { id: number }) => p.id === product.id);
@@ -212,6 +267,20 @@ export default function ProductPage() {
 
   const hasAnySocialConnected = connectedInstagram || connectedYouTube || connectedFacebook || connectedTwitter;
   const canShareSocial = isVerifiedBuyer && hasAnySocialConnected;
+
+  if (storeLoading && !storeProduct) {
+    return (
+      <div className="min-h-screen gradient-bg">
+        <Header />
+        <main className="pt-24 pb-16 px-4 md:px-8">
+          <div className="container mx-auto text-center py-16">
+            <p className="text-gray-600">Loading product…</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
