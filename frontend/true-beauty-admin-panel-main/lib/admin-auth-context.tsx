@@ -8,7 +8,14 @@ import {
   useMemo,
   useState,
 } from "react";
-import { api, refreshAdminAccessToken, setAccessToken, ApiSuccess } from "./api";
+import {
+  api,
+  refreshAdminAccessToken,
+  setAccessToken,
+  setAdminRefreshToken,
+  getAdminRefreshToken,
+  ApiSuccess,
+} from "./api";
 
 export type AdminUser = {
   id: string;
@@ -23,6 +30,7 @@ export type AdminUser = {
 export type AdminSubscription = {
   id: string;
   status: string;
+  startDate?: string | null;
   expiryDate: string | null;
   plan: {
     id: string;
@@ -39,6 +47,8 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
+  /** Re-fetch admin + subscription from `GET /admins/profile` (e.g. dashboard). */
+  refreshProfile: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -47,6 +57,19 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [subscription, setSubscription] = useState<AdminSubscription>(null);
   const [isReady, setIsReady] = useState(false);
+
+  const refreshProfile = useCallback(async () => {
+    try {
+      const me = await api.get<
+        ApiSuccess<{ admin: AdminUser; subscription: AdminSubscription }>
+      >("/admins/profile");
+      setAdmin(me.data.data.admin);
+      setSubscription(me.data.data.subscription ?? null);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -105,6 +128,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   // This handles the case where a 401 refresh fails (e.g. RT invalid/expired)
   useEffect(() => {
     const handleSessionExpired = () => {
+      setAccessToken(null);
       setAdmin(null);
       setSubscription(null);
       if (typeof window !== "undefined") {
@@ -116,19 +140,32 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    // Backend sets refreshToken as HTTP-only cookie
-    // Only accessToken comes in response body
+    // Backend sets refreshToken cookie and returns it in JSON so we can persist a copy
+    // when the admin UI and API run on different ports (cookie may not be sent).
     const { data } = await api.post<
-      ApiSuccess<{ admin: AdminUser; accessToken: string }>
+      ApiSuccess<{ admin: AdminUser; accessToken: string; refreshToken: string }>
     >("/admins/login", { email, password });
     setAccessToken(data.data.accessToken);
+    if (data.data.refreshToken) {
+      setAdminRefreshToken(data.data.refreshToken);
+    }
     setAdmin(data.data.admin);
-    // Subscription will be fetched on next /admins/profile call
+    try {
+      const me = await api.get<
+        ApiSuccess<{ admin: AdminUser; subscription: AdminSubscription }>
+      >("/admins/profile");
+      setAdmin(me.data.data.admin);
+      setSubscription(me.data.data.subscription ?? null);
+    } catch {
+      setSubscription(null);
+    }
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await api.post("/admins/logout");
+      await api.post("/admins/logout", {
+        refreshToken: getAdminRefreshToken() ?? undefined,
+      });
     } catch {
       /* ignore */
     }
@@ -146,8 +183,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       refreshSession,
+      refreshProfile,
     }),
-    [admin, subscription, isReady, login, logout, refreshSession]
+    [admin, subscription, isReady, login, logout, refreshSession, refreshProfile]
   );
 
   return (

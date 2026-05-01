@@ -1,18 +1,11 @@
 import prisma from "../config/database";
 import { PaginatedResult } from "../types";
 import { AppError } from "../middleware/errorHandler";
+import { getAdminSubscription } from "./adminAuth.service";
 
 async function checkPlanProductLimit(adminId: string): Promise<void> {
-  const subscription = await prisma.adminSubscription.findUnique({
-    where: { adminId },
-    select: {
-      status: true,
-      expiryDate: true,
-      plan: {
-        select: { maxProducts: true },
-      },
-    },
-  });
+  // Ensures demo@truebeauty.com calendar-month subscription exists before we read DB.
+  const subscription = await getAdminSubscription(adminId);
 
   if (!subscription || subscription.status !== "active") {
     throw new AppError(

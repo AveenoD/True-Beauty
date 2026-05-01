@@ -267,7 +267,9 @@ export async function updateProfile(adminId: string, data: {
 }
 
 export async function getAdminSubscription(adminId: string) {
-  // Enforce demo admin always has an active 1-month Professional subscription.
+  // Demo admin: always align to the current **calendar month** (local server TZ).
+  // Active from 1st 00:00:00 through last moment before next month's 1st 00:00:00
+  // (expiry stored as next month 1st 00:00:00 — same rule as checkPlanProductLimit).
   const admin = await prisma.admin.findUnique({
     where: { id: adminId },
     select: { email: true },
@@ -281,38 +283,29 @@ export async function getAdminSubscription(adminId: string) {
 
     if (plan?.id) {
       const now = new Date();
-      const oneMonthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      const startDate = new Date(y, m, 1, 0, 0, 0, 0);
+      const expiryDate = new Date(y, m + 1, 1, 0, 0, 0, 0);
 
-      const existing = await prisma.adminSubscription.findUnique({
+      await prisma.adminSubscription.upsert({
         where: { adminId },
-        select: { expiryDate: true, plan: { select: { name: true } }, status: true },
+        create: {
+          adminId,
+          planId: plan.id,
+          startDate,
+          expiryDate,
+          status: "active",
+          autoRenew: false,
+        },
+        update: {
+          planId: plan.id,
+          startDate,
+          expiryDate,
+          status: "active",
+          autoRenew: false,
+        },
       });
-
-      const hasProfessional =
-        existing?.plan?.name?.toLowerCase() === "professional" &&
-        existing.status === "active" &&
-        existing.expiryDate >= oneMonthFromNow;
-
-      if (!hasProfessional) {
-        await prisma.adminSubscription.upsert({
-          where: { adminId },
-          create: {
-            adminId,
-            planId: plan.id,
-            startDate: now,
-            expiryDate: oneMonthFromNow,
-            status: "active",
-            autoRenew: false,
-          },
-          update: {
-            planId: plan.id,
-            startDate: now,
-            expiryDate: oneMonthFromNow,
-            status: "active",
-            autoRenew: false,
-          },
-        });
-      }
     }
   }
 
@@ -321,6 +314,7 @@ export async function getAdminSubscription(adminId: string) {
     select: {
       id: true,
       status: true,
+      startDate: true,
       expiryDate: true,
       plan: {
         select: { id: true, name: true, maxProducts: true },

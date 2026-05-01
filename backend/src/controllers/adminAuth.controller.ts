@@ -43,10 +43,9 @@ export const login = async (req: Request, res: Response) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Remove refreshToken from response body (security - RT only in cookie)
-    const { refreshToken: _, ...responseData } = result;
-
-    return ApiResponse.success(res, responseData, "Login successful");
+    // Also return refreshToken in JSON so the SPA can store it (localStorage) when the
+    // admin UI is on a different port than the API — httpOnly cookies are not always sent cross-origin.
+    return ApiResponse.success(res, result, "Login successful");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Login failed";
     return ApiResponse.unauthorized(res, message);
@@ -88,10 +87,7 @@ export const refreshToken = async (req: Request, res: Response) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Remove refreshToken from response body
-    const { refreshToken: _, ...responseData } = result;
-
-    return ApiResponse.success(res, responseData, "Token refreshed");
+    return ApiResponse.success(res, result, "Token refreshed");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Token refresh failed";
     return ApiResponse.unauthorized(res, message);

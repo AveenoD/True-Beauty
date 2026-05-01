@@ -1,11 +1,20 @@
 import { v2 as cloudinary } from "cloudinary";
-import { unlink } from "fs/promises";
+import { copyFile, mkdir, unlink } from "fs/promises";
+import path from "path";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+export function isCloudinaryConfigured(): boolean {
+  return Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+  );
+}
 
 export function sanitizePublicId(filename: string): string {
   return filename
@@ -15,12 +24,39 @@ export function sanitizePublicId(filename: string): string {
     .substring(0, 100);
 }
 
+/** When Cloudinary env is missing, store under ./uploads and serve via GET /uploads/... */
+async function uploadToLocalDisk(
+  filePath: string,
+  folder: string,
+  publicId: string
+): Promise<string> {
+  const ext = path.extname(filePath) || ".bin";
+  const safeBase = sanitizePublicId(publicId) || `file_${Date.now()}`;
+  const destDir = path.join(process.cwd(), "uploads", folder);
+  await mkdir(destDir, { recursive: true });
+  const destPath = path.join(destDir, `${safeBase}${ext}`);
+  await copyFile(filePath, destPath);
+  try {
+    await unlink(filePath);
+  } catch {}
+
+  const port = String(process.env.PORT || 3000);
+  const base =
+    (process.env.API_BASE_URL || "").replace(/\/$/, "") ||
+    `http://localhost:${port}`;
+  return `${base}/uploads/${folder}/${path.basename(destPath)}`;
+}
+
 export async function uploadToCloudinary(
   filePath: string,
   folder: string,
   publicId?: string
 ): Promise<string> {
-  const options: any = {
+  if (!isCloudinaryConfigured()) {
+    return uploadToLocalDisk(filePath, folder, publicId ?? `upload_${Date.now()}`);
+  }
+
+  const options: Record<string, unknown> = {
     folder,
     resource_type: "image",
     quality: "auto",
@@ -30,9 +66,11 @@ export async function uploadToCloudinary(
     options.public_id = publicId;
   }
 
-  const result = await cloudinary.uploader.upload(filePath, options);
+  const result = await cloudinary.uploader.upload(
+    filePath,
+    options as unknown as Parameters<typeof cloudinary.uploader.upload>[1]
+  );
 
-  // Clean up local temp file
   try {
     await unlink(filePath);
   } catch {}

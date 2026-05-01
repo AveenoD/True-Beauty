@@ -54,11 +54,26 @@ interface ProductsContextValue {
   products: Product[];
   loading: boolean;
   error: string | null;
+  /** Modal copy for plan / subscription blocks (403 from API). */
+  planGateMessage: string | null;
+  dismissPlanGate: () => void;
   fetchProducts: () => Promise<void>;
   addProduct: (values: ProductFormValues) => Promise<void>;
   updateProduct: (id: string, values: Partial<ProductFormValues>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   getProductById: (id: string) => Product | undefined;
+}
+
+function isSubscriptionPlanGate(err: unknown): boolean {
+  const ax = err as { response?: { status?: number; data?: { message?: string } } };
+  if (ax.response?.status !== 403) return false;
+  const msg = (ax.response?.data?.message ?? "").toLowerCase();
+  return (
+    msg.includes("subscription") ||
+    msg.includes("plan") ||
+    msg.includes("renew") ||
+    msg.includes("upgrade")
+  );
 }
 
 const ProductsContext = createContext<ProductsContextValue | null>(null);
@@ -67,6 +82,9 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [planGateMessage, setPlanGateMessage] = useState<string | null>(null);
+
+  const dismissPlanGate = useCallback(() => setPlanGateMessage(null), []);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -83,6 +101,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
 
   const addProduct = useCallback(async (values: ProductFormValues) => {
     setError(null);
+    setPlanGateMessage(null);
     const uploadFiles = async (files: File[]) => {
       const urls: string[] = [];
       for (const file of files) {
@@ -92,7 +111,16 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
         const res = await api.post<ApiSuccess<{ url: string }>>(
           "/upload/admin/products/image",
           form,
-          { headers: { "Content-Type": "multipart/form-data" } }
+          {
+            transformRequest: [
+              (data, headers) => {
+                if (typeof FormData !== "undefined" && data instanceof FormData) {
+                  delete (headers as Record<string, unknown>)["Content-Type"];
+                }
+                return data as FormData;
+              },
+            ],
+          }
         );
         const url = res.data?.data?.url;
         if (url) urls.push(url);
@@ -133,7 +161,11 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       const message =
         err?.response?.data?.message || err?.message || "Failed to create product";
-      setError(message);
+      if (isSubscriptionPlanGate(err)) {
+        setPlanGateMessage(message);
+      } else {
+        setError(message);
+      }
       throw err;
     }
   }, []);
@@ -201,6 +233,8 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     products,
     loading,
     error,
+    planGateMessage,
+    dismissPlanGate,
     fetchProducts,
     addProduct,
     updateProduct,

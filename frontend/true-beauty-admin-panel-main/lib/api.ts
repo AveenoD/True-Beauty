@@ -47,7 +47,20 @@ export const api = axios.create({
 // Access token stored in localStorage (survives hard refresh) + memory for fast access.
 // Only used for admin auth. User auth uses separate api instance.
 const AT_KEY = "tb_admin_at";
+const RT_KEY = "tb_admin_rt";
 const SESSION_KEY = "tb_admin_session"; // Tracks if user was ever logged in
+
+/** Persisted copy of admin refresh JWT when UI and API are on different origins (cookie may not attach). */
+export function setAdminRefreshToken(token: string | null) {
+  if (typeof localStorage === "undefined") return;
+  if (token) localStorage.setItem(RT_KEY, token);
+  else localStorage.removeItem(RT_KEY);
+}
+
+export function getAdminRefreshToken(): string | null {
+  if (typeof localStorage === "undefined") return null;
+  return localStorage.getItem(RT_KEY);
+}
 
 function getStoredAT(): string | null {
   if (typeof localStorage === "undefined") return null;
@@ -65,6 +78,7 @@ export function setAccessToken(token: string | null) {
     } else {
       localStorage.removeItem(AT_KEY);
       localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(RT_KEY);
     }
   }
 }
@@ -88,13 +102,15 @@ let refreshPromise: Promise<string | null> | null = null;
 async function refreshAccessToken(): Promise<string | null> {
   if (refreshPromise) return refreshPromise;
 
+  const rt = getAdminRefreshToken();
   refreshPromise = api
-    .post<{ success: boolean; data: { accessToken: string } }>(
+    .post<{ success: boolean; data: { accessToken: string; refreshToken?: string } }>(
       "/admins/refresh-token",
-      undefined
+      rt ? { refreshToken: rt } : {}
     )
     .then((res) => {
       const at = res.data?.data?.accessToken ?? null;
+      const nextRt = res.data?.data?.refreshToken;
       accessToken = at;
       if (typeof localStorage !== "undefined") {
         if (at) {
@@ -105,14 +121,15 @@ async function refreshAccessToken(): Promise<string | null> {
           localStorage.removeItem(SESSION_KEY);
         }
       }
+      if (nextRt) setAdminRefreshToken(nextRt);
       return at;
     })
     .catch(() => {
-      // Refresh failed - clear cookie and token
       accessToken = null;
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem(AT_KEY);
         localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(RT_KEY);
       }
       return null;
     })

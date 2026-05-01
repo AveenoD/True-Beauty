@@ -71,6 +71,43 @@ async function seed() {
     console.log(`  ${plan.name} plan created/updated`);
   }
 
+  const demoAdmin = await prisma.admin.findFirst({
+    where: { email: { equals: "demo@truebeauty.com", mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (demoAdmin) {
+    const professional = await prisma.subscriptionPlan.findUnique({
+      where: { id: "professional" },
+      select: { id: true },
+    });
+    if (professional) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      const startDate = new Date(y, m, 1, 0, 0, 0, 0);
+      const expiryDate = new Date(y, m + 1, 1, 0, 0, 0, 0);
+      await prisma.adminSubscription.upsert({
+        where: { adminId: demoAdmin.id },
+        create: {
+          adminId: demoAdmin.id,
+          planId: professional.id,
+          startDate,
+          expiryDate,
+          status: "active",
+          autoRenew: false,
+        },
+        update: {
+          planId: professional.id,
+          startDate,
+          expiryDate,
+          status: "active",
+          autoRenew: false,
+        },
+      });
+      console.log("  demo@truebeauty.com subscription ensured (current calendar month)");
+    }
+  }
+
   console.log("Seed complete!");
 }
 

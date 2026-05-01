@@ -8,7 +8,7 @@ const router = Router();
 router.post("/register", adminAuthController.register);
 router.post("/login", adminAuthController.login);
 router.post("/refresh-token", adminAuthController.refreshToken);
-router.post("/logout", adminAuthController.logout);
+router.post("/logout", authenticateAdmin, adminAuthController.logout);
 
 // Protected profile routes
 router.get("/profile", authenticateAdmin, adminAuthController.getProfile);

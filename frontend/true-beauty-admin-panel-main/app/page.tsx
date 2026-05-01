@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAffiliates } from "@/lib/affiliates-context";
 import { KpiCard } from "@/components/ui/kpiCard";
 import { SalesAnalyticsChart } from "@/components/charts/SalesAnalyticsChart";
 import { GeographyChart } from "@/components/charts/GeographyChart";
 import { SubscriptionCard } from "@/components/ui/SubscriptionCard";
+import { useAdminAuth } from "@/lib/admin-auth-context";
 
 const RANGE_OPTIONS = [
   { id: "today", label: "Today" },
@@ -19,6 +20,12 @@ type RangeId = (typeof RANGE_OPTIONS)[number]["id"];
 export default function Home() {
   const [activeRange, setActiveRange] = useState<RangeId>("today");
   const { affiliates } = useAffiliates();
+  const { isReady, isLoggedIn, refreshProfile } = useAdminAuth();
+
+  useEffect(() => {
+    if (!isReady || !isLoggedIn) return;
+    void refreshProfile();
+  }, [isReady, isLoggedIn, refreshProfile]);
 
   const totalWithdrawalAmount = useMemo(() => {
     return affiliates.reduce((sum, aff) => {

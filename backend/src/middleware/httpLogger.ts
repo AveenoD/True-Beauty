@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { log } from "../utils/logger";
+import { log, logFormat } from "../utils/logger";
+
+type ResponseWithCapture = Response & { __logResBody?: unknown };
 
 const REDACT_KEY = /(pass(word)?|token|authorization|cookie|secret|api[_-]?key|refresh)/i;
 
@@ -58,18 +60,75 @@ function getReqBody(req: Request): unknown {
   return truncateBody(redact(body));
 }
 
+function pickRequestContext(req: Request): Record<string, unknown> | undefined {
+  const q = req.query as Record<string, unknown>;
+  const hasQuery = q && Object.keys(q).length > 0;
+  const tenant = req.get("x-tenant-slug");
+  const origin = req.get("origin");
+  const auth = req.get("authorization");
+  const ctx: Record<string, unknown> = {};
+  if (hasQuery) ctx.query = redact(q);
+  if (tenant) ctx["x-tenant-slug"] = tenant;
+  if (origin) ctx.origin = origin;
+  if (auth) ctx.authorization = "[REDACTED]";
+  return Object.keys(ctx).length ? ctx : undefined;
+}
+
+function attachResponseCapture(res: Response) {
+  if (process.env.NODE_ENV === "production") return;
+
+  const r = res as ResponseWithCapture;
+  const origJson = res.json.bind(res);
+  res.json = function jsonCapture(body: unknown) {
+    r.__logResBody = body;
+    return origJson(body);
+  };
+
+  const origSend = res.send.bind(res);
+  res.send = function sendCapture(body?: unknown) {
+    if (r.__logResBody !== undefined) {
+      return origSend(body);
+    }
+    if (body === undefined || body === null) {
+      return origSend(body);
+    }
+    if (Buffer.isBuffer(body)) {
+      r.__logResBody = `[Buffer ${body.length} bytes]`;
+    } else if (typeof body === "string") {
+      const s = body.trim();
+      if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) {
+        try {
+          r.__logResBody = JSON.parse(s);
+        } catch {
+          r.__logResBody = truncateBody(body.length > 800 ? `${body.slice(0, 800)}…` : body);
+        }
+      } else {
+        r.__logResBody = truncateBody(body.length > 800 ? `${body.slice(0, 800)}…` : body);
+      }
+    } else {
+      r.__logResBody = body;
+    }
+    return origSend(body);
+  };
+}
+
 export function httpLogger(req: Request, res: Response, next: NextFunction) {
   const start = process.hrtime.bigint();
+  attachResponseCapture(res);
 
-  // Log incoming request
   const reqBody = getReqBody(req);
+  const reqContext = pickRequestContext(req);
   const reqLine = `  ${colorMethod(req.method)}  ${req.originalUrl}`;
 
-  if (reqBody) {
-    process.stdout.write(`\x1b[90m[REQ]\x1b[0m ${reqLine}\n`);
-    process.stdout.write(`\x1b[90m      body:\x1b[0m ${JSON.stringify(reqBody, null, 2).split("\n").join("\n      ")}\n`);
-  } else {
-    process.stdout.write(`\x1b[90m[REQ]\x1b[0m ${reqLine}\n`);
+  process.stdout.write(`\x1b[90m[REQ]\x1b[0m ${reqLine}\n`);
+  if (reqContext && Object.keys(reqContext).length) {
+    const block = JSON.stringify(reqContext, null, 2);
+    process.stdout.write(`\x1b[90m      context:\x1b[0m ${block.split("\n").join("\n      ")}\n`);
+  }
+  if (reqBody !== undefined) {
+    process.stdout.write(
+      `\x1b[90m      body:\x1b[0m ${JSON.stringify(reqBody, null, 2).split("\n").join("\n      ")}\n`
+    );
   }
 
   const finish = () => {
@@ -77,18 +136,26 @@ export function httpLogger(req: Request, res: Response, next: NextFunction) {
     const status = res.statusCode;
 
     const reqId = req.requestId ?? "-";
-    const userId = (req as any).userId ?? "-";
+    const userId = (req as { userId?: string }).userId ?? "-";
     const ip = req.ip ?? "-";
-    const ua = (req.get("user-agent") ?? "-").slice(0, 60);
+    const ua = (req.get("user-agent") ?? "-").slice(0, 120);
 
-    // Structured terminal output
     const icon = status >= 400 ? "  ✗" : status >= 300 ? "  →" : "  ✓";
     process.stdout.write(
       `${icon} ${colorMethod(req.method)}  ${req.originalUrl}  ${colorStatus(status)}  ${colorDuration(Number(durationMs.toFixed(2)))}\n`
     );
     process.stdout.write(`      \x1b[90mreqId=${reqId}  userId=${userId}  ip=${ip}\x1b[0m\n`);
 
-    // Log structured data to file/stdout as JSON
+    const resBodyRaw = (res as ResponseWithCapture).__logResBody;
+    const resBody =
+      resBodyRaw !== undefined
+        ? truncateBody(redact(resBodyRaw), 2500)
+        : undefined;
+
+    const fmt = logFormat();
+    if (fmt === "pretty") {
+      process.stdout.write("\x1b[90m──────── http_request (structured) ────────\x1b[0m\n");
+    }
     log(
       status >= 500 ? "error" : status >= 400 ? "warn" : "info",
       "http_request",
@@ -101,7 +168,9 @@ export function httpLogger(req: Request, res: Response, next: NextFunction) {
         ip,
         userAgent: ua,
         userId,
-        reqBody: reqBody,
+        ...(fmt === "pretty"
+          ? { reqContext, reqBody: reqBody ?? undefined, resBody: resBody ?? undefined }
+          : {}),
       }
     );
   };

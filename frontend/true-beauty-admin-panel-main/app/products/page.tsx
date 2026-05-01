@@ -13,6 +13,7 @@ import Table from "@/components/Table";
 import { Filters, type FilterOption } from "@/components/ui/filters";
 import { KpiCard } from "@/components/ui/kpiCard";
 import DeletePopup from "@/components/ui/deletePopup";
+import { SubscriptionGateModal } from "@/components/ui/SubscriptionGateModal";
 
 const STOCK_LABELS: Record<string, string> = {
   in_stock: "In stock",
@@ -141,7 +142,17 @@ function ProductActionsMenu({
 }
 
 export default function ProductsPage() {
-  const { products, loading, error, fetchProducts, addProduct, updateProduct, deleteProduct } = useProducts();
+  const {
+    products,
+    loading,
+    error,
+    planGateMessage,
+    dismissPlanGate,
+    fetchProducts,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+  } = useProducts();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -300,6 +311,11 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
+      <SubscriptionGateModal
+        open={!!planGateMessage}
+        message={planGateMessage ?? ""}
+        onClose={dismissPlanGate}
+      />
       {/* Header — heading left, Add button right (same row on mobile) */}
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate min-w-0">

@@ -89,12 +89,15 @@ export default function RootLayout({
             : (pageTitles[pathname] || "Dashboard");
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>True Beauty Admin Panel</title>
         <meta name="description" content="Admin panel for True Beauty management" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
+      >
         <AdminAuthProvider>
           <UsersProvider>
             <ProductsProvider>

@@ -3,7 +3,6 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
-import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import routes from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
@@ -85,7 +84,6 @@ app.use(express.urlencoded({ extended: true }));
 // Logging
 app.use(requestContext);
 app.use(httpLogger);
-if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 
 // Health check
 app.get("/health", (_req, res) => {
