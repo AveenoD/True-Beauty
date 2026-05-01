@@ -58,6 +58,7 @@ export default function TopBar({ pageTitle = "Dashboard" }: TopBarProps) {
             <input
               type="text"
               placeholder="Search..."
+              suppressHydrationWarning
               className="pl-10 pr-4 py-2 w-64 rounded-xl border border-gray-200 bg-[#fef5f7] text-sm focus:outline-none focus:ring-2 focus:ring-[#f8c6d0] focus:border-transparent transition-all"
             />
           </div>

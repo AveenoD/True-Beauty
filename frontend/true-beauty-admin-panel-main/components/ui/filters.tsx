@@ -98,6 +98,7 @@ export function Filters({
           placeholder={isMobile && searchPlaceholderMobile != null ? searchPlaceholderMobile : searchPlaceholder}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
+          suppressHydrationWarning
           className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#f8c6d0] focus:border-transparent transition-all"
         />
       </div>
