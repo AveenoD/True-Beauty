@@ -6,6 +6,8 @@ import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
 import Link from 'next/link';
 import { api } from '../../../lib/api';
+import { useAuth } from '../../../lib/auth-context';
+import { useCart } from '../../../lib/cart-context';
 import {
   DEFAULT_COUPON_CODE,
   DEFAULT_COUPON_MIN_CART_TOTAL,
@@ -16,96 +18,74 @@ import {
 import { ArrowLeft, ShoppingBag, Star, Zap, Image as ImageIcon, MessageSquare, CheckCircle, Instagram, Youtube, Facebook, Twitter, Link2 } from 'lucide-react';
 import type { Product } from '../../../utils/catalog';
 
-// Category-wise demo videos (how to use). Paths under public/ are served from root.
-const CATEGORY_VIDEOS: Record<string, Record<number, string>> = {
-  skincare: {
-    1: '/productsVideo/skincare/dayCream.mp4',
-    2: '/productsVideo/skincare/nightCream.mp4',
-    3: '/productsVideo/skincare/sunscream.mp4',
-    4: '/productsVideo/skincare/faceWash.mp4',
-    5: '/productsVideo/skincare/serum.mp4',
-    6: '/productsVideo/skincare/Moisturizer.mp4',
-    // 7 toner, 8 faceMask, 9 lipBalm – fallback to dayCream
-  },
-  makeup: {
-    12: '/productsVideo/makeup/Foundation & Glow.mp4',
-    13: '/productsVideo/makeup/Lip & Cheek Palette.mp4',
-    14: '/productsVideo/makeup/Eyeshadow Palette.mp4',
-  },
-  jewellery: {
-    10: '/productsVideo/jewellery/Classic Pearl Studs.mp4',
-    11: '/productsVideo/jewellery/Rose Gold Pendant.mp4',
-    32: '/productsVideo/jewellery/Statement Ring.mp4',
-  },
-  wellness: {
-    25: '/productsVideo/wellness/Vitamins & Supplements.mp4',
-    26: '/productsVideo/wellness/Hair & Skin Gummies.mp4',
-    27: '/productsVideo/wellness/herbalTeas.mp4',
-    28: '/productsVideo/wellness/Wellness Kit.mp4',
-  },
-  haircare: {
-    19: '/productsVideo/haircare/HairShampoo.mp4',
-    20: '/productsVideo/haircare/Hair Conditioner.mp4',
-    21: '/productsVideo/haircare/hairOil.mp4',
-  },
-  gifting: {
-    29: '/productsVideo/gifting/Skincare Gift Set.mp4',
-    30: '/productsVideo/gifting/Luxury Gift Box.mp4',
-    31: '/productsVideo/gifting/Personalized Gift.mp4',
-  },
-  fragrance: {
-    22: '/productsVideo/fragrance/Perfume.mp4',
-    23: '/productsVideo/fragrance/Body Mist.mp4',
-    24: '/productsVideo/fragrance/Roll-On Perfume.mp4',
-  },
-  'bath-body': {
-    15: '/productsVideo/body&bath/bodyWash.mp4',
-    16: '/productsVideo/body&bath/bodyLotion.mp4',
-    17: '/productsVideo/body&bath/BodyScrub.mp4',
-    18: '/productsVideo/body&bath/soapBar.mp4',
-  },
-  offers: {
-    33: '/productsVideo/offers/FlashSale-SkincareDuo.mp4',
-    34: '/productsVideo/offers/Lip&Cheek.mp4',
-    35: '/productsVideo/offers/Wellness-Offers.mp4',
-    37: '/productsVideo/offers/ComboOffers.mp4',
-  },
-};
+/** Map admin `categoryName` (e.g. "Skincare") to slug used by coupons / legacy UI. */
+function slugifyCategoryLabel(name: string | null | undefined): string {
+  if (!name) return 'general';
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'general';
+}
 
-const SKINCARE_DEFAULT_VIDEO = '/productsVideo/skincare/dayCream.mp4';
-const MAKEUP_DEFAULT_VIDEO = '/productsVideo/makeup/Foundation & Glow.mp4';
-const JEWELLERY_DEFAULT_VIDEO = '/productsVideo/jewellery/Classic Pearl Studs.mp4';
-const WELLNESS_DEFAULT_VIDEO = '/productsVideo/wellness/Vitamins & Supplements.mp4';
-const HAIRCARE_DEFAULT_VIDEO = '/productsVideo/haircare/HairShampoo.mp4';
-const GIFTING_DEFAULT_VIDEO = '/productsVideo/gifting/Skincare Gift Set.mp4';
-const FRAGRANCE_DEFAULT_VIDEO = '/productsVideo/fragrance/Perfume.mp4';
-const BATH_BODY_DEFAULT_VIDEO = '/productsVideo/body&bath/bodyWash.mp4';
-const OFFERS_DEFAULT_VIDEO = '/productsVideo/offers/ComboOffers.mp4';
-
-function getProductDemoVideo(product: Product): string | null {
-  const byCategory = CATEGORY_VIDEOS[product.category];
-  const exact = byCategory?.[product.id];
-  if (exact) return exact;
-
-  if (product.category === 'skincare') return SKINCARE_DEFAULT_VIDEO;
-  if (product.category === 'makeup') return MAKEUP_DEFAULT_VIDEO;
-  if (product.category === 'jewellery') return JEWELLERY_DEFAULT_VIDEO;
-  if (product.category === 'wellness') return WELLNESS_DEFAULT_VIDEO;
-  if (product.category === 'haircare') return HAIRCARE_DEFAULT_VIDEO;
-  if (product.category === 'gifting') return GIFTING_DEFAULT_VIDEO;
-  if (product.category === 'fragrance') return FRAGRANCE_DEFAULT_VIDEO;
-  if (product.category === 'bath-body') return BATH_BODY_DEFAULT_VIDEO;
-  if (product.category === 'offers') return OFFERS_DEFAULT_VIDEO;
-
+function toYoutubeEmbedUrl(url: string): string | null {
+  try {
+    const u = new URL(url.trim());
+    const host = u.hostname.toLowerCase();
+    if (host === 'youtu.be') {
+      const id = u.pathname.replace(/^\//, '').split('/')[0];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (host.includes('youtube.com')) {
+      const v = u.searchParams.get('v');
+      if (v) return `https://www.youtube.com/embed/${v}`;
+      const embed = u.pathname.match(/\/embed\/([^/?]+)/);
+      if (embed?.[1]) return `https://www.youtube.com/embed/${embed[1]}`;
+      const shorts = u.pathname.match(/\/shorts\/([^/?]+)/);
+      if (shorts?.[1]) return `https://www.youtube.com/embed/${shorts[1]}`;
+    }
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
+/** Direct file / Cloudinary video upload — playable with <video>. */
+function isLikelyDirectVideoUrl(src: string): boolean {
+  const s = src.trim().toLowerCase();
+  if (s.startsWith('blob:') || s.startsWith('file:')) return false;
+  if (s.includes('/video/upload')) return true;
+  return /\.(mp4|webm|ogg)(\?|$)/i.test(s);
+}
+
+/** Stable positive id for cart / local checks when product id is a UUID string. */
+function stableNumericIdFromUuid(uuid: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < uuid.length; i++) {
+    h ^= uuid.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const n = Math.abs(h) % 2147483646;
+  return n === 0 ? 1 : n;
+}
+
 type Review = { id: string; author: string; rating: number; text: string; date: string; verified?: boolean };
-const MOCK_REVIEWS: Review[] = [
-  { id: '1', author: 'Priya S.', rating: 5, text: 'Lightweight and absorbs quickly. My skin feels hydrated all day. Will repurchase!', date: '2 days ago', verified: true },
-  { id: '2', author: 'Anita M.', rating: 4, text: 'Good texture and no breakouts. Only wish the tube was a bit bigger for the price.', date: '1 week ago', verified: true },
-  { id: '3', author: 'Riya K.', rating: 5, text: 'Perfect for combination skin. Works well under makeup. Highly recommend.', date: '2 weeks ago', verified: true },
-];
+function formatRelativeDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const diffMs = Date.now() - d.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return 'Today';
+  if (diffDays === 1) return '1 day ago';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  const diffWeeks = Math.round(diffDays / 7);
+  if (diffWeeks === 1) return '1 week ago';
+  if (diffWeeks < 5) return `${diffWeeks} weeks ago`;
+  const diffMonths = Math.round(diffDays / 30);
+  if (diffMonths === 1) return '1 month ago';
+  return `${diffMonths} months ago`;
+}
 
 type SharedPhoto = { id: string; objectUrl: string; name?: string };
 
@@ -114,9 +94,14 @@ type SharedSocialPost = { id: string; platform: 'instagram' | 'youtube' | 'faceb
 export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
+  const { isReady: authReady, isLoggedIn } = useAuth();
+  const { addItem, cartCount } = useCart();
   const [isClient, setIsClient] = useState(false);
   const [cartVersion, setCartVersion] = useState(0);
-  const [reviews, setReviews] = useState<Review[]>(MOCK_REVIEWS);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const [canReview, setCanReview] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [sharedPhotos, setSharedPhotos] = useState<SharedPhoto[]>([]);
   const [reviewText, setReviewText] = useState('');
@@ -131,6 +116,8 @@ export default function ProductPage() {
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [storeProduct, setStoreProduct] = useState<any | null>(null);
   const [storeLoading, setStoreLoading] = useState(false);
+  const [storeReviewsLoading, setStoreReviewsLoading] = useState(false);
+  const [storeReviewSummary, setStoreReviewSummary] = useState<{ avgRating: number | null; reviewCount: number } | null>(null);
 
   const productIdParam = String((params as any)?.id ?? '');
 
@@ -153,6 +140,44 @@ export default function ProductPage() {
     };
   }, [productIdParam]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!productIdParam) return;
+      setStoreReviewsLoading(true);
+      try {
+        const { data } = await api.get<any>(`/store/products/${encodeURIComponent(productIdParam)}/reviews?limit=25`);
+        const payload = data?.data;
+        const items = Array.isArray(payload?.data) ? payload.data : [];
+        const summary = payload?.summary ?? null;
+
+        if (!cancelled) {
+          setStoreReviewSummary(summary);
+          setReviews(
+            items.map((r: any) => ({
+              id: String(r.id),
+              author: String(r.user?.name ?? 'Customer'),
+              rating: Number(r.rating ?? 0),
+              text: String(r.comment ?? ''),
+              date: r.createdAt ? formatRelativeDate(String(r.createdAt)) : '',
+              verified: Boolean(r.isVerifiedPurchase),
+            }))
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setStoreReviewSummary(null);
+          setReviews([]);
+        }
+      } finally {
+        if (!cancelled) setStoreReviewsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [productIdParam]);
+
   const rawImage = storeProduct?.image || storeProduct?.images?.[0] || '';
   const safeImage =
     typeof rawImage === 'string' &&
@@ -165,7 +190,7 @@ export default function ProductPage() {
   // Map API product -> legacy UI shape expected by coupon/video/review widgets
   const product: Product | null = storeProduct
     ? ({
-        id: 0,
+        id: stableNumericIdFromUuid(String(storeProduct.id ?? productIdParam)),
         name: String(storeProduct.name ?? ''),
         highlight: String(storeProduct.description ?? ''),
         image: safeImage || '/images/products/dayCream.png',
@@ -177,22 +202,43 @@ export default function ProductPage() {
           storeProduct.discountPrice != null
             ? Number(storeProduct.price ?? storeProduct.discountPrice)
             : Number(storeProduct.price ?? 0),
-        rating: 4.8,
-        reviewCount: 0,
+        rating:
+          storeReviewSummary?.avgRating != null
+            ? Number(storeReviewSummary.avgRating)
+            : 0,
+        reviewCount: storeReviewSummary?.reviewCount ?? 0,
         bullets: undefined,
-        category: 'skincare',
+        category: slugifyCategoryLabel(storeProduct.categoryName),
         subcategory: 'all',
       } as Product)
     : null;
 
-  const isVerifiedBuyer = isClient && product ? (() => {
-    const cart = JSON.parse(localStorage.getItem('tb_cart') || '[]');
-    return cart.some((p: { id: number }) => p.id === product.id);
-  })() : false;
+  const isVerifiedBuyer = isClient && authReady && isLoggedIn ? canReview : false;
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!authReady || !isLoggedIn || !productIdParam) {
+        if (!cancelled) setCanReview(false);
+        return;
+      }
+      try {
+        const { data } = await api.get<any>(
+          `/store/products/${encodeURIComponent(productIdParam)}/can-review`
+        );
+        if (!cancelled) setCanReview(Boolean(data?.data?.canReview));
+      } catch {
+        if (!cancelled) setCanReview(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, isLoggedIn, productIdParam]);
 
   useEffect(() => {
     if (!isClient || typeof window === 'undefined') return;
@@ -206,20 +252,33 @@ export default function ProductPage() {
     );
   }, [isClient]);
 
-  const addToCart = () => {
-    if (!product) return;
-    const cart: { id: number; name: string; price: number; image: string; quantity: number }[] = JSON.parse(localStorage.getItem('tb_cart') || '[]');
-    const existing = cart.find((p) => p.id === product.id);
-    if (existing) existing.quantity += 1;
-    else cart.push({ id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 });
-    localStorage.setItem('tb_cart', JSON.stringify(cart));
-    setCartVersion((v) => v + 1);
+  const addToCart = async () => {
+    if (!product || !storeProduct?.id) return;
+
+    // Backend cart for logged-in users (real cart + proper product details).
+    if (!authReady || !isLoggedIn) {
+      router.push(`/login?next=${encodeURIComponent(`/product/${productIdParam}`)}`);
+      return;
+    }
+
+    if (adding) return;
+    setAdding(true);
+    setAdded(false);
+    try {
+      await addItem(String(storeProduct.id), 1);
+      setCartVersion((v) => v + 1);
+      setAdded(true);
+      // Reset UI back to "Add to Cart"
+      window.setTimeout(() => setAdded(false), 1200);
+    } finally {
+      setAdding(false);
+    }
   };
 
   const isInCart = () => {
     if (!isClient || !product) return false;
-    const cart = JSON.parse(localStorage.getItem('tb_cart') || '[]');
-    return cart.some((p: { id: number }) => p.id === product.id);
+    // Avoid localStorage; rely on /cart page for cart state.
+    return false;
   };
 
   const handleUploadPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -299,7 +358,15 @@ export default function ProductPage() {
 
   const discountPercent = Math.round((1 - product.price / product.originalPrice) * 100);
   const couponState = getCouponDisplayState(product, user, { page: 'detail' });
-  const demoVideoSrc = getProductDemoVideo(product);
+
+  const howToUseText =
+    typeof storeProduct?.howToUseText === 'string' ? storeProduct.howToUseText.trim() : '';
+  const howToUseVideoRaw =
+    typeof storeProduct?.howToUseVideo === 'string' ? storeProduct.howToUseVideo.trim() : '';
+  const youtubeEmbed = howToUseVideoRaw ? toYoutubeEmbedUrl(howToUseVideoRaw) : null;
+  const showNativeHowVideo =
+    Boolean(howToUseVideoRaw) && !youtubeEmbed && isLikelyDirectVideoUrl(howToUseVideoRaw);
+  const hasHowToContent = Boolean(howToUseText || howToUseVideoRaw);
 
   return (
     <div className="min-h-screen gradient-bg">
@@ -369,18 +436,27 @@ export default function ProductPage() {
                   </div>
                 )}
                 <div className="mt-auto flex flex-row gap-3">
-                  <button onClick={() => { addToCart(); router.push('/cart'); }} className="flex-1 bg-gradient-to-r from-[#FF3C8C] to-[#FF0066] text-white py-3 px-4 rounded-lg font-medium hover:opacity-95 transition-all flex items-center justify-center gap-2">
+                  <button
+                    onClick={async () => {
+                      await addToCart();
+                      router.push('/cart');
+                    }}
+                    className="flex-1 bg-gradient-to-r from-[#FF3C8C] to-[#FF0066] text-white py-3 px-4 rounded-lg font-medium hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                  >
                     <Zap className="w-5 h-5" /> Buy Now
                   </button>
-                  {isInCart() ? (
-                    <Link href="/cart" className="flex-1 bg-white border-2 border-rose-500 text-rose-600 py-3 px-4 rounded-lg font-medium hover:bg-rose-50 transition-colors flex items-center justify-center gap-2">
-                      <ShoppingBag className="w-5 h-5" /> Go to Cart
-                    </Link>
-                  ) : (
-                    <button onClick={addToCart} className="flex-1 bg-white border-2 border-rose-500 text-rose-600 py-3 px-4 rounded-lg font-medium hover:bg-rose-50 transition-colors flex items-center justify-center gap-2">
-                      <ShoppingBag className="w-5 h-5" /> Add to Cart
-                    </button>
-                  )}
+                  <button
+                    onClick={addToCart}
+                    disabled={adding}
+                    className={`flex-1 border-2 py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                      added
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                        : 'bg-white border-rose-500 text-rose-600 hover:bg-rose-50'
+                    } ${adding ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    {adding ? 'Adding…' : added ? 'Added to cart' : 'Add to Cart'}
+                  </button>
                 </div>
                 <div className="mt-6 pt-6 border-t border-rose-100">
                   <h3 className="text-sm font-semibold text-gray-800 mb-2">Return &amp; Exchange Policy</h3>
@@ -401,18 +477,50 @@ export default function ProductPage() {
               {/* How to use – auto-play product video + scrollable shared videos */}
               <section>
                 <h2 className="text-lg font-playfair font-semibold text-gray-800 mb-3">How to use</h2>
-                {demoVideoSrc && (
-                  <div className="rounded-xl overflow-hidden bg-rose-50/60 aspect-video max-w-2xl mx-auto mb-4">
-                    <video
-                      src={demoVideoSrc}
-                      className="w-full h-full object-contain"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      controls
-                      title="Product demo"
-                    />
+                {!hasHowToContent && (
+                  <p className="text-sm text-gray-500 mb-4">
+                    Usage instructions for this product have not been added yet.
+                  </p>
+                )}
+                {howToUseText && (
+                  <div className="mb-5">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-2">Instructions</h3>
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{howToUseText}</div>
+                  </div>
+                )}
+                {howToUseVideoRaw && (
+                  <div className="rounded-xl overflow-hidden bg-rose-50/60 aspect-video max-w-2xl mx-auto mb-4 border border-rose-100">
+                    {youtubeEmbed ? (
+                      <iframe
+                        src={youtubeEmbed}
+                        className="h-full w-full"
+                        title="How to use video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    ) : showNativeHowVideo ? (
+                      <video
+                        src={howToUseVideoRaw}
+                        className="h-full w-full object-contain"
+                        controls
+                        playsInline
+                        preload="metadata"
+                        title="How to use video"
+                      />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+                        <p className="text-sm text-gray-600">Open the linked video in a new tab.</p>
+                        <a
+                          href={howToUseVideoRaw}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#FF3C8C] to-[#FF0066] px-4 py-2 text-sm font-medium text-white hover:opacity-95"
+                        >
+                          <Link2 className="h-4 w-4" />
+                          Watch video
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
                 {sharedPhotos.length > 0 && (

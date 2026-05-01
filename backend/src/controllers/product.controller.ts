@@ -24,10 +24,44 @@ export const list = async (req: AuthenticatedRequest, res: Response) => {
 
 export const create = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { name, categoryId, categoryName, price, discountPrice, stock, description, image, images, sku, status } = req.body;
+    const {
+      name,
+      categoryId,
+      categoryName,
+      price,
+      discountPrice,
+      stock,
+      description,
+      howToUseText,
+      howToUseVideo,
+      image,
+      images,
+      sku,
+      status,
+      isAffiliateProduct,
+      commissionRate,
+      isLatestProduct,
+    } = req.body;
     if (!name || !price) return ApiResponse.badRequest(res, "Name and price are required");
 
-    const product = await productService.createProduct(req.adminId!, { name, categoryId, categoryName, price, discountPrice, stock, description, image, images, sku, status });
+    const product = await productService.createProduct(req.adminId!, {
+      name,
+      categoryId,
+      categoryName,
+      price,
+      discountPrice,
+      stock,
+      description,
+      howToUseText,
+      howToUseVideo,
+      image,
+      images,
+      sku,
+      status,
+      isAffiliateProduct,
+      commissionRate,
+      isLatestProduct,
+    });
     return ApiResponse.success(res, product, "Product created", 201);
   } catch (error) {
     if (error instanceof AppError) {

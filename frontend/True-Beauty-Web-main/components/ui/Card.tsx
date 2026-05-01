@@ -122,11 +122,11 @@ export function Card(props: CardProps) {
     const rawImage = (product as any).image || '';
     const safeImage =
       typeof rawImage === 'string' &&
-      rawImage &&
+      rawImage.trim().length > 0 &&
       !rawImage.startsWith('blob:') &&
       !rawImage.startsWith('file:')
         ? rawImage
-        : '';
+        : null;
     const showCouponBadge = couponState.show && couponState.type === 'has_coupon';
     const displayPrice =
       (product as any).discountPrice != null
@@ -143,11 +143,17 @@ export function Card(props: CardProps) {
           href={`/product/${product.id}`}
           className="relative block aspect-square sm:aspect-[4/3] overflow-hidden bg-rose-50/60"
         >
-          <img
-            src={safeImage}
-            alt={product.name}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300"
-          />
+          {safeImage ? (
+            <img
+              src={safeImage}
+              alt={product.name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300"
+            />
+          ) : (
+            <div className="absolute inset-0 grid place-items-center text-rose-200">
+              <span className="text-xs font-medium">No image</span>
+            </div>
+          )}
           <button
             type="button"
             onClick={(e) => toggleWishlist(e)}

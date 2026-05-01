@@ -36,7 +36,7 @@ export async function getCart(userId: string) {
 }
 
 export async function addToCart(userId: string, data: { productId: string; quantity: number }) {
-  const product = await prisma.product.findUnique({
+  const product = await prisma.product.findFirst({
     where: { id: data.productId, deletedAt: null },
   });
   if (!product) throw new Error("Product not found");

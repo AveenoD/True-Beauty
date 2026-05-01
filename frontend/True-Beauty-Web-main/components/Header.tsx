@@ -9,6 +9,7 @@ import { getThemeById } from '../utils/themeUtils';
 import { categories } from '../utils/categories';
 import { useAuth } from '../lib/auth-context';
 import ConfirmDialog from './ConfirmDialog';
+import { useCart } from '../lib/cart-context';
 
 export default function Header() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, isLoggedIn, logout: authLogout } = useAuth();
+  const { cartCount: ctxCartCount, isReady: cartReady } = useCart();
   const [isAffiliate, setIsAffiliate] = useState(false);
   const [categoriesMenuOpen, setCategoriesMenuOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(80);
@@ -101,17 +103,10 @@ export default function Header() {
 
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  const getCartCount = () => {
-    if (typeof window === 'undefined') return 0;
-    try {
-      const cart = JSON.parse(localStorage.getItem('tb_cart') || '[]');
-      return cart.reduce((sum: number, item: { quantity?: number }) => sum + (item.quantity || 1), 0);
-    } catch { return 0; }
-  };
-
   useEffect(() => {
-    setCartCount(getCartCount());
-  }, []);
+    if (!cartReady) return;
+    setCartCount(ctxCartCount);
+  }, [cartReady, ctxCartCount]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -152,7 +147,12 @@ export default function Header() {
             </Link>
             <nav className="hidden md:flex items-center space-x-3 lg:space-x-6 xl:space-x-8 flex-1 justify-start max-w-2xl mx-2 lg:mx-4 min-w-0">
               <div className="relative w-full max-w-md">
-                <input type="text" placeholder="Search..." className="w-full px-4 lg:px-5 py-2 lg:py-2.5 pl-10 lg:pl-11 rounded-full border-2 border-gray-200 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 transition-all bg-white shadow-sm text-sm lg:text-base" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  suppressHydrationWarning
+                  className="w-full px-4 lg:px-5 py-2 lg:py-2.5 pl-10 lg:pl-11 rounded-full border-2 border-gray-200 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 transition-all bg-white shadow-sm text-sm lg:text-base"
+                />
                 <Search className="absolute left-3 lg:left-4 top-2.5 lg:top-3 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
               </div>
             </nav>

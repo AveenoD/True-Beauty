@@ -496,10 +496,13 @@ model Product {
   image              String?
   images             String[]
   description        String?
+  howToUseText       String?   @db.Text
+  howToUseVideo      String?
   deletedAt          DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   isAffiliateProduct Boolean   @default(false)
+  isLatestProduct    Boolean   @default(false)
   sellerId           String?
   sku                String?
   stockThreshold     Int?

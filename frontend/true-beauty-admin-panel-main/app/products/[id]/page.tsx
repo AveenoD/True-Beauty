@@ -11,9 +11,16 @@ import {
   Boxes,
   FileText,
   Image as ImageIcon,
+  Video,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useProducts } from "@/lib/products-context";
+import { useRouter } from "next/navigation";
+import { useProducts, type ProductFormValues } from "@/lib/products-context";
+import { Drawer } from "@/components/ui/Drawer";
+import { ProductForm } from "@/components/ui/ProductForm";
+import DeletePopup from "@/components/ui/deletePopup";
 
 const STOCK_LABELS: Record<string, string> = {
   in_stock: "In stock",
@@ -46,11 +53,43 @@ function formatPrice(amount: number) {
   }).format(amount);
 }
 
+function toYoutubeEmbedUrl(url: string): string | null {
+  try {
+    const u = new URL(url.trim());
+    const host = u.hostname.toLowerCase();
+    if (host === "youtu.be") {
+      const id = u.pathname.replace(/^\//, "").split("/")[0];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (host.includes("youtube.com")) {
+      const v = u.searchParams.get("v");
+      if (v) return `https://www.youtube.com/embed/${v}`;
+      const embed = u.pathname.match(/\/embed\/([^/?]+)/);
+      if (embed?.[1]) return `https://www.youtube.com/embed/${embed[1]}`;
+      const shorts = u.pathname.match(/\/shorts\/([^/?]+)/);
+      if (shorts?.[1]) return `https://www.youtube.com/embed/${shorts[1]}`;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function isLikelyDirectVideoUrl(src: string): boolean {
+  const s = src.trim().toLowerCase();
+  if (s.startsWith("blob:") || s.startsWith("file:")) return false;
+  if (s.includes("/video/upload")) return true; // Cloudinary video resource
+  return /\.(mp4|webm|ogg)(\?|$)/i.test(s);
+}
+
 export default function ProductDetailPage() {
   const params = useParams();
-  const { getProductById } = useProducts();
+  const router = useRouter();
+  const { getProductById, updateProduct, deleteProduct } = useProducts();
   const id = typeof params.id === "string" ? params.id : params.id?.[0];
   const product = id ? getProductById(id) : undefined;
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
 
   if (!id || !product) {
     return (
@@ -74,6 +113,18 @@ export default function ProductDetailPage() {
     : product.image
       ? [product.image]
       : [];
+  const safeImages = images
+    .filter((s): s is string => typeof s === "string")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const howToUseText =
+    typeof product.howToUseText === "string" ? product.howToUseText.trim() : "";
+  const howToUseVideo =
+    typeof product.howToUseVideo === "string" ? product.howToUseVideo.trim() : "";
+  const youtubeEmbed = howToUseVideo ? toYoutubeEmbedUrl(howToUseVideo) : null;
+  const showNativeVideo =
+    Boolean(howToUseVideo) && !youtubeEmbed && isLikelyDirectVideoUrl(howToUseVideo);
   const stockClass = STOCK_CLASSES[product.stockStatus] ?? "bg-gray-100 text-gray-700";
   const statusClass = STATUS_CLASSES[product.status] ?? "bg-gray-100 text-gray-700";
 
@@ -96,8 +147,8 @@ export default function ProductDetailPage() {
               <h2 className="text-lg font-semibold text-gray-900">Images</h2>
             </div>
             <div className="p-4 space-y-4">
-              {images.length > 0 ? (
-                images.map((src, i) => (
+              {safeImages.length > 0 ? (
+                safeImages.map((src, i) => (
                   <div
                     key={i}
                     className="relative aspect-square rounded-xl bg-[#fef5f7] overflow-hidden"
@@ -125,18 +176,41 @@ export default function ProductDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 bg-[#fef5f7]">
-              <h1 className="text-xl font-semibold text-gray-900">{product.name}</h1>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span
-                  className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${stockClass}`}
-                >
-                  {STOCK_LABELS[product.stockStatus] ?? product.stockStatus}
-                </span>
-                <span
-                  className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusClass}`}
-                >
-                  {STATUS_LABELS[product.status] ?? product.status}
-                </span>
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h1 className="text-xl font-semibold text-gray-900 truncate">{product.name}</h1>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span
+                      className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${stockClass}`}
+                    >
+                      {STOCK_LABELS[product.stockStatus] ?? product.stockStatus}
+                    </span>
+                    <span
+                      className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusClass}`}
+                    >
+                      {STATUS_LABELS[product.status] ?? product.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-[#fef5f7] transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
             <div className="p-6 space-y-6">
@@ -212,10 +286,101 @@ export default function ProductDetailPage() {
                   </p>
                 </div>
               )}
+
+              {(howToUseText || howToUseVideo) && (
+                <div className="pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Video className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-sm font-semibold text-gray-900">How to use</h3>
+                  </div>
+
+                  {howToUseText && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        Instructions (text)
+                      </p>
+                      <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                        {howToUseText}
+                      </p>
+                    </div>
+                  )}
+
+                  {howToUseVideo && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                        Video URL
+                      </p>
+                      <div className="rounded-xl overflow-hidden border border-gray-100 bg-[#fef5f7] max-w-md">
+                        {youtubeEmbed ? (
+                          <div className="relative aspect-video">
+                            <iframe
+                              src={youtubeEmbed}
+                              className="absolute inset-0 h-full w-full"
+                              title="How to use video"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                            />
+                          </div>
+                        ) : showNativeVideo ? (
+                          <div className="relative aspect-video">
+                            <video
+                              src={howToUseVideo}
+                              className="absolute inset-0 h-full w-full object-contain"
+                              controls
+                              playsInline
+                              preload="metadata"
+                            />
+                          </div>
+                        ) : (
+                          <div className="p-4">
+                            <a
+                              href={howToUseVideo}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-[#D96A86] hover:underline break-all"
+                            >
+                              {howToUseVideo}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Edit drawer */}
+      <Drawer open={editOpen} onClose={() => setEditOpen(false)} title="Edit Product" width="lg">
+        <ProductForm
+          initialValues={product}
+          onCancel={() => setEditOpen(false)}
+          onSubmit={async (values: ProductFormValues) => {
+            if (!id) return;
+            await updateProduct(id, values);
+            setEditOpen(false);
+          }}
+        />
+      </Drawer>
+
+      {/* Delete confirm */}
+      <DeletePopup
+        open={deleteOpen}
+        title="Remove product"
+        description={`Remove \"${product.name}\" from the list? This cannot be undone.`}
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={async () => {
+          if (!id) return;
+          await deleteProduct(id);
+          setDeleteOpen(false);
+          router.push("/products");
+        }}
+      />
     </div>
   );
 }

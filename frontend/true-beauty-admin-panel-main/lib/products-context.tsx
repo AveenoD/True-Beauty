@@ -32,6 +32,9 @@ export interface Product {
   images?: string[];
   sku?: string | null;
   description?: string | null;
+  howToUseText?: string | null;
+  howToUseVideo?: string | null;
+  isLatestProduct?: boolean | null;
   isAffiliateProduct: boolean;
   commissionRate?: number | null;
   deletedAt?: string | null;
@@ -144,6 +147,9 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       discountPrice: values.discountPrice ?? undefined,
       stock: values.stock,
       description: values.description ?? undefined,
+      howToUseText: values.howToUseText?.trim() || undefined,
+      howToUseVideo: values.howToUseVideo?.trim() || undefined,
+      isLatestProduct: values.isLatestProduct ?? false,
       // Prefer uploaded Cloudinary URLs if any files were selected.
       image: (uploadedUrls[0] ?? values.image) ?? undefined,
       images: uploadedUrls.length > 0 ? uploadedUrls : (values.images ?? []),
@@ -180,6 +186,13 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     if (values.discountPrice !== undefined) payload.discountPrice = values.discountPrice;
     if (values.stock !== undefined) payload.stock = values.stock;
     if (values.description !== undefined) payload.description = values.description;
+    if (values.howToUseText !== undefined) {
+      payload.howToUseText = values.howToUseText?.trim() ? values.howToUseText.trim() : null;
+    }
+    if (values.howToUseVideo !== undefined) {
+      payload.howToUseVideo = values.howToUseVideo?.trim() ? values.howToUseVideo.trim() : null;
+    }
+    if (values.isLatestProduct !== undefined) payload.isLatestProduct = values.isLatestProduct;
     if (values.image !== undefined) payload.image = values.image;
     if (values.images !== undefined) payload.images = values.images;
     if (values.sku !== undefined) payload.sku = values.sku;

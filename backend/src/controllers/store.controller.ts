@@ -49,6 +49,70 @@ export const getProduct = asyncHandler(
   }
 );
 
+export const listProductReviews = asyncHandler(async (req: Request, res: Response) => {
+  const tenantAdminId = (req as any).tenantAdminId as string | undefined;
+  if (!tenantAdminId) {
+    return ApiResponse.badRequest(res, "Tenant context missing");
+  }
+
+  const id = z.string().min(1).parse(req.params.id);
+  const schema = z.object({
+    page: z.coerce.number().min(1).optional(),
+    limit: z.coerce.number().min(1).max(50).optional(),
+  });
+  const query = schema.parse(req.query);
+
+  const result = await storeService.listProductReviews(tenantAdminId, id, query);
+  return ApiResponse.success(res, result, "Reviews retrieved");
+});
+
+export const canReviewProduct = asyncHandler(async (req: Request, res: Response) => {
+  const tenantAdminId = (req as any).tenantAdminId as string | undefined;
+  if (!tenantAdminId) {
+    return ApiResponse.badRequest(res, "Tenant context missing");
+  }
+  const userId = (req as any).userId as string | undefined;
+  if (!userId) {
+    return ApiResponse.unauthorized(res, "No token provided");
+  }
+
+  const id = z.string().min(1).parse(req.params.id);
+  const result = await storeService.canUserReviewProduct(userId, tenantAdminId, id);
+  return ApiResponse.success(res, result, "Review eligibility");
+});
+
+export const createProductReview = asyncHandler(async (req: Request, res: Response) => {
+  const tenantAdminId = (req as any).tenantAdminId as string | undefined;
+  if (!tenantAdminId) {
+    return ApiResponse.badRequest(res, "Tenant context missing");
+  }
+  const userId = (req as any).userId as string | undefined;
+  if (!userId) {
+    return ApiResponse.unauthorized(res, "No token provided");
+  }
+
+  const id = z.string().min(1).parse(req.params.id);
+  const schema = z.object({
+    rating: z.coerce.number().min(1).max(5),
+    comment: z.string().max(2000).optional(),
+    images: z.array(z.string().url()).max(5).optional(),
+  });
+  const data = schema.parse(req.body);
+
+  try {
+    const created = await storeService.createProductReview(userId, tenantAdminId, id, {
+      rating: data.rating,
+      comment: data.comment ?? null,
+      images: data.images ?? [],
+    });
+    return ApiResponse.success(res, created, "Review submitted", 201);
+  } catch (err: any) {
+    const status = Number(err?.statusCode) || 500;
+    const message = err?.message || "Failed to submit review";
+    return ApiResponse.error(res, message, status);
+  }
+});
+
 export const listServices = asyncHandler(
   async (req: Request, res: Response) => {
     const tenantAdminId = (req as any).tenantAdminId as string | undefined;

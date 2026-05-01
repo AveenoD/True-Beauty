@@ -57,6 +57,10 @@ export async function createProduct(adminId: string, data: {
   name: string; categoryId?: string; categoryName?: string; price: number;
   discountPrice?: number; stock?: number; description?: string; image?: string;
   images?: string[]; sku?: string; status?: string; isAffiliateProduct?: boolean;
+  commissionRate?: number | null;
+  howToUseText?: string | null;
+  howToUseVideo?: string | null;
+  isLatestProduct?: boolean | null;
 }) {
   // Check plan product limit before creating
   await checkPlanProductLimit(adminId);
@@ -84,11 +88,19 @@ export async function createProduct(adminId: string, data: {
       discountPrice: data.discountPrice,
       stock: data.stock || 0,
       description: data.description,
+      howToUseText: data.howToUseText?.trim() || null,
+      howToUseVideo: data.howToUseVideo?.trim() || null,
       image: data.image,
       images: data.images || [],
       sku: finalSku,
       status: data.status || "active",
       stockStatus: (data.stock || 0) > 0 ? "in_stock" : "out_of_stock",
+      isAffiliateProduct: data.isAffiliateProduct ?? false,
+      commissionRate:
+        data.isAffiliateProduct && typeof data.commissionRate === "number"
+          ? data.commissionRate
+          : null,
+      isLatestProduct: data.isLatestProduct ?? false,
     },
   });
 }
@@ -105,10 +117,15 @@ export async function updateProduct(adminId: string, id: string, data: Partial<{
   discountPrice: number;
   stock: number;
   description: string;
+  howToUseText: string | null;
+  howToUseVideo: string | null;
   image: string;
   images: string[];
   sku: string;
   status: string;
+  isAffiliateProduct: boolean;
+  commissionRate: number | null;
+  isLatestProduct: boolean;
 }>) {
   const product = await prisma.product.findFirst({ where: { id, adminId, deletedAt: null } });
   if (!product) return null;

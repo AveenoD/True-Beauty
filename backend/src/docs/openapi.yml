@@ -2224,6 +2224,116 @@ x-paths-inventory:
         - Review_Rating
       x-priority-order: 107
       parameters:
+        - name: X-Tenant-Slug
+          in: header
+          required: true
+          schema:
+            type: string
+          example: demo
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+          example: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreProductReviewsResponse"
+    post:
+      tags:
+        - Reviews
+      summary: Submit a product review (verified buyers only)
+      description: |
+        Requires authenticated user + tenant context.
+
+        Priority: Phase 3 / Day 5
+        ERD tables: Review_Rating, Order, Order_Item
+      operationId: op_store_product_review_create
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: X-Tenant-Slug
+          in: header
+          required: true
+          schema:
+            type: string
+          example: demo
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoreCreateProductReviewRequest"
+            examples:
+              submitReview:
+                summary: Submit 5-star review
+                value:
+                  rating: 5
+                  comment: "Lightweight and absorbs quickly."
+                  images:
+                    - "https://res.cloudinary.com/<cloud>/image/upload/v123/products/review_1.jpg"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreCreateProductReviewResponse"
+        "403":
+          description: Forbidden (not verified / already reviewed)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+  /store/products/{id}/can-review:
+    get:
+      tags:
+        - Reviews
+      summary: Check if logged-in user can review product
+      description: |
+        Returns whether the current authenticated user is eligible to submit a review.
+
+        Eligibility requires a delivered order containing this product and no prior review for that order.
+      operationId: op_store_product_review_can
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: X-Tenant-Slug
+          in: header
+          required: true
+          schema:
+            type: string
+          example: demo
         - name: id
           in: path
           required: true
@@ -2235,7 +2345,7 @@ x-paths-inventory:
           content:
             application/json:
               schema:
-                $ref: null
+                $ref: "#/components/schemas/StoreCanReviewResponse"
   /store/services:
     get:
       tags:
@@ -9057,6 +9167,158 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/ProductDetail"
+    StoreProductReviewSummary:
+      type: object
+      x-implemented: true
+      properties:
+        avgRating:
+          type: number
+          nullable: true
+          example: 4.6
+        reviewCount:
+          type: integer
+          example: 128
+    StoreProductReview:
+      type: object
+      x-implemented: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comment:
+          type: string
+          nullable: true
+          example: "Great product. Works as described."
+        images:
+          type: array
+          items:
+            type: string
+        isVerifiedPurchase:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+              example: "Priya S."
+        status:
+          type: string
+          description: Review moderation status.
+          example: pending
+    StoreProductReviewsPayload:
+      type: object
+      x-implemented: true
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoreProductReview"
+        summary:
+          $ref: "#/components/schemas/StoreProductReviewSummary"
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 10
+            total:
+              type: integer
+              example: 32
+            totalPages:
+              type: integer
+              example: 4
+    StoreProductReviewsResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Reviews retrieved
+        data:
+          $ref: "#/components/schemas/StoreProductReviewsPayload"
+    StoreCanReviewPayload:
+      type: object
+      x-implemented: true
+      properties:
+        canReview:
+          type: boolean
+          example: true
+        reason:
+          type: string
+          nullable: true
+          description: Present when canReview is false.
+          enum:
+            - product_not_found
+            - not_verified_purchase
+            - already_reviewed
+        orderId:
+          type: string
+          format: uuid
+          nullable: true
+    StoreCanReviewResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Review eligibility
+        data:
+          $ref: "#/components/schemas/StoreCanReviewPayload"
+    StoreCreateProductReviewRequest:
+      type: object
+      x-implemented: true
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comment:
+          type: string
+          nullable: true
+          maxLength: 2000
+          example: "Lightweight and absorbs quickly."
+        images:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            format: uri
+    StoreCreateProductReviewResponse:
+      type: object
+      x-implemented: true
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Review submitted
+        data:
+          $ref: "#/components/schemas/StoreProductReview"
     ServiceSummary:
       type: object
       x-implemented: true
