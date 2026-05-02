@@ -10,6 +10,7 @@ import {
 } from '../../utils/coupons';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
+import { useWishlist } from '../../lib/wishlist-context';
 
 const cardBaseClass =
   'group bg-white/90 backdrop-blur-sm rounded-xl overflow-hidden border border-rose-100/80 flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:shadow-rose-100/40 hover:border-rose-200/80';
@@ -50,6 +51,7 @@ export function Card(props: CardProps) {
   const [wishlistBusy, setWishlistBusy] = useState(false);
   const [couponState, setCouponState] = useState<ReturnType<typeof getCouponDisplayState>>({ show: false });
   const { isLoggedIn } = useAuth();
+  const { refresh: refreshWishlist } = useWishlist();
 
   useEffect(() => {
     if (productId == null || typeof window === 'undefined') return;
@@ -114,6 +116,7 @@ export function Card(props: CardProps) {
       // ignore for now
     } finally {
       setWishlistBusy(false);
+      void refreshWishlist();
     }
   };
 

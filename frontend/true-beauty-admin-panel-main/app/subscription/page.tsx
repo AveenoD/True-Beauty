@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, CreditCard, ArrowLeft } from "lucide-react";
@@ -9,10 +9,24 @@ import {
   SUBSCRIPTION_PLANS,
   type SubscriptionPlanId,
 } from "@/lib/subscription-context";
+import { useAdminAuth, type AdminSubscription } from "@/lib/admin-auth-context";
+
+function isLiveBackendSubscription(sub: AdminSubscription): boolean {
+  if (!sub?.plan || !sub.expiryDate) return false;
+  if (sub.status === "expired" || sub.status === "cancelled") return false;
+  if (new Date(sub.expiryDate) <= new Date()) return false;
+  return sub.status === "active";
+}
 
 export default function SubscriptionPage() {
   const router = useRouter();
+  const { subscription: adminSubscription, refreshProfile, isReady: authReady } = useAdminAuth();
   const { subscription, remainingDays } = useSubscription();
+
+  useEffect(() => {
+    if (!authReady) return;
+    void refreshProfile();
+  }, [authReady, refreshProfile]);
   const [selectedPlanId, setSelectedPlanId] =
     useState<SubscriptionPlanId | null>(null);
   const [purchased, setPurchased] = useState(false);
@@ -72,9 +86,9 @@ export default function SubscriptionPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {SUBSCRIPTION_PLANS.map((plan) => {
-          const isCurrent =
-            subscription?.planId === plan.id &&
-            subscription?.status === "active";
+          const isActiveFromBackend =
+            isLiveBackendSubscription(adminSubscription) &&
+            adminSubscription?.plan?.id === plan.id;
           const isSelected = selectedPlanId === plan.id;
 
           return (
@@ -83,7 +97,7 @@ export default function SubscriptionPage() {
               className={`
                 relative bg-white rounded-2xl p-6 shadow-sm border-2 transition-all
                 ${
-                  isCurrent
+                  isActiveFromBackend
                     ? "border-[#D96A86] bg-[#fef5f7]/50"
                     : isSelected
                       ? "border-[#D96A86]"
@@ -91,9 +105,9 @@ export default function SubscriptionPage() {
                 }
               `}
             >
-              {isCurrent && (
-                <span className="absolute top-4 right-4 inline-flex items-center rounded-full bg-[#D96A86] px-2.5 py-0.5 text-xs font-medium text-white">
-                  Current
+              {isActiveFromBackend && (
+                <span className="absolute top-4 right-4 inline-flex items-center rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
+                  Active
                 </span>
               )}
               <div className="flex items-center gap-3 mb-4">

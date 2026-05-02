@@ -15,6 +15,7 @@ import ProductGrid from '../components/ProductGrid';
 import { categories, getCategoryNameBySlug } from '../utils/categories';
 import { BeautyService, getServicesByCategory } from '../utils/catalog';
 import Card from '../components/ui/Card';
+import { api, ApiSuccess } from '../lib/api';
 
 const heroSlides = [
   { id: 1, title: "True Beauty Skincare Collection", tagline: "Premium formulations for radiant, glowing skin. Hydrating mist, serum, foundation & more.", benefits: ["Luxury ingredients & elegant packaging", "Suitable for all skin types", "Minimalist, cruelty-free beauty"], buttonText: "Shop Now", image: "/images/heroSection/allProducts.png", bgColor: "from-rose-50 to-pink-50" },
@@ -24,12 +25,20 @@ const heroSlides = [
   { id: 6, title: "Sun Protection & Lip Care", tagline: "Protect your skin with SPF and nourish your lips with our premium lip balm collection.", benefits: ["Broad spectrum protection", "Nourishing lip care", "Daily essentials"], buttonText: "Shop Now", image: "/images/products/sunscreen.png", bgColor: "from-yellow-50 to-orange-50" }
 ];
 
-const promotionalSlides = [
-  { id: 1, video: "/videos/video1.mp4", headline: "Glow from Within", benefit: "Serums that deliver visible radiance in days", cta: "Shop Serums" },
-  { id: 2, video: "/videos/video2.mp4", headline: "Deep Hydration", benefit: "24-hour moisture for plump, dewy skin", cta: "Shop Moisturizers" },
-  { id: 3, video: "/videos/video3.mp4", headline: "Gentle Rituals", benefit: "Cleansers that nourish as they purify", cta: "Shop Cleansers" },
-  { id: 4, video: "/videos/video4.mp4", headline: "Protect & Perfect", benefit: "SPF that feels like skincare, never greasy", cta: "Shop Sunscreen" }
-];
+type LatestStoreProduct = {
+  id: string;
+  name: string;
+  description: string | null;
+  howToUseVideo: string | null;
+  image: string | null;
+};
+
+function formatCarouselDescription(raw: string | null, maxLen = 160): string {
+  if (!raw || !raw.trim()) return 'Explore this pick from our latest collection.';
+  const single = raw.replace(/\s+/g, ' ').trim();
+  if (single.length <= maxLen) return single;
+  return `${single.slice(0, maxLen - 1)}…`;
+}
 
 function ProductsFallback() {
   return (
@@ -66,6 +75,25 @@ function HomeContent() {
     timeSlot: '',
     paymentMode: 'online' as 'pay-at-parlour' | 'online',
   });
+  const [latestProducts, setLatestProducts] = useState<LatestStoreProduct[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await api.get<ApiSuccess<LatestStoreProduct[]>>('/store/products', {
+          params: { isLatestProduct: 'true', limit: 9 },
+        });
+        const rows = (data.data ?? []).slice(0, 9);
+        if (!cancelled) setLatestProducts(rows);
+      } catch {
+        if (!cancelled) setLatestProducts([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const allServicesForCategory = useMemo(
     () => getServicesByCategory(selectedCategory),
@@ -307,22 +335,80 @@ function HomeContent() {
             <h2 className="text-2xl md:text-3xl font-playfair font-bold text-gray-800 mt-1">Discover the Glow</h2>
           </div>
           <div className="rounded-2xl border border-rose-200/60 p-6 md:p-8 bg-white/30">
-            <Swiper modules={[Autoplay, Pagination, Navigation]} autoplay={{ delay: 4000, disableOnInteraction: false }} pagination={{ clickable: true }} navigation={true} loop={true} speed={600} slidesPerView={1} spaceBetween={24} breakpoints={{ 640: { slidesPerView: 1.2, spaceBetween: 20 }, 768: { slidesPerView: 1.5, spaceBetween: 24 }, 1024: { slidesPerView: 2, spaceBetween: 28 }, 1280: { slidesPerView: 2.5, spaceBetween: 32 } }} className="promo-carousel rounded-2xl overflow-visible">
-              {promotionalSlides.map((slide) => (
-                <SwiperSlide key={slide.id}>
-                  <article className="group relative h-80 sm:h-96 md:h-[420px] rounded-2xl overflow-hidden bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-100/60 shadow-[0_8px_32px_rgba(251,113,133,0.12)] transition-all duration-500 hover:shadow-[0_16px_48px_rgba(251,113,133,0.18)] hover:scale-[1.02]">
-                    <video src={slide.video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-rose-900/30 via-transparent to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                      <h3 className="font-playfair font-bold text-white text-xl md:text-2xl mb-2 drop-shadow-lg">{slide.headline}</h3>
-                      <p className="text-white/90 text-sm md:text-base mb-4 max-w-sm">{slide.benefit}</p>
-                      <button className="bg-white/95 text-rose-700 px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl">{slide.cta}</button>
-                    </div>
-                  </article>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            {latestProducts === null ? (
+              <div className="h-80 sm:h-96 md:h-[420px] rounded-2xl bg-rose-50/80 border border-rose-100/60 flex items-center justify-center">
+                <p className="text-gray-500 text-sm">Loading latest products…</p>
+              </div>
+            ) : latestProducts.length === 0 ? (
+              <div className="h-64 rounded-2xl bg-rose-50/60 border border-dashed border-rose-200/80 flex items-center justify-center px-4 text-center">
+                <p className="text-gray-600 text-sm md:text-base max-w-md">
+                  No products are marked as latest yet. In the admin panel, enable &quot;Latest product&quot; on up to nine items to show them here.
+                </p>
+              </div>
+            ) : (
+              <Swiper
+                key={latestProducts.map((p) => p.id).join('-')}
+                modules={[Autoplay, Pagination, Navigation]}
+                autoplay={{ delay: 4500, disableOnInteraction: false }}
+                pagination={{ clickable: true }}
+                navigation={true}
+                loop={latestProducts.length >= 5}
+                speed={600}
+                slidesPerView={1}
+                spaceBetween={24}
+                breakpoints={{
+                  640: { slidesPerView: 1.2, spaceBetween: 20 },
+                  768: { slidesPerView: 1.5, spaceBetween: 24 },
+                  1024: { slidesPerView: 2, spaceBetween: 28 },
+                  1280: { slidesPerView: 2.5, spaceBetween: 32 },
+                }}
+                className="promo-carousel rounded-2xl overflow-visible"
+              >
+                {latestProducts.map((product) => {
+                  const videoUrl = product.howToUseVideo?.trim() || '';
+                  const poster = product.image?.trim() || '/images/products/dayCream.png';
+                  return (
+                    <SwiperSlide key={product.id}>
+                      <article className="group relative h-80 sm:h-96 md:h-[420px] rounded-2xl overflow-hidden bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-100/60 shadow-[0_8px_32px_rgba(251,113,133,0.12)] transition-all duration-500 hover:shadow-[0_16px_48px_rgba(251,113,133,0.18)] hover:scale-[1.02]">
+                        {videoUrl ? (
+                          <video
+                            src={videoUrl}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            poster={poster}
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                        ) : (
+                          <img
+                            src={poster}
+                            alt={product.name}
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-rose-900/30 via-transparent to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                          <h3 className="font-playfair font-bold text-white text-xl md:text-2xl mb-2 drop-shadow-lg line-clamp-2">
+                            {product.name}
+                          </h3>
+                          <p className="text-white/90 text-sm md:text-base mb-4 max-w-lg line-clamp-3">
+                            {formatCarouselDescription(product.description)}
+                          </p>
+                          <Link
+                            href={`/product/${product.id}`}
+                            className="inline-flex bg-white/95 text-rose-700 px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                          >
+                            Shop now
+                          </Link>
+                        </div>
+                      </article>
+                    </SwiperSlide>
+                  );
+                })}
+              </Swiper>
+            )}
           </div>
         </div>
       </section>

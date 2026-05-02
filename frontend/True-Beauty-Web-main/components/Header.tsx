@@ -10,6 +10,7 @@ import { categories } from '../utils/categories';
 import { useAuth } from '../lib/auth-context';
 import ConfirmDialog from './ConfirmDialog';
 import { useCart } from '../lib/cart-context';
+import { useWishlist } from '../lib/wishlist-context';
 
 export default function Header() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, isLoggedIn, logout: authLogout } = useAuth();
   const { cartCount: ctxCartCount, isReady: cartReady } = useCart();
+  const { wishlistCount, isReady: wishlistReady, refresh: refreshWishlist } = useWishlist();
   const [isAffiliate, setIsAffiliate] = useState(false);
   const [categoriesMenuOpen, setCategoriesMenuOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(80);
@@ -109,6 +111,12 @@ export default function Header() {
   }, [cartReady, ctxCartCount]);
 
   useEffect(() => {
+    if (profileDropdownOpen && wishlistReady && isLoggedIn) {
+      void refreshWishlist();
+    }
+  }, [profileDropdownOpen, wishlistReady, isLoggedIn, refreshWishlist]);
+
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target as Node)) setProfileDropdownOpen(false);
     };
@@ -188,7 +196,19 @@ export default function Header() {
                           <button type="button" onClick={() => { setProfileDropdownOpen(false); window.location.href = '/profile#addresses'; }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50"><MapPin className="w-5 h-5 flex-shrink-0" /><span>Saved Addresses</span></button>
                           <Link href="/profile/orders" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"><Package className="w-5 h-5 flex-shrink-0" /><span>Orders</span></Link>
                           <Link href="/profile/my-coupons" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"><TicketPercent className="w-5 h-5 flex-shrink-0" /><span>My Coupons</span></Link>
-                          <Link href="/profile/wishlist" onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"><Heart className="w-5 h-5 flex-shrink-0" /><span>Wishlist</span></Link>
+                          <Link
+                            href="/profile/wishlist"
+                            onClick={() => setProfileDropdownOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            <Heart className="w-5 h-5 flex-shrink-0" />
+                            <span className="flex-1 min-w-0">Wishlist</span>
+                            {wishlistCount > 0 ? (
+                              <span className="shrink-0 rounded-full bg-pink-500 text-white text-[10px] font-semibold min-w-[1.25rem] h-5 px-1 flex items-center justify-center tabular-nums">
+                                {wishlistCount}
+                              </span>
+                            ) : null}
+                          </Link>
                           <button type="button" onClick={requestLogout} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50"><LogOut className="w-5 h-5 flex-shrink-0" /><span>Logout</span></button>
                         </nav>
                       </div>
@@ -340,7 +360,11 @@ export default function Header() {
               <Link href={!isLoggedIn ? '/login?redirect=' + encodeURIComponent('/affiliate/apply') : isAffiliate ? '/affiliate' : '/affiliate/apply'} className="px-1.5 lg:px-2 xl:px-4 py-1 lg:py-1.5 xl:py-2 text-gray-700 hover:text-pink-500 transition-colors font-medium text-xs lg:text-sm xl:text-base whitespace-nowrap hidden xl:flex items-center gap-1.5 lg:gap-2"><Users className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4" />{isAffiliate ? 'Affiliate' : 'Join Affiliate'}</Link>
               <Link href="/cart" className="relative flex items-center p-1 lg:p-1.5 xl:p-2">
                 <ShoppingBag className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-gray-700 hover:text-pink-500 cursor-pointer transition-colors" />
-                <span className="absolute -top-0.5 -right-0.5 lg:-top-1 lg:-right-1 xl:-top-2 xl:-right-2 bg-pink-500 text-white text-[9px] lg:text-[10px] xl:text-xs rounded-full w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-5 xl:h-5 flex items-center justify-center min-w-[14px] lg:min-w-[16px] xl:min-w-[20px]">{cartCount}</span>
+                {cartCount > 0 ? (
+                  <span className="absolute -top-0.5 -right-0.5 lg:-top-1 lg:-right-1 xl:-top-2 xl:-right-2 bg-pink-500 text-white text-[9px] lg:text-[10px] xl:text-xs rounded-full w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-5 xl:h-5 flex items-center justify-center min-w-[14px] lg:min-w-[16px] xl:min-w-[20px]">
+                    {cartCount}
+                  </span>
+                ) : null}
               </Link>
             </div>
             </div>
@@ -512,7 +536,7 @@ export default function Header() {
                     className="flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-gray-700 hover:text-pink-500 hover:bg-white/50 transition-colors font-medium text-sm sm:text-base rounded-md"
                   >
                     <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Wishlist
+                    {wishlistCount > 0 ? `Wishlist (${wishlistCount})` : "Wishlist"}
                   </Link>
                   <Link
                     href="/cart"
@@ -520,7 +544,7 @@ export default function Header() {
                     className="flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-gray-700 hover:text-pink-500 hover:bg-white/50 transition-colors font-medium text-sm sm:text-base rounded-md"
                   >
                     <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Cart ({cartCount})
+                    {cartCount > 0 ? `Cart (${cartCount})` : "Cart"}
                   </Link>
                 </div>
               )}

@@ -7,8 +7,10 @@ import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
 import type { Product as DummyProduct } from '../../../utils/catalog';
 import { api } from '../../../lib/api';
+import { useWishlist } from '../../../lib/wishlist-context';
 
 export default function WishlistPage() {
+  const { refresh: refreshWishlist } = useWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -82,6 +84,7 @@ export default function WishlistPage() {
     try {
       await api.delete(`/wishlist/${wishlistItemId}`);
       setWishlist((prev) => prev.filter((it) => it.id !== wishlistItemId));
+      void refreshWishlist();
     } catch {
       // ignore
     }

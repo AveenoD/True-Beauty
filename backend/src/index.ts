@@ -69,11 +69,18 @@ app.use(
   })
 );
 
-// Rate limiting
+// Rate limiting — one shared bucket per IP for almost all routes.
+// Do not throttle token refresh: hitting 429 here makes the frontend drop the session (refresh is treated like auth failure).
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW || "15") * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_MAX || "100"),
   message: { success: false, message: "Too many requests, please try again later" },
+  skip: (req) => {
+    if (req.method === "GET" && req.path === "/health") return true;
+    if (req.method !== "POST") return false;
+    const p = req.path || "";
+    return p === "/users/refresh-token" || p === "/admins/refresh-token";
+  },
 });
 app.use(limiter);
 

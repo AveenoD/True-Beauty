@@ -173,6 +173,7 @@ export async function listProducts(
   status?: string;
   sort?: string;
   order?: "asc" | "desc";
+  isLatestProduct?: "true" | "false";
 }) {
   const page = Math.max(1, query.page || 1);
   const limit = Math.min(100, Math.max(1, query.limit || 20));
@@ -204,6 +205,10 @@ export async function listProducts(
     if (query.maxPrice !== undefined) {
       (where.price as Record<string, number>).lte = query.maxPrice;
     }
+  }
+
+  if (query.isLatestProduct === "true") {
+    where.isLatestProduct = true;
   }
 
   const [products, total] = await Promise.all([

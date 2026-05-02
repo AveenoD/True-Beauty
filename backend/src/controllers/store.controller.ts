@@ -21,6 +21,8 @@ export const listProducts = asyncHandler(
       status: z.string().optional(),
       sort: z.string().optional(),
       order: z.enum(["asc", "desc"]).optional(),
+      /** When "true", only products flagged as latest/trending in admin. */
+      isLatestProduct: z.enum(["true", "false"]).optional(),
     });
 
     const query = schema.parse(req.query);

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import Link from 'next/link';
 import { ShoppingBag, Trash2, Minus, Plus, ArrowLeft, Tag } from 'lucide-react';
 import { validateCoupon, getAvailableCouponsForUser, DEFAULT_COUPON_CODE, type Coupon, type MinimalCartItem } from '../../utils/coupons';
@@ -39,6 +40,8 @@ export default function CartPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCouponState | null>(null);
   const [couponMessage, setCouponMessage] = useState<string | null>(null);
   const [couponMessageType, setCouponMessageType] = useState<'error' | 'success' | null>(null);
+  const [removalTarget, setRemovalTarget] = useState<CartItem | null>(null);
+  const [removeDialogBusy, setRemoveDialogBusy] = useState(false);
 
   useEffect(() => {
     let appliedFromStorage: AppliedCouponState | null = null;
@@ -161,6 +164,19 @@ export default function CartPage() {
   const discountAmount = appliedCoupon?.discount ?? 0;
   const total = Math.max(0, subtotal - discountAmount);
 
+  const handleConfirmRemove = useCallback(async () => {
+    if (!removalTarget) return;
+    setRemoveDialogBusy(true);
+    try {
+      await removeItem(removalTarget.id);
+      setRemovalTarget(null);
+    } catch {
+      // Keep dialog open so the user can cancel or retry; cart error banner may update from context.
+    } finally {
+      setRemoveDialogBusy(false);
+    }
+  }, [removalTarget, removeItem]);
+
   return (
     <div className="min-h-screen gradient-bg">
       <Header />
@@ -259,9 +275,9 @@ export default function CartPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => setRemovalTarget(item)}
                           className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          aria-label="Remove"
+                          aria-label="Remove from cart"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -355,6 +371,26 @@ export default function CartPage() {
           )}
         </div>
       </main>
+      <ConfirmDialog
+        open={removalTarget !== null}
+        title="Remove this item from your cart?"
+        description={
+          removalTarget
+            ? `You are about to remove "${removalTarget.product.name}" from your cart.`
+            : undefined
+        }
+        confirmText="Remove item"
+        cancelText="Keep in cart"
+        variant="danger"
+        loading={removeDialogBusy}
+        onConfirm={() => {
+          void handleConfirmRemove();
+        }}
+        onCancel={() => {
+          if (removeDialogBusy) return;
+          setRemovalTarget(null);
+        }}
+      />
       <Footer />
     </div>
   );
