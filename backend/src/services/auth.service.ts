@@ -33,6 +33,12 @@ function sha256Hex(input: string) {
   return crypto.createHash("sha256").update(input).digest("hex");
 }
 
+function findUserByTenantEmail(adminId: string, email: string) {
+  return prisma.user.findUnique({
+    where: { adminId_email: { adminId, email } },
+  });
+}
+
 export async function registerUser(tenantAdminId: string, data: {
   name: string;
   email: string;
@@ -46,9 +52,7 @@ export async function registerUser(tenantAdminId: string, data: {
       ? data.phone.trim()
       : undefined;
 
-  const existing = await prisma.user.findUnique({
-    where: { email },
-  });
+  const existing = await findUserByTenantEmail(tenantAdminId, email);
 
   if (existing) {
     throw new Error("Email already registered");
@@ -111,9 +115,9 @@ export async function registerUser(tenantAdminId: string, data: {
   };
 }
 
-export async function resendVerificationEmail(emailRaw: string) {
+export async function resendVerificationEmail(tenantAdminId: string, emailRaw: string) {
   const email = emailRaw.trim().toLowerCase();
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await findUserByTenantEmail(tenantAdminId, email);
 
   // Always return success to avoid email enumeration
   if (!user) {
@@ -210,15 +214,9 @@ export async function verifyEmailWithToken(token: string) {
 
 export async function loginUser(tenantAdminId: string, data: { email: string; password: string }) {
   const email = data.email.trim().toLowerCase();
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
+  const user = await findUserByTenantEmail(tenantAdminId, email);
 
   if (!user) {
-    throw new Error("Invalid email or password");
-  }
-
-  if (!user.adminId || user.adminId !== tenantAdminId) {
     throw new Error("Invalid email or password");
   }
 
@@ -352,11 +350,9 @@ export async function refreshUserToken(refreshToken: string) {
   }
 }
 
-export async function forgotPassword(email: string) {
+export async function forgotPassword(tenantAdminId: string, email: string) {
   const normalized = email.trim().toLowerCase();
-  const user = await prisma.user.findUnique({
-    where: { email: normalized },
-  });
+  const user = await findUserByTenantEmail(tenantAdminId, normalized);
 
   if (!user) {
     return { message: "If an account exists, a reset email has been sent" };

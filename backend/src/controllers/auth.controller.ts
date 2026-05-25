@@ -63,8 +63,12 @@ export const resendVerification = asyncHandler(
     const schema = z.object({
       email: z.string().email("Invalid email address"),
     });
+    const tenantAdminId = (req as AuthenticatedRequest).tenantAdminId;
+    if (!tenantAdminId) {
+      return ApiResponse.badRequest(res, "Tenant context missing");
+    }
     const { email } = schema.parse(req.body);
-    const result = await authService.resendVerificationEmail(email);
+    const result = await authService.resendVerificationEmail(tenantAdminId, email);
     return ApiResponse.success(res, result, "Verification email sent");
   }
 );
@@ -142,12 +146,16 @@ export const refreshToken = asyncHandler(
 
 export const forgotPassword = asyncHandler(
   async (req: Request, res: Response) => {
+    const tenantAdminId = (req as AuthenticatedRequest).tenantAdminId;
+    if (!tenantAdminId) {
+      return ApiResponse.badRequest(res, "Tenant context missing");
+    }
     const schema = z.object({
       email: z.string().email("Invalid email address"),
     });
 
     const { email } = schema.parse(req.body);
-    const result = await authService.forgotPassword(email);
+    const result = await authService.forgotPassword(tenantAdminId, email);
 
     return ApiResponse.success(res, result, "Password reset email sent");
   }

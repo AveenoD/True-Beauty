@@ -14,6 +14,7 @@
     "db:down": "docker compose -f ../docker-compose.yml down",
     "prisma:studio": "prisma studio",
     "db:seed": "npx ts-node --transpile-only prisma/seed.ts",
+    "db:tenant-foundation": "node scripts/migrate-tenant-foundation.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -8,6 +8,25 @@ All notable changes to this repository will be documented in this file.
 
 ## Unreleased
 
+### [25-05-2026 14:00] — Multi-tenant Phase 1: DB foundation + per-tenant user email
+
+**What changed:**
+
+- **Planning:** Added root [`short-term-plan.md`](short-term-plan.md) (phase-by-phase SaaS tenant/domain rollout).
+- **Database (Prisma):** New `TenantDomain` model and `TenantDomainKind` enum (`storefront`, `admin_panel`); `User.adminId` required with FK to `Admin`; email uniqueness is now **`@@unique([adminId, email])`** (same email allowed on different tenants); `Admin.slug` required and globally unique.
+- **Migration:** Idempotent script **`npm run db:tenant-foundation`** ([`backend/scripts/migrate-tenant-foundation.js`](backend/scripts/migrate-tenant-foundation.js)) backfills orphan `adminId`, admin slugs, composite email index, and seeds local hosts `localhost` / `127.0.0.1` on the default demo admin.
+- **Auth (compile/runtime alignment):** User register, login, resend verification, and forgot-password resolve users by **tenant + email** (`adminId_email`), not global email alone — matches new DB constraints.
+- **Seed:** [`backend/prisma/seed.ts`](backend/prisma/seed.ts) upserts `tenant_domain` rows for demo admin when present.
+- **Docs:** [`backend/docs/PHASE1.md`](backend/docs/PHASE1.md) — how to run migration locally.
+
+**Files touched:** `short-term-plan.md`, `backend/prisma/schema.prisma`, `backend/scripts/migrate-tenant-foundation.js`, `backend/package.json`, `backend/prisma/seed.ts`, `backend/src/services/auth.service.ts`, `backend/src/controllers/auth.controller.ts`, `backend/docs/PHASE1.md`, `backend/prisma/sql/tenant_foundation.sql`
+
+**Breaking change:** **YES** — run `cd backend && npm run db:tenant-foundation && npx prisma generate` on each environment before deploying; existing DBs with global `user.email` unique need the migration script.
+
+**API endpoints used:** No new routes; behavior change on existing `/users/register`, `/users/login`, `/users/resend-verification`, `/users/forgot-password` (tenant-scoped email lookup).
+
+---
+
 ### [02-05-2026 16:10] — Changelog: dated entry format
 
 **What changed:**

@@ -26,6 +26,11 @@ enum AdminVerificationStatus {
   rejected
 }
 
+enum TenantDomainKind {
+  storefront
+  admin_panel
+}
+
 enum UserKycStatus {
   not_submitted
   pending
@@ -231,7 +236,7 @@ model Admin {
   name         String
   email        String    @unique
   password     String
-  slug         String?
+  slug         String    @unique
   profilePhoto String?
   role         AdminRole @default(admin)
   isActive     Boolean   @default(true)
@@ -250,8 +255,24 @@ model Admin {
   categories           Category[]
   products             Product[]
   coupons              Coupon[]
+  users                User[]
+  tenantDomains        TenantDomain[]
 
   @@map("admin")
+}
+
+model TenantDomain {
+  id        String           @id @default(uuid())
+  adminId   String
+  host      String           @unique
+  kind      TenantDomainKind @default(storefront)
+  isPrimary Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@map("tenant_domain")
 }
 
 model SuperAdmin {
@@ -272,9 +293,9 @@ model SuperAdmin {
 
 model User {
   id              String    @id @default(uuid())
-  adminId         String?
+  adminId         String
   name            String
-  email           String    @unique
+  email           String
   password        String?
   phone           String?
   dateOfBirth     DateTime?
@@ -289,6 +310,7 @@ model User {
   deletedAt       DateTime?
 
   // Relations
+  admin            Admin             @relation(fields: [adminId], references: [id])
   authTokens       AuthToken[]
   addresses        Address[]
   orders           Order[]
@@ -301,6 +323,7 @@ model User {
   exchanges        ExchangeRequest[]
   affiliateProfile AffiliateProfile?
 
+  @@unique([adminId, email])
   @@map("user")
 }
 

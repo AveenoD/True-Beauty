@@ -8,6 +8,24 @@ Notable **API and server** changes under `backend/`. The repository root [`CHANG
 
 ## Unreleased
 
+### [25-05-2026 14:00] — Phase 1: TenantDomain + per-tenant user email
+
+**What changed:**
+
+- **Schema:** `TenantDomain` (`host` → `adminId`, `kind`, `isPrimary`); `User` → `Admin` relation; `@@unique([adminId, email])`; `Admin.slug` NOT NULL + unique.
+- **Migration:** `npm run db:tenant-foundation` — creates `tenant_domain`, backfills `user.adminId`, drops global email unique, seeds `localhost` / `127.0.0.1` for default admin.
+- **Auth service:** `findUserByTenantEmail()` via `adminId_email` for register, login, resend verification, forgot password ([`src/services/auth.service.ts`](src/services/auth.service.ts), [`src/controllers/auth.controller.ts`](src/controllers/auth.controller.ts)).
+- **Seed:** Demo admin tenant domains in [`prisma/seed.ts`](prisma/seed.ts).
+- **Docs:** [`docs/PHASE1.md`](docs/PHASE1.md).
+
+**Files touched:** `prisma/schema.prisma`, `scripts/migrate-tenant-foundation.js`, `package.json`, `prisma/seed.ts`, `src/services/auth.service.ts`, `src/controllers/auth.controller.ts`, `docs/PHASE1.md`, `prisma/sql/tenant_foundation.sql`
+
+**Breaking change:** **YES** — run `npm run db:tenant-foundation` before start/deploy.
+
+**API endpoints used:** Existing `/users/*` auth routes (tenant-scoped email resolution only).
+
+---
+
 ### [02-05-2026 16:10] — Changelog: dated entry format
 
 **What changed:**

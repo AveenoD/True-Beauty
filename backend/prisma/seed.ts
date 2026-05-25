@@ -73,9 +73,22 @@ async function seed() {
 
   const demoAdmin = await prisma.admin.findFirst({
     where: { email: { equals: "demo@truebeauty.com", mode: "insensitive" } },
-    select: { id: true },
+    select: { id: true, slug: true },
   });
   if (demoAdmin) {
+    for (const host of ["localhost", "127.0.0.1"]) {
+      await prisma.tenantDomain.upsert({
+        where: { host },
+        create: {
+          adminId: demoAdmin.id,
+          host,
+          kind: "storefront",
+          isPrimary: host === "localhost",
+        },
+        update: { adminId: demoAdmin.id, kind: "storefront" },
+      });
+    }
+    console.log(`  Tenant domains seeded for demo admin (slug=${demoAdmin.slug})`);
     const professional = await prisma.subscriptionPlan.findUnique({
       where: { id: "professional" },
       select: { id: true },
