@@ -16,20 +16,36 @@ function slugify(input: string) {
     .slice(0, 30);
 }
 
+/** parlour-a.local → parlour-a; admin.parlour-a.local → parlour-a */
+function deriveSlugFromHostname(hostname: string): string | null {
+  const host = hostname.trim().toLowerCase();
+  if (!host || host === "localhost" || host === "127.0.0.1") return null;
+
+  if (host.endsWith(".local")) {
+    const base = host.slice(0, -".local".length);
+    const slugSource = base.startsWith("admin.") ? base.slice("admin.".length) : base;
+    const slug = slugify(slugSource);
+    if (slug && SLUG_REGEX.test(slug)) return slug;
+    return null;
+  }
+
+  const parts = host.split(".");
+  if (parts.length >= 3 && parts[0] && parts[0] !== "www") {
+    const sub = slugify(parts[0]);
+    if (sub && SLUG_REGEX.test(sub)) return sub;
+  }
+
+  return null;
+}
+
 function deriveTenantSlug(params: URLSearchParams): string | null {
   const fromQuery =
     params.get("tenant") || params.get("t") || params.get("store");
   const slug = slugify(fromQuery || "");
   if (slug && SLUG_REGEX.test(slug)) return slug;
 
-  // Subdomain support (future): <slug>.domain.com
   if (typeof window !== "undefined") {
-    const host = window.location.hostname.toLowerCase();
-    const parts = host.split(".");
-    if (parts.length >= 3 && parts[0] && parts[0] !== "www") {
-      const sub = slugify(parts[0]);
-      if (sub && SLUG_REGEX.test(sub)) return sub;
-    }
+    return deriveSlugFromHostname(window.location.hostname);
   }
 
   return null;
@@ -50,14 +66,16 @@ export default function TenantBootstrap() {
     const nextSlug =
       derived ||
       (envSlug && SLUG_REGEX.test(envSlug) ? envSlug : null) ||
-      // Local dev fallback only when nothing is set yet.
       (!existing && window.location.hostname === "localhost" ? "demo" : null);
 
     if (nextSlug && nextSlug !== existing) {
       localStorage.setItem("tenantSlug", nextSlug);
     }
+
+    if (derived && process.env.NODE_ENV === "development") {
+      console.info("[tenant] slug for API header:", nextSlug ?? derived);
+    }
   }, []);
 
   return null;
 }
-

@@ -28,9 +28,11 @@
 - `assertTenantUser` on cart, wishlist, orders, payments, returns, etc.
 - See `backend/docs/PHASE3.md`
 
-## Phase 4 — Local multi-tenant UX
+## Phase 4 — Local multi-tenant UX (done)
 
-- `*.local` seeds, docs, two-tenant test guide
+- `npm run db:seed-local-tenants`, `LOCAL_TENANT.md`, `TENANT_REGRESSION.md`
+- Frontend hostname `*.local` → slug
+- See `backend/docs/PHASE4.md`
 
 ## Phase 5 — Admin ↔ domain + SuperAdmin domain CRUD
 

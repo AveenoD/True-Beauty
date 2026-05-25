@@ -8,6 +8,22 @@ All notable changes to this repository will be documented in this file.
 
 ## Unreleased
 
+### [25-05-2026 18:00] — Multi-tenant Phase 4: local `*.local` testing + regression checklist
+
+**What changed:**
+
+- **`npm run db:seed-local-tenants`**: dev tenants `parlour-a` / `parlour-b` with `parlour-a.local`, `parlour-b.local`, and `admin.*.local` domain rows; loopback stays on primary admin.
+- **Docs:** [`backend/docs/LOCAL_TENANT.md`](backend/docs/LOCAL_TENANT.md) (hosts file, URLs), [`backend/docs/TENANT_REGRESSION.md`](backend/docs/TENANT_REGRESSION.md) (Phases 1–4 manual QA), [`backend/docs/PHASE4.md`](backend/docs/PHASE4.md).
+- **Web `TenantBootstrap`:** hostname `*.local` and `admin.*.local` → `tenantSlug` in `localStorage` for `X-Tenant-Slug`.
+
+**Files touched:** `backend/scripts/seed-local-tenant-domains.js`, `backend/package.json`, `backend/docs/LOCAL_TENANT.md`, `backend/docs/TENANT_REGRESSION.md`, `backend/docs/PHASE4.md`, `frontend/True-Beauty-Web-main/components/TenantBootstrap.tsx`, `short-term-plan.md`
+
+**Breaking change:** NO
+
+**API endpoints used:** None new
+
+---
+
 ### [25-05-2026 16:45] — Multi-tenant Phase 3: tenant user guards + cart/coupon hardening
 
 **What changed:**

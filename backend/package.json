@@ -15,6 +15,7 @@
     "prisma:studio": "prisma studio",
     "db:seed": "npx ts-node --transpile-only prisma/seed.ts",
     "db:tenant-foundation": "node scripts/migrate-tenant-foundation.js",
+    "db:seed-local-tenants": "node scripts/seed-local-tenant-domains.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

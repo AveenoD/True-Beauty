@@ -8,6 +8,17 @@ Notable **API and server** changes under `backend/`. The repository root [`CHANG
 
 ## Unreleased
 
+### [25-05-2026 18:00] — Phase 4: local tenant seeds + regression docs
+
+**What changed:**
+
+- `scripts/seed-local-tenant-domains.js` + `npm run db:seed-local-tenants`
+- `docs/LOCAL_TENANT.md`, `docs/TENANT_REGRESSION.md`, `docs/PHASE4.md`
+
+**Breaking change:** NO
+
+---
+
 ### [25-05-2026 16:45] — Phase 3: assertTenantUser + route guards
 
 **What changed:**
