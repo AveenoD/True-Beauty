@@ -1,11 +1,11 @@
 import { Router } from "express";
 import * as wishlistController from "../controllers/wishlist.controller";
-import { authenticateUser } from "../middleware/auth";
 import { requireTenant } from "../middleware/tenant";
+import { authenticateTenantUser } from "../middleware/userTenantAuth";
 
 const router = Router();
 router.use(requireTenant);
-router.use(authenticateUser);
+router.use(authenticateTenantUser);
 
 router.get("/", wishlistController.getWishlist);
 router.post("/", wishlistController.addItem);

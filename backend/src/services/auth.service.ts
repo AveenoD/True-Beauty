@@ -289,7 +289,7 @@ export async function logoutUser(userId: string, refreshToken?: string) {
   }
 }
 
-export async function refreshUserToken(refreshToken: string) {
+export async function refreshUserToken(refreshToken: string, tenantAdminId?: string) {
   try {
     const payload = verifyRefreshToken(refreshToken);
 
@@ -319,6 +319,10 @@ export async function refreshUserToken(refreshToken: string) {
 
     if (!user || !user.isActive) {
       throw new Error("User not found or inactive");
+    }
+
+    if (tenantAdminId && user.adminId !== tenantAdminId) {
+      throw new Error("Invalid refresh token");
     }
 
     await prisma.authToken.update({

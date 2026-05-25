@@ -8,6 +8,21 @@ Notable **API and server** changes under `backend/`. The repository root [`CHANG
 
 ## Unreleased
 
+### [25-05-2026 16:45] — Phase 3: assertTenantUser + route guards
+
+**What changed:**
+
+- `assertTenantUser`, `authenticateTenantUser` on all protected user/tenant routes.
+- Payments/returns: added `requireTenant`.
+- Coupon apply: tenant from resolver, not request body `adminId`.
+- Cart: tenant-scoped product checks; refresh token tenant match.
+
+**Files touched:** `src/middleware/assertTenantUser.ts`, `src/middleware/userTenantAuth.ts`, `src/routes/*.ts` (users, cart, wishlist, order, payment, return, store, coupon.apply), `src/services/cart.service.ts`, `src/controllers/cart.controller.ts`, `src/services/auth.service.ts`, `src/controllers/auth.controller.ts`, `docs/PHASE3.md`
+
+**Breaking change:** YES — `/payments`, `/returns` need tenant context; cross-tenant JWT → 403.
+
+---
+
 ### [25-05-2026 15:30] — Phase 2: central tenant resolver
 
 **What changed:**

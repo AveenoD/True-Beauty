@@ -35,9 +35,13 @@ export async function getCart(userId: string) {
   };
 }
 
-export async function addToCart(userId: string, data: { productId: string; quantity: number }) {
+export async function addToCart(
+  userId: string,
+  tenantAdminId: string,
+  data: { productId: string; quantity: number }
+) {
   const product = await prisma.product.findFirst({
-    where: { id: data.productId, deletedAt: null },
+    where: { id: data.productId, adminId: tenantAdminId, deletedAt: null },
   });
   if (!product) throw new Error("Product not found");
   if (product.stock < data.quantity) throw new Error("Insufficient stock");
@@ -63,13 +67,18 @@ export async function addToCart(userId: string, data: { productId: string; quant
   });
 }
 
-export async function updateCartItem(userId: string, itemId: string, quantity: number) {
+export async function updateCartItem(
+  userId: string,
+  tenantAdminId: string,
+  itemId: string,
+  quantity: number
+) {
   if (quantity <= 0) {
-    return removeCartItem(userId, itemId);
+    return removeCartItem(userId, itemId, tenantAdminId);
   }
 
   const item = await prisma.cartItem.findFirst({
-    where: { id: itemId, userId },
+    where: { id: itemId, userId, product: { adminId: tenantAdminId } },
     include: { product: true },
   });
   if (!item) throw new Error("Cart item not found");
@@ -81,9 +90,15 @@ export async function updateCartItem(userId: string, itemId: string, quantity: n
   });
 }
 
-export async function removeCartItem(userId: string, itemId: string) {
+export async function removeCartItem(
+  userId: string,
+  itemId: string,
+  tenantAdminId?: string
+) {
   await prisma.cartItem.deleteMany({
-    where: { id: itemId, userId },
+    where: tenantAdminId
+      ? { id: itemId, userId, product: { adminId: tenantAdminId } }
+      : { id: itemId, userId },
   });
 }
 

@@ -133,7 +133,8 @@ export const refreshToken = asyncHandler(
       return ApiResponse.unauthorized(res, "Refresh token missing");
     }
 
-    const result = await authService.refreshUserToken(refreshToken);
+    const tenantAdminId = (req as AuthenticatedRequest).tenantAdminId;
+    const result = await authService.refreshUserToken(refreshToken, tenantAdminId);
     setRefreshTokenCookie(res, result.refreshToken);
 
     return ApiResponse.success(

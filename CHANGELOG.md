@@ -8,6 +8,26 @@ All notable changes to this repository will be documented in this file.
 
 ## Unreleased
 
+### [25-05-2026 16:45] — Multi-tenant Phase 3: tenant user guards + cart/coupon hardening
+
+**What changed:**
+
+- **`assertTenantUser`** middleware: logged-in `user.adminId` must match `req.tenantAdminId` (403 otherwise).
+- **`authenticateTenantUser`** stack applied on protected **`/users`**, **`/cart`**, **`/wishlist`**, **`/orders`**, **`/payments`**, **`/returns`**, and authenticated **`/store`** review routes.
+- **`/payments`** and **`/returns`** now require **`requireTenant`** (were missing before).
+- **`POST /coupon/apply`**: uses server **`tenantAdminId`** instead of trusting client **`adminId`** in body.
+- **Cart service**: add/update/remove scoped to products belonging to the current tenant.
+- **Refresh token**: fails when tenant header/host does not match the user's store.
+- **Docs:** [`backend/docs/PHASE3.md`](backend/docs/PHASE3.md).
+
+**Files touched:** `backend/src/middleware/assertTenantUser.ts`, `backend/src/middleware/userTenantAuth.ts`, `backend/src/routes/users.routes.ts`, `cart.routes.ts`, `wishlist.routes.ts`, `order.routes.ts`, `payment.routes.ts`, `return.routes.ts`, `store.routes.ts`, `coupon.apply.routes.ts`, `backend/src/services/cart.service.ts`, `backend/src/controllers/cart.controller.ts`, `backend/src/services/auth.service.ts`, `backend/src/controllers/auth.controller.ts`, `backend/docs/PHASE3.md`
+
+**Breaking change:** **YES (behavior)** — `/payments` and `/returns` now require `X-Tenant-Slug` or resolvable `Host`; cross-tenant API calls with a valid JWT return **403**.
+
+**API endpoints used:** Existing routes only (stricter tenant enforcement).
+
+---
+
 ### [25-05-2026 15:30] — Multi-tenant Phase 2: central tenant resolver (Host → domain → slug)
 
 **What changed:**

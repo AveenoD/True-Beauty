@@ -1,9 +1,11 @@
 import { Router } from "express";
 import * as returnController from "../controllers/return.controller";
-import { authenticateUser } from "../middleware/auth";
+import { requireTenant } from "../middleware/tenant";
+import { authenticateTenantUser } from "../middleware/userTenantAuth";
 
 const router = Router();
-router.use(authenticateUser);
+router.use(requireTenant);
+router.use(authenticateTenantUser);
 
 router.post("/", returnController.create);
 router.get("/", returnController.list);

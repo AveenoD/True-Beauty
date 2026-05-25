@@ -22,10 +22,11 @@
 - Env: `DEV_DEFAULT_TENANT_SLUG=demo`
 - See `backend/docs/PHASE2.md`
 
-## Phase 3 — User ↔ Admin auth hardening
+## Phase 3 — User ↔ Admin auth hardening (done)
 
-- Per-tenant email in `auth.service.ts`
+- Per-tenant email in `auth.service.ts` (Phase 1)
 - `assertTenantUser` on cart, wishlist, orders, payments, returns, etc.
+- See `backend/docs/PHASE3.md`
 
 ## Phase 4 — Local multi-tenant UX
 

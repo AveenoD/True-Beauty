@@ -18,7 +18,11 @@ export const addItem = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { productId, quantity } = req.body;
     if (!productId || !quantity) return ApiResponse.badRequest(res, "productId and quantity required");
-    const item = await cartService.addToCart(req.userId!, { productId, quantity });
+    const tenantAdminId = req.tenantAdminId!;
+    const item = await cartService.addToCart(req.userId!, tenantAdminId, {
+      productId,
+      quantity,
+    });
     return ApiResponse.success(res, item, "Added to cart", 201);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to add to cart";
@@ -31,7 +35,12 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response) => {
     const { quantity } = req.body;
     if (quantity === undefined) return ApiResponse.badRequest(res, "quantity required");
     const id = z.string().min(1).parse(req.params.id);
-    const item = await cartService.updateCartItem(req.userId!, id, quantity);
+    const item = await cartService.updateCartItem(
+      req.userId!,
+      req.tenantAdminId!,
+      id,
+      quantity
+    );
     return ApiResponse.success(res, item, "Cart updated");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update cart";
@@ -42,7 +51,7 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response) => {
 export const removeItem = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = z.string().min(1).parse(req.params.id);
-    await cartService.removeCartItem(req.userId!, id);
+    await cartService.removeCartItem(req.userId!, id, req.tenantAdminId!);
     return ApiResponse.success(res, null, "Item removed");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to remove item";
