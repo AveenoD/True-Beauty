@@ -16,10 +16,11 @@
 - Backfill + seed `localhost` / `127.0.0.1`
 - **No backend route changes**
 
-## Phase 2 — Central tenant resolver
+## Phase 2 — Central tenant resolver (done)
 
 - `tenantResolver.service.ts` + refactor `requireTenant`
 - Env: `DEV_DEFAULT_TENANT_SLUG=demo`
+- See `backend/docs/PHASE2.md`
 
 ## Phase 3 — User ↔ Admin auth hardening
 

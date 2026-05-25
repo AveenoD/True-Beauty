@@ -8,6 +8,8 @@ export interface AuthenticatedRequest extends Request {
   adminId?: string;
   tenantAdminId?: string;
   tenantSlug?: string;
+  /** How tenant was resolved (Phase 2): host | slug | dev */
+  tenantResolvedVia?: "host" | "slug" | "dev";
 }
 
 export interface TokenPayload {

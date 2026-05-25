@@ -64,11 +64,17 @@ function pickRequestContext(req: Request): Record<string, unknown> | undefined {
   const q = req.query as Record<string, unknown>;
   const hasQuery = q && Object.keys(q).length > 0;
   const tenant = req.get("x-tenant-slug");
+  const host = req.get("host");
+  const resolvedVia = (req as { tenantResolvedVia?: string }).tenantResolvedVia;
+  const tenantSlug = (req as { tenantSlug?: string }).tenantSlug;
   const origin = req.get("origin");
   const auth = req.get("authorization");
   const ctx: Record<string, unknown> = {};
   if (hasQuery) ctx.query = redact(q);
+  if (host) ctx.host = host;
   if (tenant) ctx["x-tenant-slug"] = tenant;
+  if (tenantSlug) ctx.tenantSlug = tenantSlug;
+  if (resolvedVia) ctx.tenantResolvedVia = resolvedVia;
   if (origin) ctx.origin = origin;
   if (auth) ctx.authorization = "[REDACTED]";
   return Object.keys(ctx).length ? ctx : undefined;

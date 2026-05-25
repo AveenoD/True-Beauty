@@ -8,6 +8,24 @@ Notable **API and server** changes under `backend/`. The repository root [`CHANG
 
 ## Unreleased
 
+### [25-05-2026 15:30] — Phase 2: central tenant resolver
+
+**What changed:**
+
+- New [`src/services/tenantResolver.service.ts`](src/services/tenantResolver.service.ts): Host → `tenant_domain`, dev `localhost` shortcut, `X-Tenant-Slug` fallback.
+- [`src/middleware/tenant.ts`](src/middleware/tenant.ts) uses resolver; exposes `req.tenantResolvedVia`.
+- [`src/middleware/httpLogger.ts`](src/middleware/httpLogger.ts): tenant resolution fields in request context.
+- **`.env.example`:** `DEV_DEFAULT_TENANT_SLUG`, `ALLOW_TENANT_SLUG_HEADER`.
+- [`docs/PHASE2.md`](docs/PHASE2.md).
+
+**Files touched:** `src/services/tenantResolver.service.ts`, `src/middleware/tenant.ts`, `src/types/index.ts`, `src/middleware/httpLogger.ts`, `.env.example`, `docs/PHASE2.md`
+
+**Breaking change:** NO
+
+**API endpoints used:** Existing tenant-scoped routes unchanged (resolution only).
+
+---
+
 ### [25-05-2026 14:00] — Phase 1: TenantDomain + per-tenant user email
 
 **What changed:**

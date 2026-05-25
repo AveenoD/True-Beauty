@@ -8,6 +8,24 @@ All notable changes to this repository will be documented in this file.
 
 ## Unreleased
 
+### [25-05-2026 15:30] — Multi-tenant Phase 2: central tenant resolver (Host → domain → slug)
+
+**What changed:**
+
+- **`resolveTenantFromRequest()`** ([`backend/src/services/tenantResolver.service.ts`](backend/src/services/tenantResolver.service.ts)): resolves tenant in order **Host / `tenant_domain`** → **dev loopback** (`localhost` → `DEV_DEFAULT_TENANT_SLUG`) → **`X-Tenant-Slug`** fallback.
+- **`requireTenant`** middleware refactored to use the resolver; sets `req.tenantResolvedVia` (`host` | `slug` | `dev`) for logging.
+- **`.env.example`:** `DEV_DEFAULT_TENANT_SLUG`, `ALLOW_TENANT_SLUG_HEADER`.
+- **HTTP logger:** logs `host`, `tenantSlug`, `tenantResolvedVia` when present.
+- **Docs:** [`backend/docs/PHASE2.md`](backend/docs/PHASE2.md).
+
+**Files touched:** `backend/src/services/tenantResolver.service.ts`, `backend/src/middleware/tenant.ts`, `backend/src/types/index.ts`, `backend/src/middleware/httpLogger.ts`, `backend/.env.example`, `backend/docs/PHASE2.md`
+
+**Breaking change:** NO — existing clients using `X-Tenant-Slug` behave as before; Host-based resolution is additive.
+
+**API endpoints used:** No new routes; all routes already behind `requireTenant` (e.g. `/users/*`, `/store/*`, `/cart`, `/wishlist`, `/orders`, `/coupon/apply`).
+
+---
+
 ### [25-05-2026 14:00] — Multi-tenant Phase 1: DB foundation + per-tenant user email
 
 **What changed:**
